@@ -141,10 +141,19 @@ def check_path(tool: str, path: str | None, cwd: str, content: str = "") -> Deci
     return ALLOW
 
 
+REFEREE = ("sagectl/evals.py", "sagectl/guard.py", "sagectl/hooks.py")
+
+
 def evaluate(payload: dict) -> Decision:
     tool = payload.get("tool_name", "")
     ti = payload.get("tool_input") or {}
     cwd = payload.get("cwd") or str(paths.SAGE_HOME)
+    # Inside a subagent (hook payloads carry agent_type there), the referee is frozen: no agent
+    # may edit the code that grades or guards it. Keshav edits these from the main session.
+    if payload.get("agent_type") and tool in ("Edit", "Write", "NotebookEdit"):
+        target = (ti.get("file_path") or "").replace("\\", "/")
+        if target.endswith(REFEREE):
+            return deny("The referee (evals.py / guard.py / hooks.py) is frozen for subagents.")
     if tool == "Bash":
         return check_bash(ti.get("command", ""), cwd)
     if tool in ("Read", "Edit", "Write", "NotebookEdit"):
