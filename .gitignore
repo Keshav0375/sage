@@ -1,0 +1,11 @@
+# sage runtime — traces, trash, caches, eval results, snapshots. Local only.
+.sage/
+.plans/
+.wt/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+.DS_Store
+.claude/settings.local.json
