@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "attribution": { "commit": "", "pr": "" },
+  "outputStyle": "Homeboy",
+
+  "env": {
+    "ENABLE_LSP_TOOL": "1"
+  },
+
+  "enabledMcpjsonServers": ["github", "context7", "playwright", "reddit"],
+
+  "statusLine": {
+    "type": "command",
+    "command": "python3 \"${CLAUDE_PROJECT_DIR:-.}/bin/sagectl\" statusline",
+    "padding": 0
+  },
+
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "WebSearch",
+      "WebFetch",
+
+      "Bash(python3 *)",
+      "Bash(./bin/sagectl *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(pyright *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(go vet *)",
+      "Bash(go test *)",
+      "Bash(cargo *)",
+      "Bash(terraform fmt *)",
+      "Bash(terraform validate*)",
+      "Bash(tflint *)",
+
+      "Bash(git *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh run *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(gh repo view *)",
+      "Bash(gh auth status)",
+
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(rg *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(tree *)",
+      "Bash(jq *)",
+      "Bash(diff *)",
+      "Bash(sort *)",
+      "Bash(which *)",
+      "Bash(echo *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+
+      "Skill(start)",
+      "Skill(check)",
+      "Skill(review)",
+      "Skill(research)",
+      "Skill(ground-rules)",
+
+      "mcp__github",
+      "mcp__context7",
+      "mcp__reddit"
+    ],
+    "ask": [
+      "Bash(gh pr merge *)",
+      "Bash(gh pr create *)",
+      "Bash(gh repo create *)",
+      "Bash(terraform apply*)",
+      "Bash(terraform destroy*)",
+      "Bash(terraform state *)",
+      "Bash(docker *)",
+      "Bash(npm install*)",
+      "Bash(pip install*)",
+      "mcp__playwright"
+    ],
+    "deny": [
+      "Bash(sudo *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(chmod -R 777*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/secrets/**)"
+    ]
+  },
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook session-start", "timeout": 20 }]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Edit|Write|NotebookEdit|Grep|Glob|Skill|Agent|mcp__github__.*",
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook guard", "timeout": 10 }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook post-edit", "timeout": 60 }]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook trace", "timeout": 10 }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook trace", "timeout": 10 }]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook subagent-stop", "timeout": 10 }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook stop", "timeout": 300 }]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook pre-compact", "timeout": 30 }]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/sagectl\" hook trace", "timeout": 10 }]
+      }
+    ]
+  }
+}
