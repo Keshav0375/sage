@@ -51,5 +51,5 @@ Max 12 lines unless the agent file says otherwise. Long material goes to a file
 | research note | `library/research/<YYYY-MM-DD>-<slug>.md` | synthesizer |
 | council record | `library/council/<YYYY-MM-DD>-<slug>.md` | chairman |
 | harness proposal | git branch `evolve/<cluster>-<slug>` + `.plans/evolve-<cluster>.md` | harness-smith |
-| incubating agent | `.claude/agents/_incubator/<name>.md` | agent-smith |
+| incubating agent | `incubator/agents/<name>.md` | agent-smith |
 | snapshot | `.sage/handoffs/<stamp>.md` (gitignored) | PreCompact hook |
