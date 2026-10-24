@@ -89,7 +89,7 @@ def card(name: str | None) -> str:
                  "`/new-project <name>` or `sagectl use <name>`"]
     else:
         proj = projects.load(name)
-        rows.append(f"project  {name} · {proj.kind}" + (f" · {proj.description[:30]}" if proj.description else ""))
+        rows.append(f"project  {name} · {proj.kind}" + (f" · {proj.description[:40]}" if proj.description else ""))
         for r in proj.repos:
             rows.append(f"repo     {r.name} → {r.path}" + ("" if r.path.is_dir() else "  (missing!)"))
         phases = tracker.parse(proj.root / "phases" / "TODO.md")
