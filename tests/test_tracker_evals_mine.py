@@ -97,3 +97,18 @@ def test_new_project_detects_python_stack(home):
     p = project.load("demo")
     assert "pyright" in p.lsp and "ruff check ." in p.gate["full"] and p.repos[0].name == "app"
     assert project.detect(home / "demo-repo" / "src") == "demo"
+
+
+def test_projects_board_and_summary(home):
+    from sagectl import ui
+
+    todo = home / "projects" / "demo" / "phases" / "TODO.md"
+    todo.write_text(TODO)
+    s = ui.summary("demo")
+    assert s["phase"]["num"] == 2 and s["phase"]["verified"] == 1 and s["phase"]["tasks"] == 5
+    assert s["phase"]["now"][0]["id"] == "2.2" and s["phase"]["next_wave"] == ["2.2", "2.4"]
+    assert s["phases_signed"] == 1 and s["repos"][0]["ok"]
+    b = ui.board("demo")
+    lines = b.splitlines()
+    assert lines[0].startswith("╭─ sage · 1 project ") and "▸ demo" in b and "1/5" in b
+    assert len({len(x) for x in lines}) == 1  # every line the same width: the box is closed

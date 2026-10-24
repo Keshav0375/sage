@@ -11,7 +11,7 @@ skills, hooks. **No application code lives here.** Project code stays in its own
 
 ```bash
 python3 bin/sagectl where                 # active project + phase card: tasks, WAVES, gate, lessons
-python3 bin/sagectl where --all           # every project, every phase
+python3 bin/sagectl projects             # every project on one board (or: projects <name>)
 python3 bin/sagectl arch <doc> --list     # TOC + token cost; then: sagectl arch <doc> 3.2
 python3 bin/sagectl gate [--fast]         # the project's quality gate → ONE VERDICT line
 python3 bin/sagectl lesson list           # open lessons for the active project
@@ -42,7 +42,7 @@ or `sagectl use <p>`.
 |------|----------|--------|
 | **Build** | `/new-project` `/spec` `/plan` `/build` `/check` `/review` `/ship` | context-builder · architect · planner · builder · reviewer · safety-reviewer · gate-runner · clerk |
 | **Think** | `/research` `/council` `/grill` `/decide` | scout · synthesizer · skeptic · councilor · chairman |
-| **Evolve** | `/retro` `/mine` `/evolve` `/forge-agent` `/audit` `/handoff` `/start` | miner · harness-smith · agent-smith |
+| **Evolve** | `/retro` `/mine` `/evolve` `/forge-agent` `/audit` `/handoff` `/start` `/projects` | miner · harness-smith · agent-smith |
 
 **Opus decides, Sonnet types, Haiku checks.** The main session is always the orchestrator:
 subagents can't spawn subagents, so every fan-out is yours. A wave of independent work goes

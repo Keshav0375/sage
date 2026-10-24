@@ -119,3 +119,103 @@ def card(name: str | None) -> str:
         rows.append(f"trash    {trash_n} bucket(s) · `sagectl trash list`")
     body = [f"│ {r[:w - 4]:<{w - 4}} │" for r in rows]
     return "\n".join([top, *body, "╰" + "─" * (w - 2) + "╯"])
+
+
+# --- projects board: every project on one card -----------------------------------------------
+
+def _ago(ts: float | None) -> str:
+    if not ts:
+        return "never"
+    s = int(time.time() - ts)
+    for unit, n in (("d", 86400), ("h", 3600), ("m", 60)):
+        if s >= n:
+            return f"{s // n}{unit}"
+    return "now"
+
+
+def _bar(done: int, total: int, width: int = 12) -> str:
+    fill = round(width * done / total) if total else 0
+    return "█" * fill + "░" * (width - fill)
+
+
+def summary(name: str) -> dict:
+    """Everything the board shows about one project, as data (also `sagectl projects --json`)."""
+    proj = projects.load(name)
+    phases = tracker.parse(proj.root / "phases" / "TODO.md")
+    ph = tracker.active(phases)
+    lessons = trace.load_lessons(name)
+    gate_f = paths.CACHE / f"gate-{name}.json"
+    gate = json.loads(gate_f.read_text()) if gate_f.is_file() else None
+    files = [proj.root / f for f in ("phases/TODO.md", "STATE.md", "lessons.jsonl", "project.toml")]
+    touched = max((f.stat().st_mtime for f in files if f.is_file()), default=None)
+    out = {
+        "name": name, "kind": proj.kind, "description": proj.description,
+        "repos": [{"name": r.name, "path": str(r.path), "ok": r.path.is_dir()} for r in proj.repos],
+        "phases_total": len(phases), "phases_signed": sum(p.signed for p in phases),
+        "phase": None, "open_lessons": sum(lsn.get("status") == "open" for lsn in lessons),
+        "gate": gate, "touched": touched,
+    }
+    if ph:
+        lw, cyc = tracker.waves(ph)
+        out["phase"] = {
+            "num": ph.num, "title": ph.title, "branch": ph.branch,
+            "verified": sum(t.status == "verified" for t in ph.tasks), "tasks": len(ph.tasks),
+            "now": [{"id": t.id, "status": t.status, "title": t.title}
+                    for t in ph.tasks if t.status in ("wip", "review", "blocked")],
+            "next_wave": lw[0] if lw else [], "cycle": cyc,
+        }
+    return out
+
+
+def board(active: str | None = None) -> str:
+    names = projects.names()
+    w = 72
+    title = f"─ sage · {len(names)} project{'s' if len(names) != 1 else ''} "
+    top = "╭" + title + "─" * (w - 2 - len(title)) + "╮"
+    if not names:
+        rows = ["no projects yet — `/new-project <name>` to start one"]
+        return "\n".join([top, *[f"│ {r:<{w - 4}} │" for r in rows], "╰" + "─" * (w - 2) + "╯"])
+
+    sums = [summary(n) for n in names]
+    # active first, then most recently touched
+    sums.sort(key=lambda s: (s["name"] != active, -(s["touched"] or 0)))
+    rows: list[str] = []
+    for i, s in enumerate(sums):
+        if i:
+            rows.append("─" * (w - 4))
+        mark = "▸" if s["name"] == active else " "
+        desc = f"  {s['description']}" if s["description"] else ""
+        rows.append(f"{mark} {s['name']:<16} {s['kind']:<8}{desc}")
+        ph = s["phase"]
+        if ph:
+            of = f"{ph['num']}/{s['phases_total']}"
+            rows.append(f"  phase  {of} — {ph['title'][:22]:<22} {_bar(ph['verified'], ph['tasks'])} "
+                        f"{ph['verified']}/{ph['tasks']}")
+            now = " · ".join(f"{t['id']} {t['status']} {t['title'][:18]}" for t in ph["now"][:2])
+            nxt = f"next wave {' '.join(ph['next_wave'])}" if ph["next_wave"] else ""
+            if ph["cycle"]:
+                nxt = f"CYCLE {' '.join(ph['cycle'])}"
+            if now or nxt:
+                rows.append("  now    " + " · ".join(x for x in (now, nxt) if x))
+        elif s["phases_total"]:
+            rows.append(f"  phase  all {s['phases_total']} signed ✓ — `/plan` the next one")
+        else:
+            rows.append("  phase  none yet — `/spec` then `/plan`")
+        g = s["gate"]
+        gate = f"gate {'✓' if g['verdict'] == 'GREEN' else '✗' if g['verdict'] == 'RED' else '~'} " \
+               f"{g['verdict']} {_ago(g['at'])}" if g else "gate –"
+        bad = [r["name"] for r in s["repos"] if not r["ok"]]
+        repos = "no repos"
+        if s["repos"]:
+            repos = f"repos {len(s['repos'])}" + (f" (missing: {', '.join(bad)})" if bad else " ok")
+        rows.append(f"  {gate} · lessons {s['open_lessons']} open · {repos} · touched {_ago(s['touched'])}")
+
+    verified = sum(s["phase"]["verified"] for s in sums if s["phase"])
+    tasks = sum(s["phase"]["tasks"] for s in sums if s["phase"])
+    lessons = sum(s["open_lessons"] for s in sums)
+    red = sum(1 for s in sums if s["gate"] and s["gate"]["verdict"] == "RED")
+    foot = (f" {verified}/{tasks} active tasks verified · {lessons} lesson{'s' if lessons != 1 else ''} open · "
+            f"{red} RED gate{'s' if red != 1 else ''} ")
+    bottom = "╰" + "─" * (w - 3 - len(foot)) + foot + "─╯"
+    body = [f"│ {r[:w - 4]:<{w - 4}} │" for r in rows]
+    return "\n".join([top, *body, bottom])

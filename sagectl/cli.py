@@ -196,6 +196,19 @@ def cmd_card(a) -> int:
     return 0
 
 
+def cmd_projects(a) -> int:
+    from . import project as projects
+    from . import ui
+    if a.name:
+        print(ui.card(a.name))
+        return 0
+    if a.json:
+        print(json.dumps([ui.summary(n) for n in projects.names()], indent=1, default=str))
+        return 0
+    print(ui.board(projects.detect()))
+    return 0
+
+
 def cmd_statusline(a) -> int:
     from . import ui
     try:
@@ -272,6 +285,8 @@ def build() -> argparse.ArgumentParser:
     p = P("use", cmd_use, "set the default active project"); p.add_argument("name")
     p = P("audit", cmd_audit, "context budget + unused skills/agents"); p.add_argument("--days", type=int, default=30)
     p = P("card", cmd_card, "print the session card"); p.add_argument("-p", "--project")
+    p = P("projects", cmd_projects, "every project on one board (or one project's full card)")
+    p.add_argument("name", nargs="?"); p.add_argument("--json", action="store_true")
     P("statusline", cmd_statusline, "render the statusline (stdin: Claude Code JSON)")
     p = P("hook", cmd_hook, "hook entry point (stdin: hook JSON)"); p.add_argument("name")
     return ap

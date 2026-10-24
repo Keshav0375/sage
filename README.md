@@ -84,6 +84,7 @@ Turn on the sandbox with `/sandbox` (Claude Code ≥ 2.1.2).
 | | `/forge-agent` | create a specialist agent (incubator → evals → graduate) or retire unused ones |
 | | `/audit` | context budget, unused skills/agents, MCP sprawl |
 | | `/handoff` · `/start` | resumable snapshot · session card + next move |
+| | `/projects [name]` | every project on one board: phase progress, in-flight tasks, gate, lessons, missing repos |
 
 ## Agents (16)
 
@@ -131,7 +132,7 @@ sage/
 │   ├── settings.json            # permissions, hooks, statusline, output style
 │   ├── output-styles/homeboy.md
 │   ├── agents/                  # 16 agents, three lanes
-│   └── skills/                  # 18 slash commands + ground-rules
+│   └── skills/                  # 19 slash commands + ground-rules
 ├── .mcp.json                    # github (read-only), context7, playwright, reddit
 ├── sagectl/                     # deterministic tooling (stdlib Python) + tests/
 ├── bin/sagectl                  # run without installing
