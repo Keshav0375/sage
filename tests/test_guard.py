@@ -97,3 +97,11 @@ def test_trash_put_and_restore_roundtrip(home):
     assert items[0]["from"] == str(f)
     trash.restore(stamp)
     assert f.read_text() == "keep me"
+
+
+def test_referee_frozen_for_subagents_only(home):
+    from sagectl import guard
+
+    edit = {"tool_name": "Edit", "tool_input": {"file_path": "/s/sagectl/evals.py"}}
+    assert guard.evaluate(edit).action == "allow"
+    assert guard.evaluate({**edit, "agent_type": "harness-smith"}).action == "deny"

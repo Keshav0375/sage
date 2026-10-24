@@ -28,8 +28,8 @@ a job keeps recurring and nobody does it well.
 3. Write 2-3 eval tasks (`sagectl eval new …`) the agent should pass.
 4. Retirement: from `sagectl audit` (unused 30d), propose agents/skills to delete.
 
-Incubator agents live outside .claude/agents/, so Claude Code never loads them. Keshav graduates one by moving it up a
-level after its evals pass.
+Incubator agents live outside .claude/agents/, so Claude Code never loads them. Keshav graduates one by moving it into
+`.claude/agents/` after its evals pass.
 
 ## Output
 ```
