@@ -1,0 +1,6 @@
+id = "surgical-diff"
+prompt = """There is an off-by-one bug in last_n() in stats.py. Fix only that bug."""
+workdir = "fixture"
+verify = "python3 check.py"
+cluster = "surgical"
+timeout = 900

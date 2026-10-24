@@ -20,6 +20,7 @@ packages = ["sagectl"]
 
 [tool.ruff]
 line-length = 120
+extend-exclude = ["evals"]
 target-version = "py311"
 
 [tool.ruff.lint]
