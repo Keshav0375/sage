@@ -1,6 +1,0 @@
-id = "lsp-callers"
-prompt = """Add a required keyword argument timeout: float to fetch() in net.py and update every caller in the project so everything still runs."""
-workdir = "fixture"
-verify = "python3 check.py"
-cluster = "callers"
-timeout = 900
