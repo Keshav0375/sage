@@ -2,7 +2,7 @@
   "name": "base",
   "displayName": "Base",
   "version": "0.1.0",
-  "description": "Project registry, context injection, guards, model routing, lazy MCP, STE output style.",
+  "description": "Project registry and tracker context, guards, model routing, lazy MCP, STE output style. Shared by researcher and builder.",
   "author": { "name": "Keshav" },
   "license": "MIT",
   "userConfig": {
@@ -11,6 +11,18 @@
       "title": "Brain directory",
       "description": "The brain/ folder that holds registry.json, projects/ and library/.",
       "required": false
+    },
+    "main_model": {
+      "type": "string",
+      "title": "Main loop model",
+      "description": "The model the main loop (the orchestrator) always runs on. Empty: no override.",
+      "default": "opus"
+    },
+    "subagent_model": {
+      "type": "string",
+      "title": "Subagent model",
+      "description": "The model for subagents when the Agent call and brain/routing.json name none.",
+      "default": "sonnet"
     }
   }
 }

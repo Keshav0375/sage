@@ -1,9 +1,0 @@
-{
-  "name": "build",
-  "displayName": "Build",
-  "version": "0.1.0",
-  "description": "Build lane: plan, build in worktrees, independent verify, review, ship.",
-  "author": { "name": "Keshav" },
-  "license": "MIT",
-  "dependencies": ["base"]
-}

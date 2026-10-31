@@ -1,55 +1,41 @@
 ---
 name: pipeline
-description: The multi-agent protocol for any non-trivial task — research, decide, do, verify, declare, each owned by a different agent, fanned out in parallel. Use for features, fixes, architecture, and any answer where being wrong is costly.
+description: The orchestration protocol for the researcher and builder agents — the main session (Opus) only orchestrates and decides; subagents (Sonnet) research, write, build and check, fanned out in parallel; no subagent owns more than one step. Use for any non-trivial task.
 ---
 
-# Pipeline: research → decide → do → verify → declare
+# Orchestration protocol
 
-No single agent owns more than one step. The main session orchestrates and thinks; subagents
-gather, propose, build and check. A wave of independent subagents goes out in **one message** so
-they run in parallel.
+## Roles
+- **Main session = orchestrator.** It runs on Opus (the base mod forces it). It splits the work,
+  spawns subagents, reads their replies, decides, and loops. It does not do the research,
+  writing, editing or testing itself.
+- **Subagents = workers.** Each does one small, well-specified task on Sonnet and returns a typed
+  reply (its status keyword first). They do not spawn further subagents.
 
-## 1. Research (≥2 subagents, different sources)
-Spawn at least two research agents in one message, each with one source or lens:
-- `think:docs-reader` — current official docs for every technology involved (Azure via
-  Microsoft Learn, AWS, Google Cloud, Context7 for libraries), one agent per technology.
-- `think:reference-scout` — well-known similar systems and vendor reference architectures,
-  for any design decision.
-- `think:paper-scout` — papers, when the task has an algorithmic or scaling core.
-- `think:web-scout` — practitioner evidence: issues, postmortems, benchmarks, discussions.
-- `Explore` — the code in the project's repos.
+## The five steps, each with a different owner
+1. **Research**: scouts gather evidence from different sources, in parallel.
+2. **Decide**: the main session, from at least two independent proposals when there is a real
+   tradeoff, after a skeptic checks the leading one. Open decisions go to Keshav.
+3. **Do**: a writer or editor subagent produces the change.
+4. **Verify**: subagents that did not do the work check it (review, tests, architecture).
+5. **Declare**: a verifier gives the verdict from the other agents' evidence; the main session
+   reports it to Keshav. Nobody declares from their own work.
 
-Each returns `EVIDENCE` with a source per claim. Skip a lens only when it clearly cannot apply,
-and say which one you skipped.
-
-## 2. Decide (main session, after ≥2 independent proposals)
-For a choice with real tradeoffs, spawn ≥2 proposers in one message with different lenses (for
-example `think:solution-architect` with lens=simplicity and lens=scale). They do not see each
-other's answers. Then the main session:
-- compares the proposals against the evidence,
-- spawns `think:skeptic` on the leading option's load-bearing claims,
-- decides, and writes down the decision, the rejected options, and what the choice makes harder.
-An open decision in `STATE.md` goes to Keshav. Do not decide it.
-
-## 3. Do (a builder, not the decider)
-`build:builder` follows the plan in its own worktree. It makes no design decisions; a gap in the
-plan comes back as `GAP`.
-
-## 4. Verify (an agent that did not do the work)
-Spawn in one message:
-- `build:verifier` — runs the gate and checks each acceptance criterion with evidence.
-- `build:reviewer` — correctness review of the diff.
-- `build:safety-reviewer` — when the diff touches auth, IO, secrets, infra, or agent code.
-Verifiers are read-only. Where possible, they run on a different model than the builder.
-
-## 5. Declare (main session only)
-State the result with the verifier's evidence: gate verdict, criteria met, findings open.
-Say exactly what did not run. Never declare from the builder's own report.
+## How to spawn
+- Independent tasks go out in **one message**, so they run in parallel.
+- Give each subagent everything it needs in the prompt: the goal, the inputs (paths, keys, arch
+  sections), the output format, and where to write files. Subagents do not see this
+  conversation.
+- Keep each task small and concrete. If a subagent replies `GAP` or `HALT`, the main session
+  resolves it (or asks Keshav) and spawns again. It never fills the gap itself.
+- Loop until the verifier says `GREEN`, or stop after three loops and report.
 
 ## Model routing
-Opus decides and reviews, Sonnet builds and reads, Haiku checks and fetches. Agent files set the
-default; `brain/routing.json` overrides per agent type; an explicit `model` on the Agent call wins.
+Main loop: Opus, always. Subagents: Sonnet by default (the `subagent_model` option).
+`brain/routing.json` overrides per subagent type; a `model` on the Agent call wins over both.
 
-## When the task is small
-A one-line fix or a factual question still separates do and verify: the main session may do it,
-then a verifier (or the gate) checks it before you declare it.
+## The two agents
+- **researcher** (`/researcher:run`): research → architecture with diagrams in
+  `brain/projects/<p>/arch/` → validation → epics and tickets in `tracker.json` → GitHub Project.
+- **builder** (`/builder:build`): one epic from `tracker.json` → fetch → branch → edit →
+  review, test and arch check in parallel → verify → loop → PR.

@@ -18,7 +18,9 @@ async function projectCard($, brainDir, reg, home, name, match) {
   }
   const statePath = `${brainDir}/projects/${name}/STATE.md`
   const state = (await $.fs.exists(statePath)) ? await $.fs.read(statePath) : undefined
-  return renderCard(reg, name, home, exists, state, match)
+  const trackerPath = `${brainDir}/projects/${name}/tracker.json`
+  const tracker = (await $.fs.exists(trackerPath)) ? await $.fs.read(trackerPath) : undefined
+  return renderCard(reg, name, home, exists, state, match, tracker)
 }
 
 // The context text for the session's working directory.
@@ -38,6 +40,8 @@ async function contextFor($, brainDir, cwd) {
 
 export function register(on, options) {
   const brainDir = options?.brain_dir ? String(options.brain_dir).replace(/\/$/, '') : ''
+  const mainModel = String(options?.main_model ?? 'opus')
+  const subagentModel = String(options?.subagent_model ?? 'sonnet')
 
   on('session.start', async ($, e, next) => {
     await $.tool.register({
@@ -85,13 +89,20 @@ export function register(on, options) {
     return next(e)
   })
 
-  // Model routing: the orchestrator's explicit choice, then brain/routing.json, then defaults.
+  // Model routing for subagents: the orchestrator's explicit choice, then brain/routing.json,
+  // then the subagent_model option.
   on('agent.spawn', async ($, e, next) => {
     let overrides = {}
     const path = `${brainDir}/routing.json`
     if (brainDir && (await $.fs.exists(path))) overrides = parseRouting(await $.fs.read(path))
-    const model = routeModel(e.subagentType, e.model, overrides)
+    const model = routeModel(e.subagentType, e.model, overrides, subagentModel)
     return next(model ? { ...e, model } : e)
+  })
+
+  // The main loop always runs on the main model. Subagent steps carry an agentId and pass through.
+  on('turn.step', async function* ($, e, next) {
+    if (e.agentId || !mainModel || e.model.includes(mainModel)) return yield* next(e)
+    return yield* next({ ...e, model: mainModel })
   })
 
   // Lazy MCP: every MCP tool except this plugin's own stays behind tool search.

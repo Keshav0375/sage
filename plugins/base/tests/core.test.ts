@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { parseRegistry, resolveCwd, renderCard, stateHighlights } from '../hooks/registry.ts'
+import { parseRegistry, resolveCwd, renderCard, stateHighlights, trackerSummary } from '../hooks/registry.ts'
 import { checkBash } from '../hooks/guard.ts'
 import { routeModel } from '../hooks/routing.ts'
 
@@ -50,11 +50,30 @@ test('guard allows normal commands', () => {
   expect(checkBash('ls -la && rm notes.tmp')).toBe(undefined)
 })
 
-test('routing keeps an explicit model, then overrides, then defaults', () => {
-  expect(routeModel('Explore', 'opus', {})).toBe(undefined)
-  expect(routeModel('Explore', undefined, { Explore: 'sonnet' })).toBe('sonnet')
-  expect(routeModel('Explore', undefined, {})).toBe('haiku')
-  expect(routeModel('think:docs-reader', undefined, {})).toBe(undefined)
+test('routing keeps an explicit model, then overrides, then the subagent model', () => {
+  expect(routeModel('Explore', 'opus', {}, 'sonnet')).toBe(undefined)
+  expect(routeModel('Explore', undefined, { Explore: 'haiku' }, 'sonnet')).toBe('haiku')
+  expect(routeModel('builder:editor', undefined, {}, 'sonnet')).toBe('sonnet')
+  expect(routeModel('builder:editor', undefined, {}, '')).toBe(undefined)
+})
+
+test('tracker summary shows epic progress and ready tickets', () => {
+  const tracker = JSON.stringify({
+    github: { project_url: 'https://github.com/users/k/projects/3' },
+    epics: [{
+      key: 'E1', title: 'Auth', tickets: [
+        { key: 'E1-T1', title: 'Schema', status: 'done' },
+        { key: 'E1-T2', title: 'Login API', status: 'todo', depends_on: ['E1-T1'] },
+        { key: 'E1-T3', title: 'SSO', status: 'todo', depends_on: ['E1-T2'] },
+      ],
+    }],
+  })
+  expect(trackerSummary(tracker)).toEqual([
+    'Tracker:',
+    'GitHub project: https://github.com/users/k/projects/3',
+    '- E1 Auth [1/3 done]',
+    'Ready: E1-T2 Login API',
+  ])
 })
 
 test('the mod denies a destructive Bash call', async ($, on) => {

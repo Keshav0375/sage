@@ -6,8 +6,8 @@ project's registry entry, architecture, decisions and lessons.
 ```
 .claude-plugin/marketplace.json   marketplace "hq"
 plugins/base/     registry + context mod, guards, attribution, model routing, lazy MCP, STE style
-plugins/think/    research and solution architecture: docs, papers, system design, council, ADRs
-plugins/build/    plan, build in worktrees, independent verify, review, ship
+plugins/researcher/  research + architecture agent: docs, reference systems, papers, arch with diagrams, GitHub epics and tickets
+plugins/builder/     builder agent: epic loop with fetcher, brancher, editor, code-reviewer, runner, warden, verifier
 plugins/observe/  JSONL traces of tools, subagents, turns
 plugins/ui/       terminal UI mod (scaffold only)
 brain/            data: registry.json, routing.json, projects/<p>/, library/
@@ -20,7 +20,7 @@ For every other repo, run once:
 
 ```
 /plugin marketplace add ~/Projects/sage
-/plugin install base@hq think@hq build@hq observe@hq
+/plugin install base@hq researcher@hq builder@hq observe@hq
 ```
 
 Then set the `base` option `brain_dir` to `~/Projects/sage/brain` in `/config`, and run

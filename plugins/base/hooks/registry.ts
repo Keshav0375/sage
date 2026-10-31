@@ -66,6 +66,7 @@ export function renderCard(
   repoExists: Record<string, boolean>,
   state: string | undefined,
   match?: Match,
+  tracker?: string,
 ): string {
   const p = reg.projects[name]
   if (!p) return `Unknown project "${name}". Known: ${Object.keys(reg.projects).join(', ')}`
@@ -80,10 +81,41 @@ export function renderCard(
       lines.push(`- ${repo}: ${path}${repoExists[repo] === false ? '  (MISSING on disk)' : ''}`)
     }
   }
-  lines.push(`Brain folder: projects/${name}/ (arch/, decisions.md, STATE.md, lessons.jsonl)`)
+  lines.push(`Brain folder: projects/${name}/ (arch/, tracker.json, STATE.md, lessons.jsonl)`)
   const hl = state ? stateHighlights(state) : []
   if (hl.length) lines.push('From STATE.md:', ...hl)
+  if (tracker) {
+    try {
+      lines.push(...trackerSummary(tracker))
+    } catch {
+      lines.push('Tracker: tracker.json does not parse.')
+    }
+  }
   return lines.join('\n')
+}
+
+// A short summary of brain/projects/<p>/tracker.json: the GitHub project, epic progress, and
+// the next tickets whose dependencies are done.
+export function trackerSummary(text: string, maxNext = 3): string[] {
+  const t = JSON.parse(text)
+  const lines: string[] = []
+  if (t.github?.project_url) lines.push(`GitHub project: ${t.github.project_url}`)
+  const done = new Set<string>()
+  const all: any[] = []
+  for (const epic of t.epics ?? []) {
+    for (const tk of epic.tickets ?? []) {
+      all.push(tk)
+      if (tk.status === 'done') done.add(tk.key)
+    }
+  }
+  for (const epic of t.epics ?? []) {
+    const tickets = epic.tickets ?? []
+    const n = tickets.filter((tk) => tk.status === 'done').length
+    lines.push(`- ${epic.key} ${epic.title} [${n}/${tickets.length} done]${epic.issue?.url ? ` ${epic.issue.url}` : ''}`)
+  }
+  const next = all.filter((tk) => tk.status === 'todo' && (tk.depends_on ?? []).every((d) => done.has(d)))
+  if (next.length) lines.push(`Ready: ${next.slice(0, maxNext).map((tk) => `${tk.key} ${tk.title}`).join('; ')}`)
+  return lines.length ? ['Tracker:', ...lines] : []
 }
 
 export function renderBoard(reg: Registry, home: string): string {

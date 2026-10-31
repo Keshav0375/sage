@@ -1,4 +1,4 @@
 {
-  "_doc": "Model per subagent type. An explicit model on the Agent call wins over this file; this file wins over the plugin defaults and the agent's frontmatter. Keys: built-in types (Explore, general-purpose, Plan) or plugin agents (think:docs-reader). Values: opus, sonnet, haiku, fable, or a model id.",
+  "_doc": "Model per subagent type. An explicit model on the Agent call wins over this file; this file wins over the plugin defaults and the agent's frontmatter. Keys: built-in types (Explore, general-purpose, Plan) or plugin agents (researcher:docs-reader). Values: opus, sonnet, haiku, fable, or a model id.",
   "agents": {}
 }

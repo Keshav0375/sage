@@ -1,15 +1,9 @@
-// Model routing for subagents. Order of precedence:
+// Model routing. The main loop decides and always runs on the main model (opus by default).
+// Subagents do small, delegated tasks and run on the subagent model (sonnet by default).
+// Subagent order of precedence:
 //   1. a model the orchestrator passed on the Agent call
 //   2. brain/routing.json overrides (keyed by subagent type)
-//   3. DEFAULTS below
-//   4. the agent file's own `model` frontmatter (Claude Code's resolution)
-// "Opus decides, Sonnet builds, Haiku checks."
-
-export const DEFAULTS: Record<string, string> = {
-  Explore: 'haiku',
-  'general-purpose': 'sonnet',
-  Plan: 'opus',
-}
+//   3. the subagent_model plugin option
 
 export function parseRouting(text: string): Record<string, string> {
   const data = JSON.parse(text)
@@ -24,7 +18,8 @@ export function routeModel(
   subagentType: string,
   requested: string | undefined,
   overrides: Record<string, string>,
+  fallback: string,
 ): string | undefined {
   if (requested) return undefined
-  return overrides[subagentType] ?? DEFAULTS[subagentType]
+  return overrides[subagentType] ?? (fallback || undefined)
 }

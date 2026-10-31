@@ -1,23 +1,25 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "hq",
-  "description": "Keshav's harness: project registry and context, multi-agent orchestration, architecture research, build lane, and traces.",
-  "owner": { "name": "Keshav" },
+  "description": "Keshav's harness: base (registry, context, guards, routing), researcher and builder agents, traces.",
+  "owner": {
+    "name": "Keshav"
+  },
   "plugins": [
     {
       "name": "base",
       "source": "./plugins/base",
-      "description": "Project registry, context injection, guards, model routing, lazy MCP, STE output style."
+      "description": "Project registry and tracker context, guards, model routing (main loop Opus, subagents Sonnet), lazy MCP, STE output style."
     },
     {
-      "name": "think",
-      "source": "./plugins/think",
-      "description": "Research and solution-architecture lane: docs, papers, system design, council, ADRs."
+      "name": "researcher",
+      "source": "./plugins/researcher",
+      "description": "Research and architecture agent: official docs, reference systems, papers, validated architecture with diagrams, epics and tickets on a GitHub Project."
     },
     {
-      "name": "build",
-      "source": "./plugins/build",
-      "description": "Build lane: plan, build in worktrees, independent verify, review, ship."
+      "name": "builder",
+      "source": "./plugins/builder",
+      "description": "Builder agent: one epic at a time from the tracker and arch docs, with fetcher, brancher, editor, code-reviewer, runner, warden and verifier subagents."
     },
     {
       "name": "observe",

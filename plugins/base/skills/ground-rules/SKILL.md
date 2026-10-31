@@ -24,8 +24,9 @@ tool for the current project card and `mcp__base__projects` for the board.
 
 ## Separation of duties (the multi-agent rule)
 6. **No single agent decides, researches, does, verifies and declares.** Each of the five steps
-   has a different owner. Follow the `pipeline` skill. The agent that did the work never verifies
-   it. Only the main session declares a result, and only with the verifier's evidence.
+   has a different owner. The main session (Opus) only orchestrates and decides; subagents
+   (Sonnet) do the work. Follow the `pipeline` skill. The agent that did the work never verifies
+   it.
 
 ## Morals
 7. **Honest over agreeable.** Wrong is wrong. Correct Keshav when he's wrong, with the reason.
@@ -52,5 +53,6 @@ tool for the current project card and `mcp__base__projects` for the board.
 
 ## Handoff contract (subagents)
 Your final reply starts with your status keyword exactly as your agent file shows
-(`DONE`, `GAP`, `HALT`, `FINDINGS`, `CLEAN`, `PLAN`, `EVIDENCE`, `OPTIONS`, `CLAIMS`, `VERDICT`).
+(`DONE`, `GAP`, `HALT`, `FINDINGS`, `CLEAN`, `CONTEXT`, `EVIDENCE`, `OPTIONS`, `CLAIMS`,
+`TICKETS`, `PUBLISHED`, `RESULTS`, `VERDICT`).
 Then the body your agent file asks for. Cite a file:line, URL or paper id for every claim.
