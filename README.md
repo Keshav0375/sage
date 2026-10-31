@@ -9,7 +9,7 @@ plugins/brain/     registry + context mod, guards, attribution, model routing, l
 plugins/researcher/  research + architecture agent: docs, reference systems, papers, arch with diagrams, GitHub epics and tickets
 plugins/builder/     builder agent: epic loop with fetcher, brancher, editor, code-reviewer, runner, warden, verifier
 plugins/observe/  JSONL traces of tools, subagents, turns
-plugins/ui/       status band: clock, tokens today and all-time, cost, context, rate limits
+plugins/ui/       "time" plugin: status line: clock, tokens today and all-time, cost, context, rate limits
 context/            data: registry.json, routing.json, projects/<p>/, library/
 ```
 
@@ -20,7 +20,7 @@ For every other repo, run once:
 
 ```
 /plugin marketplace add ~/Projects/sage
-/plugin install brain@hq researcher@hq builder@hq observe@hq ui@hq
+/plugin install brain@hq researcher@hq builder@hq observe@hq time@hq
 ```
 
 Then set the `brain` plugin option `context_dir` to `~/Projects/sage/context` in `/config`, and run

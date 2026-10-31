@@ -1,4 +1,4 @@
-# ui
+# time (in plugins/ui)
 
 Terminal UI mod for Claude Code. Pins one status line under the prompt (`$.ui.status`), next to
 Claude Code's own notices, so it is always in view:

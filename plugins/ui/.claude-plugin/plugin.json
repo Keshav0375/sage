@@ -1,9 +1,11 @@
 {
-  "name": "ui",
-  "displayName": "UI",
+  "name": "time",
+  "displayName": "time",
   "version": "0.1.0",
-  "description": "A band above the prompt: clock, today's and all-time tokens and cost, context use, rate limits.",
-  "author": { "name": "Keshav" },
+  "description": "Status line under the prompt: clock, today and all-time tokens, session cost, context use, rate limits.",
+  "author": {
+    "name": "Keshav"
+  },
   "license": "MIT",
   "userConfig": {
     "show_cost": {
