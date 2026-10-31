@@ -1,5 +1,5 @@
 # harness runtime: traces, plans, scratch. Local only.
-brain/.runtime/
+context/.runtime/
 
 # generated mod types
 plugins/*/.claude-plugin/types/

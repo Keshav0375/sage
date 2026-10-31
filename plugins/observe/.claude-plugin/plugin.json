@@ -9,7 +9,7 @@
     "trace_dir": {
       "type": "directory",
       "title": "Trace directory",
-      "description": "Where daily JSONL traces go. Use brain/.runtime/traces in the harness repo. Empty: the plugin data folder.",
+      "description": "Where daily JSONL traces go. Use context/.runtime/traces in the harness repo. Empty: the plugin data folder.",
       "required": false
     }
   }

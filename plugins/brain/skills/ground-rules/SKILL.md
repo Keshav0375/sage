@@ -5,10 +5,10 @@ description: Binding rules for every session and every subagent in Keshav's harn
 
 # Ground rules (binding for every session and every subagent)
 
-**Where you are.** The harness repo holds the brain (`brain/`: registry, architecture, decisions,
+**Where you are.** The harness repo holds the brain (`context/`: registry, architecture, decisions,
 lessons) and the plugins. Project code lives in the project's own repos, listed in
-`brain/registry.json`. **Never put brain files into a code repo.** Use the `mcp__base__where`
-tool for the current project card and `mcp__base__projects` for the board.
+`context/registry.json`. **Never put brain files into a code repo.** Use the `mcp__brain__where`
+tool for the current project card and `mcp__brain__projects` for the board.
 
 ## How to code
 1. **Think before coding.** Unclear intent, architecture or requirement: ask before writing a
@@ -39,11 +39,11 @@ tool for the current project card and `mcp__base__projects` for the board.
 10. **Human gates are human.** Verification sign-off, merges to protected branches and harness
     promotions are Keshav's call. Agents report and say what to check.
 11. **Open decisions halt.** An open decision in a project's `STATE.md` is a question Keshav owes
-    you. Never default it. Architecture in `brain/projects/<p>/arch/` is binding: if the spec and
+    you. Never default it. Architecture in `context/projects/<p>/arch/` is binding: if the spec and
     the arch disagree, or the arch is silent on a value you need, halt and ask.
-12. **No Claude attribution.** Keshav is sole author. The base mod enforces it.
+12. **No Claude attribution.** Keshav is sole author. The brain mod enforces it.
 13. **Deletes are moves.** Move files to `~/.Trash`. No force-push, no `reset --hard`.
-    Destructive or irreversible: stop and ask. The base mod blocks the common cases.
+    Destructive or irreversible: stop and ask. The brain mod blocks the common cases.
 14. **Held-out is sealed.** Never read or edit `**/heldout/**`.
 
 ## Token rules

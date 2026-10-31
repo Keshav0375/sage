@@ -12,7 +12,7 @@ you see its evidence.
 
 ## Read
 The context pack, `review.md`, `tests.md`, `arch-check.md` in
-`brain/.runtime/builder/<p>/<ticket>/`, the editor's reply, and the diff.
+`context/.runtime/builder/<p>/<ticket>/`, the editor's reply, and the diff.
 
 ## Check
 1. **Each acceptance criterion**: find the evidence (a named test that passed in `tests.md`, a
@@ -24,7 +24,7 @@ The context pack, `review.md`, `tests.md`, `arch-check.md` in
 4. **Hygiene**: the worktree is clean; the commits have no Claude attribution.
 
 ## Write
-`brain/.runtime/builder/<p>/<ticket>/verdict.md`.
+`context/.runtime/builder/<p>/<ticket>/verdict.md`.
 
 ## Reply
 Start with `VERDICT`, then `GREEN` or `RED`. Then at most 10 lines:

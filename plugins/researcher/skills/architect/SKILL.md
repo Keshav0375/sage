@@ -1,17 +1,17 @@
 ---
 name: architect
-description: Create or extend a project's binding architecture in brain/projects/<p>/arch/ at solution-architect level — current docs, papers, competing designs, adversarial check, then Keshav's decision. Trigger /researcher:architect <project> <problem>.
+description: Create or extend a project's binding architecture in context/projects/<p>/arch/ at solution-architect level — current docs, papers, competing designs, adversarial check, then Keshav's decision. Trigger /researcher:architect <project> <problem>.
 argument-hint: "<project> <problem or feature>"
 ---
 
 # /researcher:architect
 
-The output is `brain/projects/<p>/arch/`: `overview.md` (sections from the template, with
+The output is `context/projects/<p>/arch/`: `overview.md` (sections from the template, with
 diagrams), `stack.md`, `decisions.md` and `plan.md`. Architecture is binding, so every load-bearing choice needs evidence.
-Follow the `base:pipeline` skill. The main session orchestrates; it never skips a step.
+Follow the `brain:pipeline` skill. The main session orchestrates; it never skips a step.
 
 ## 1. Frame (main session)
-- Get the project card with `mcp__base__where`. Read the existing `arch/` by section.
+- Get the project card with `mcp__brain__where`. Read the existing `arch/` by section.
 - Write the requirements as numbers: users, QPS (peak and average), data size and growth,
   latency targets (p50, p99), availability, consistency needs, budget, team size, deadline.
 - Missing numbers are questions for Keshav. Ask them now, in one message. Do not guess them.

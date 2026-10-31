@@ -1,12 +1,12 @@
 ---
 name: plan
-description: Divide a project's decided architecture into an implementation plan — epics from arch/plan.md, builder-ready tickets with summary, description and acceptance criteria — and save it to brain/projects/<p>/tracker.json for Keshav's approval. Trigger /researcher:plan <project>.
+description: Divide a project's decided architecture into an implementation plan — epics from arch/plan.md, builder-ready tickets with summary, description and acceptance criteria — and save it to context/projects/<p>/tracker.json for Keshav's approval. Trigger /researcher:plan <project>.
 argument-hint: "<project>"
 ---
 
 # /researcher:plan
 
-Load `base:tracker` for the format. The arch must be decided first: `arch/overview.md` and
+Load `brain:tracker` for the format. The arch must be decided first: `arch/overview.md` and
 `arch/plan.md` exist and `STATE.md` has no open decision that the plan depends on.
 
 1. **Epics.** Read `arch/plan.md`. Each epic delivers one usable outcome and maps to arch

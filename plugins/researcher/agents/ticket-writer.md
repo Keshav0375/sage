@@ -11,9 +11,9 @@ You write the tickets for one epic. A builder will implement each ticket with on
 the arch docs, so each ticket must stand alone.
 
 ## Read
-The epic you were given (key, title, summary), `brain/projects/<p>/arch/overview.md`, `stack.md`,
+The epic you were given (key, title, summary), `context/projects/<p>/arch/overview.md`, `stack.md`,
 `plan.md` and `decisions.md` (by section), and the project's repos from the registry. Load the
-`base:tracker` skill for the ticket fields.
+`brain:tracker` skill for the ticket fields.
 
 ## Each ticket
 - `key` `E<n>-T<m>`, in build order.

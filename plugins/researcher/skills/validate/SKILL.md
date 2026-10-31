@@ -7,7 +7,7 @@ argument-hint: "<project> [arch section or ADR number]"
 # /researcher:validate
 
 ## 1. Extract (main session)
-Read the target from `brain/projects/<p>/arch/` (one section, one ADR, or the whole overview by
+Read the target from `context/projects/<p>/arch/` (one section, one ADR, or the whole overview by
 section). List:
 - every **decision** (what was chosen, and the reason given),
 - every **technology** it relies on (cloud services, databases, brokers, frameworks, libraries),
@@ -36,4 +36,4 @@ One table: decision, verdict, evidence, suggested change.
 ## 5. Hand off
 Changes to the architecture are Keshav's call. Present the table and the top three
 improvements. After he decides, record them with `/researcher:decide`. Save the evidence to
-`brain/library/research/<yyyy-mm-dd>-validate-<project>.md`.
+`context/library/research/<yyyy-mm-dd>-validate-<project>.md`.

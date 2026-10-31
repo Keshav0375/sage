@@ -5,5 +5,5 @@
   "description": "Builder agent: works one project epic at a time from its tracker and binding arch docs, with fetcher, brancher, editor, code-reviewer, runner, warden and verifier subagents.",
   "author": { "name": "Keshav" },
   "license": "MIT",
-  "dependencies": ["base"]
+  "dependencies": ["brain"]
 }

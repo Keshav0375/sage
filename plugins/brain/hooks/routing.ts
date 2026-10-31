@@ -2,7 +2,7 @@
 // Subagents do small, delegated tasks and run on the subagent model (sonnet by default).
 // Subagent order of precedence:
 //   1. a model the orchestrator passed on the Agent call
-//   2. brain/routing.json overrides (keyed by subagent type)
+//   2. context/routing.json overrides (keyed by subagent type)
 //   3. the subagent_model plugin option
 
 export function parseRouting(text: string): Record<string, string> {

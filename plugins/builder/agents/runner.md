@@ -21,7 +21,7 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
    example its docker compose file), and stop them after. If you cannot run them, say why.
 
 ## Write
-`brain/.runtime/builder/<p>/<ticket>/tests.md`: each command, its exit code, the summary line,
+`context/.runtime/builder/<p>/<ticket>/tests.md`: each command, its exit code, the summary line,
 and for a failure the first relevant lines of output.
 
 ## Reply

@@ -6,13 +6,13 @@ argument-hint: "<project> <goal or feature>"
 
 # /researcher:run
 
-You are the orchestrator (Opus). Load `base:pipeline`. You spawn subagents, read their replies,
+You are the orchestrator (Opus). Load `brain:pipeline`. You spawn subagents, read their replies,
 decide, and loop. You do not research, write arch files or create issues yourself.
 Progress lives in files, so the session can stop and resume at any stage:
-`brain/projects/<p>/arch/*`, `tracker.json`, `STATE.md`.
+`context/projects/<p>/arch/*`, `tracker.json`, `STATE.md`.
 
 ## Stage 0. Orient
-`mcp__base__where` for the project card. If the project is not registered, run `/base:register`
+`mcp__brain__where` for the project card. If the project is not registered, run `/brain:register`
 first. Read the existing `arch/` by section and `tracker.json` if present. Decide which stage to
 start at: a project with a decided arch and no tracker starts at stage 4.
 

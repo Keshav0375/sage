@@ -6,7 +6,7 @@ description: The orchestration protocol for the researcher and builder agents �
 # Orchestration protocol
 
 ## Roles
-- **Main session = orchestrator.** It runs on Opus (the base mod forces it). It splits the work,
+- **Main session = orchestrator.** It runs on Opus (the brain mod forces it). It splits the work,
   spawns subagents, reads their replies, decides, and loops. It does not do the research,
   writing, editing or testing itself.
 - **Subagents = workers.** Each does one small, well-specified task on Sonnet and returns a typed
@@ -32,10 +32,10 @@ description: The orchestration protocol for the researcher and builder agents �
 
 ## Model routing
 Main loop: Opus, always. Subagents: Sonnet by default (the `subagent_model` option).
-`brain/routing.json` overrides per subagent type; a `model` on the Agent call wins over both.
+`context/routing.json` overrides per subagent type; a `model` on the Agent call wins over both.
 
 ## The two agents
 - **researcher** (`/researcher:run`): research → architecture with diagrams in
-  `brain/projects/<p>/arch/` → validation → epics and tickets in `tracker.json` → GitHub Project.
+  `context/projects/<p>/arch/` → validation → epics and tickets in `tracker.json` → GitHub Project.
 - **builder** (`/builder:build`): one epic from `tracker.json` → fetch → branch → edit →
   review, test and arch check in parallel → verify → loop → PR.

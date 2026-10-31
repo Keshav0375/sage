@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "hq",
-  "description": "Keshav's harness: base (registry, context, guards, routing), researcher and builder agents, traces.",
+  "description": "Keshav's harness: brain (registry, context, guards, routing), researcher and builder agents, traces.",
   "owner": {
     "name": "Keshav"
   },
   "plugins": [
     {
-      "name": "base",
-      "source": "./plugins/base",
+      "name": "brain",
+      "source": "./plugins/brain",
       "description": "Project registry and tracker context, guards, model routing (main loop Opus, subagents Sonnet), lazy MCP, STE output style."
     },
     {

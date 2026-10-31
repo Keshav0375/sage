@@ -1,11 +1,11 @@
 ---
 name: tracker
-description: The format of brain/projects/<p>/tracker.json — the local state of a project's implementation plan and its GitHub project, epics and tickets. The researcher writes it; the builder reads and updates it. Load before reading or writing a tracker.
+description: The format of context/projects/<p>/tracker.json — the local state of a project's implementation plan and its GitHub project, epics and tickets. The researcher writes it; the builder reads and updates it. Load before reading or writing a tracker.
 ---
 
 # tracker.json
 
-`brain/projects/<p>/tracker.json` is the local copy of the plan. GitHub holds the same epics and
+`context/projects/<p>/tracker.json` is the local copy of the plan. GitHub holds the same epics and
 tickets as issues in a GitHub Project. The tracker is what agents read; keep both in step.
 
 ```json
@@ -52,7 +52,7 @@ tickets as issues in a GitHub Project. The tracker is what agents read; keep bot
 
 ## Rules
 - `key` values never change. Epics are `E<n>`, tickets are `E<n>-T<m>`.
-- `repo` is a repo name from the project's `repos` in `brain/registry.json`.
+- `repo` is a repo name from the project's `repos` in `context/registry.json`.
 - `status` is one of `todo`, `in_progress`, `review`, `done`, `blocked`.
 - `issue` is `null` until the researcher publishes it to GitHub. `id` is the REST id (needed to
   link sub-issues); `number` is the issue number.

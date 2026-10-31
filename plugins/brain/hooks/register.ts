@@ -2,44 +2,44 @@ import { parseRegistry, resolveCwd, renderCard, renderBoard, expandHome } from '
 import { checkBash } from './guard.ts'
 import { parseRouting, routeModel } from './routing.ts'
 
-// Reads brain/registry.json. Returns undefined when brain_dir is unset or the file is missing.
-async function loadRegistry($, brainDir) {
-  if (!brainDir) return undefined
-  const path = `${brainDir}/registry.json`
+// Reads context/registry.json. Returns undefined when context_dir is unset or the file is missing.
+async function loadRegistry($, contextDir) {
+  if (!contextDir) return undefined
+  const path = `${contextDir}/registry.json`
   if (!(await $.fs.exists(path))) return undefined
   return parseRegistry(await $.fs.read(path))
 }
 
 // The project card for one project, with repo existence and STATE.md highlights.
-async function projectCard($, brainDir, reg, home, name, match) {
+async function projectCard($, contextDir, reg, home, name, match) {
   const exists = {}
   for (const [repo, raw] of Object.entries(reg.projects[name]?.repos ?? {})) {
     exists[repo] = await $.fs.exists(expandHome(raw, home))
   }
-  const statePath = `${brainDir}/projects/${name}/STATE.md`
+  const statePath = `${contextDir}/projects/${name}/STATE.md`
   const state = (await $.fs.exists(statePath)) ? await $.fs.read(statePath) : undefined
-  const trackerPath = `${brainDir}/projects/${name}/tracker.json`
+  const trackerPath = `${contextDir}/projects/${name}/tracker.json`
   const tracker = (await $.fs.exists(trackerPath)) ? await $.fs.read(trackerPath) : undefined
   return renderCard(reg, name, home, exists, state, match, tracker)
 }
 
 // The context text for the session's working directory.
-async function contextFor($, brainDir, cwd) {
-  if (!brainDir) return 'base: brain_dir is not set. Run /base:setup.'
+async function contextFor($, contextDir, cwd) {
+  if (!contextDir) return 'brain: context_dir is not set. Run /brain:setup.'
   const home = (await $.env.get('HOME')) ?? ''
-  const reg = await loadRegistry($, brainDir)
-  if (!reg) return `base: no registry at ${brainDir}/registry.json. Run /base:setup.`
+  const reg = await loadRegistry($, contextDir)
+  if (!reg) return `brain: no registry at ${contextDir}/registry.json. Run /brain:setup.`
   const match = resolveCwd(reg, cwd, home)
-  if (match) return await projectCard($, brainDir, reg, home, match.project, match)
-  const brainRoot = brainDir.replace(/\/brain\/?$/, '')
+  if (match) return await projectCard($, contextDir, reg, home, match.project, match)
+  const brainRoot = contextDir.replace(/\/context\/?$/, '')
   if (cwd === brainRoot || cwd.startsWith(brainRoot + '/')) {
-    return `You are in the harness repo (brain at ${brainDir}). Architecture planning happens here.\n${renderBoard(reg, home)}`
+    return `You are in the harness repo (context at ${contextDir}). Architecture planning happens here.\n${renderBoard(reg, home)}`
   }
-  return `Directory ${cwd} is not in the registry. Run /base:register to add it to a project.`
+  return `Directory ${cwd} is not in the registry. Run /brain:register to add it to a project.`
 }
 
 export function register(on, options) {
-  const brainDir = options?.brain_dir ? String(options.brain_dir).replace(/\/$/, '') : ''
+  const contextDir = options?.context_dir ? String(options.context_dir).replace(/\/$/, '') : ''
   const mainModel = String(options?.main_model ?? 'opus')
   const subagentModel = String(options?.subagent_model ?? 'sonnet')
 
@@ -58,22 +58,22 @@ export function register(on, options) {
 
   // Context: the project card goes into the first message of each conversation.
   on('prompt.context', async ($, e, next) => {
-    const text = await contextFor($, brainDir, await $.session.cwd())
+    const text = await contextFor($, contextDir, await $.session.cwd())
     return next({ ...e, blocks: [...e.blocks, { name: 'project', text }] })
   })
 
-  on('tool.call', { tool: 'mcp__base__where' }, async ($, e) => {
+  on('tool.call', { tool: 'mcp__brain__where' }, async ($, e) => {
     const home = (await $.env.get('HOME')) ?? ''
-    const reg = await loadRegistry($, brainDir)
-    if (!reg) return { result: 'No registry. Run /base:setup.' }
-    if (!e.project) return { result: await contextFor($, brainDir, await $.session.cwd()) }
-    return { result: await projectCard($, brainDir, reg, home, e.project) }
+    const reg = await loadRegistry($, contextDir)
+    if (!reg) return { result: 'No registry. Run /brain:setup.' }
+    if (!e.project) return { result: await contextFor($, contextDir, await $.session.cwd()) }
+    return { result: await projectCard($, contextDir, reg, home, e.project) }
   })
 
-  on('tool.call', { tool: 'mcp__base__projects' }, async ($) => {
+  on('tool.call', { tool: 'mcp__brain__projects' }, async ($) => {
     const home = (await $.env.get('HOME')) ?? ''
-    const reg = await loadRegistry($, brainDir)
-    return { result: reg ? renderBoard(reg, home) : 'No registry. Run /base:setup.' }
+    const reg = await loadRegistry($, contextDir)
+    return { result: reg ? renderBoard(reg, home) : 'No registry. Run /brain:setup.' }
   })
 
   // Execution guard: destructive commands and Claude attribution never run.
@@ -89,12 +89,12 @@ export function register(on, options) {
     return next(e)
   })
 
-  // Model routing for subagents: the orchestrator's explicit choice, then brain/routing.json,
+  // Model routing for subagents: the orchestrator's explicit choice, then context/routing.json,
   // then the subagent_model option.
   on('agent.spawn', async ($, e, next) => {
     let overrides = {}
-    const path = `${brainDir}/routing.json`
-    if (brainDir && (await $.fs.exists(path))) overrides = parseRouting(await $.fs.read(path))
+    const path = `${contextDir}/routing.json`
+    if (contextDir && (await $.fs.exists(path))) overrides = parseRouting(await $.fs.read(path))
     const model = routeModel(e.subagentType, e.model, overrides, subagentModel)
     return next(model ? { ...e, model } : e)
   })
@@ -108,7 +108,7 @@ export function register(on, options) {
   // Lazy MCP: every MCP tool except this plugin's own stays behind tool search.
   on('tool.describe', async ($, e, next) => {
     const r = await next(e)
-    if (e.tool.startsWith('mcp__') && !e.tool.startsWith('mcp__base__')) return { ...r, isDeferred: true }
+    if (e.tool.startsWith('mcp__') && !e.tool.startsWith('mcp__brain__')) return { ...r, isDeferred: true }
     return r
   })
 }

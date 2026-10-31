@@ -1,4 +1,4 @@
-// Pure functions over brain/registry.json. No mods API calls here:
+// Pure functions over context/registry.json. No mods API calls here:
 // register.ts reads the files and passes text in.
 
 export type Project = {
@@ -81,7 +81,7 @@ export function renderCard(
       lines.push(`- ${repo}: ${path}${repoExists[repo] === false ? '  (MISSING on disk)' : ''}`)
     }
   }
-  lines.push(`Brain folder: projects/${name}/ (arch/, tracker.json, STATE.md, lessons.jsonl)`)
+  lines.push(`Context folder: projects/${name}/ (arch/, tracker.json, STATE.md, lessons.jsonl)`)
   const hl = state ? stateHighlights(state) : []
   if (hl.length) lines.push('From STATE.md:', ...hl)
   if (tracker) {
@@ -94,7 +94,7 @@ export function renderCard(
   return lines.join('\n')
 }
 
-// A short summary of brain/projects/<p>/tracker.json: the GitHub project, epic progress, and
+// A short summary of context/projects/<p>/tracker.json: the GitHub project, epic progress, and
 // the next tickets whose dependencies are done.
 export function trackerSummary(text: string, maxNext = 3): string[] {
   const t = JSON.parse(text)

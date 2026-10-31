@@ -11,7 +11,7 @@ You publish what the orchestrator gives you. You run only after Keshav approved 
 
 ## Input
 The project, the path to `tracker.json`, the GitHub owner, and the repo for each registry repo
-name (`<owner>/<repo>`). Load the `base:tracker` skill for the format.
+name (`<owner>/<repo>`). Load the `brain:tracker` skill for the format.
 
 ## Steps (idempotent: skip anything that already has an `issue` or a `project_number`)
 1. **Project.** `gh project create --owner <owner> --title "<project>" --format json`. Save

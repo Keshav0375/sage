@@ -6,12 +6,12 @@ argument-hint: "<project> <epic key, e.g. E1>"
 
 # /builder:build
 
-You are the main loop (Opus). Load `base:pipeline` and `base:tracker`. You orchestrate and
+You are the main loop (Opus). Load `brain:pipeline` and `brain:tracker`. You orchestrate and
 decide; subagents (Sonnet) do every task. You never edit project code, run the tests or write
-reports yourself. Per-ticket files live in `brain/.runtime/builder/<p>/<ticket>/`.
+reports yourself. Per-ticket files live in `context/.runtime/builder/<p>/<ticket>/`.
 
 ## 0. Orient
-- `mcp__base__where <project>`: repos, GitHub project, epic progress.
+- `mcp__brain__where <project>`: repos, GitHub project, epic progress.
 - Read `tracker.json`. Pick the epic. Its tickets with status `todo` whose `depends_on` are all
   `done` are **ready**. Tickets `in_progress` or `review` resume where they stopped.
 - Halt on an open decision in `STATE.md` that the epic depends on.

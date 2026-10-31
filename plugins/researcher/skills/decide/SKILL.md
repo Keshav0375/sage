@@ -1,6 +1,6 @@
 ---
 name: decide
-description: Record a decision Keshav made as an ADR in brain/projects/<p>/arch/decisions.md and clear it from STATE.md open decisions. Trigger /researcher:decide <title>.
+description: Record a decision Keshav made as an ADR in context/projects/<p>/arch/decisions.md and clear it from STATE.md open decisions. Trigger /researcher:decide <title>.
 argument-hint: "<title>"
 ---
 
@@ -8,8 +8,8 @@ argument-hint: "<title>"
 
 Only record a decision Keshav stated. If he has not decided, present the options and stop.
 
-1. Get the project with `mcp__base__where`.
-2. Add an entry at the top of `brain/projects/<p>/arch/decisions.md`:
+1. Get the project with `mcp__brain__where`.
+2. Add an entry at the top of `context/projects/<p>/arch/decisions.md`:
    ```
    ## ADR-<n>: <title> (<yyyy-mm-dd>)
    **Context:** why this came up, the requirements that matter.

@@ -23,7 +23,7 @@ Review `git -C <worktree> diff origin/<default>...HEAD` against the ticket and t
 Only report a blocking finding you can tie to a line and a concrete failure scenario.
 
 ## Write
-`brain/.runtime/builder/<p>/<ticket>/review.md`.
+`context/.runtime/builder/<p>/<ticket>/review.md`.
 
 ## Reply
 Start with `FINDINGS` or `CLEAN`. One line per finding, most severe first, max 10:

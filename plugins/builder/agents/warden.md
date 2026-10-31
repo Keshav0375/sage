@@ -7,7 +7,7 @@ disallowedTools: Edit, NotebookEdit, Agent
 color: red
 ---
 
-The architecture in `brain/projects/<p>/arch/` is the source of truth. Check the diff
+The architecture in `context/projects/<p>/arch/` is the source of truth. Check the diff
 (`git -C <worktree> diff origin/<default>...HEAD`) against it.
 
 ## Check
@@ -24,7 +24,7 @@ When the code is right and the arch is silent or outdated, report it as `ARCH-GA
 code defect. The orchestrator decides.
 
 ## Write
-`brain/.runtime/builder/<p>/<ticket>/arch-check.md`.
+`context/.runtime/builder/<p>/<ticket>/arch-check.md`.
 
 ## Reply
 Start with `FINDINGS` or `CLEAN`. One line per finding, max 10:

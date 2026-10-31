@@ -13,7 +13,7 @@
     }
   },
   "enabledPlugins": {
-    "base@hq": true,
+    "brain@hq": true,
     "researcher@hq": true,
     "builder@hq": true,
     "observe@hq": true

@@ -1,6 +1,6 @@
 ---
 name: research
-description: Deep research on a question — parallel scouts over current docs, papers, the web and Keshav's library, then a cited synthesis by the main session and an adversarial fact-check. Saves the note to brain/library/research/. Use for tech choices, "what's the best way to…", "is X worth it", tool comparisons.
+description: Deep research on a question — parallel scouts over current docs, papers, the web and Keshav's library, then a cited synthesis by the main session and an adversarial fact-check. Saves the note to context/library/research/. Use for tech choices, "what's the best way to…", "is X worth it", tool comparisons.
 argument-hint: "<question>"
 ---
 
@@ -11,7 +11,7 @@ Restate it in one sentence with the decision it serves and the constraints that 
 ambiguous, ask Keshav one question first.
 
 ## 2. Check the library
-Search `brain/library/` (research, papers, patterns, council) for earlier work. Reuse it and
+Search `context/library/` (research, papers, patterns, council) for earlier work. Reuse it and
 note its date.
 
 ## 3. Scout (one message, in parallel)
@@ -29,5 +29,5 @@ Spawn `researcher:skeptic` on the synthesis. Fix or drop every `WRONG` or `UNSUP
 `WEAK` ones.
 
 ## 6. Save
-Write `brain/library/research/<yyyy-mm-dd>-<slug>.md`: question, answer, evidence table with
+Write `context/library/research/<yyyy-mm-dd>-<slug>.md`: question, answer, evidence table with
 links and dates, open gaps, and the skeptic's verdicts.

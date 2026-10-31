@@ -5,5 +5,5 @@
   "description": "Research and architecture agent: official docs, reference systems, papers, validated architecture with diagrams, implementation plan as GitHub epics and tickets.",
   "author": { "name": "Keshav" },
   "license": "MIT",
-  "dependencies": ["base"]
+  "dependencies": ["brain"]
 }
