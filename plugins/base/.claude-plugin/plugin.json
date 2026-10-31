@@ -1,0 +1,16 @@
+{
+  "name": "base",
+  "displayName": "Base",
+  "version": "0.1.0",
+  "description": "Project registry, context injection, guards, model routing, lazy MCP, STE output style.",
+  "author": { "name": "Keshav" },
+  "license": "MIT",
+  "userConfig": {
+    "brain_dir": {
+      "type": "directory",
+      "title": "Brain directory",
+      "description": "The brain/ folder that holds registry.json, projects/ and library/.",
+      "required": false
+    }
+  }
+}

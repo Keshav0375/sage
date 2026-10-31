@@ -1,0 +1,9 @@
+{
+  "name": "think",
+  "displayName": "Think",
+  "version": "0.1.0",
+  "description": "Research and solution-architecture lane: current docs, papers, system design, council, ADRs.",
+  "author": { "name": "Keshav" },
+  "license": "MIT",
+  "dependencies": ["base"]
+}

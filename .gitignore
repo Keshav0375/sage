@@ -1,11 +1,12 @@
-# sage runtime — traces, trash, caches, eval results, snapshots. Local only.
-.sage/
-.plans/
-.wt/
+# harness runtime: traces, plans, scratch. Local only.
+brain/.runtime/
+
+# generated mod types
+plugins/*/.claude-plugin/types/
+plugins/*/tsconfig.json
+
 __pycache__/
 *.pyc
-.pytest_cache/
-.ruff_cache/
-.venv/
+node_modules/
 .DS_Store
 .claude/settings.local.json

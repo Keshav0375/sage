@@ -1,0 +1,16 @@
+{
+  "name": "observe",
+  "displayName": "Observe",
+  "version": "0.1.0",
+  "description": "Appends tool, subagent and turn events to daily JSONL traces for later analysis.",
+  "author": { "name": "Keshav" },
+  "license": "MIT",
+  "userConfig": {
+    "trace_dir": {
+      "type": "directory",
+      "title": "Trace directory",
+      "description": "Where daily JSONL traces go. Use brain/.runtime/traces in the harness repo. Empty: the plugin data folder.",
+      "required": false
+    }
+  }
+}

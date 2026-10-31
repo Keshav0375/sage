@@ -1,0 +1,4 @@
+{
+  "description": "Core mod: project context, guards, attribution, model routing, MCP deferral, registry tools.",
+  "modules": ["./register.ts"]
+}

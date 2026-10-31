@@ -1,0 +1,14 @@
+{
+  "description": "Trace hooks: one JSONL line per tool call, subagent stop and turn stop.",
+  "hooks": {
+    "PostToolUse": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/trace.py\"" }] }
+    ],
+    "SubagentStop": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/trace.py\"" }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/trace.py\"" }] }
+    ]
+  }
+}

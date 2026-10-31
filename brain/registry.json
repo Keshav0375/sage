@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "projects": {
+    "_inbox": {
+      "kind": "inbox",
+      "status": "active",
+      "summary": "One-off questions and tasks that belong to no project.",
+      "repos": {}
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "exa": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp",
+      "alwaysLoad": false
+    },
+    "huggingface": {
+      "type": "http",
+      "url": "https://huggingface.co/mcp",
+      "alwaysLoad": false
+    },
+    "arxiv": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["arxiv-mcp-server"],
+      "alwaysLoad": false
+    },
+    "aws-knowledge": {
+      "type": "http",
+      "url": "https://knowledge-mcp.global.api.aws",
+      "alwaysLoad": false
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "alwaysLoad": false
+    },
+    "reddit": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "reddit-mcp-buddy@latest"],
+      "alwaysLoad": false
+    }
+  }
+}

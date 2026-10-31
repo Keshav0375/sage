@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "hq",
+  "description": "Keshav's harness: project registry and context, multi-agent orchestration, architecture research, build lane, and traces.",
+  "owner": { "name": "Keshav" },
+  "plugins": [
+    {
+      "name": "base",
+      "source": "./plugins/base",
+      "description": "Project registry, context injection, guards, model routing, lazy MCP, STE output style."
+    },
+    {
+      "name": "think",
+      "source": "./plugins/think",
+      "description": "Research and solution-architecture lane: docs, papers, system design, council, ADRs."
+    },
+    {
+      "name": "build",
+      "source": "./plugins/build",
+      "description": "Build lane: plan, build in worktrees, independent verify, review, ship."
+    },
+    {
+      "name": "observe",
+      "source": "./plugins/observe",
+      "description": "Tool and subagent traces for later analysis."
+    }
+  ]
+}

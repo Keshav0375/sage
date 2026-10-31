@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/readonly",
+      "headersHelper": "printf '{\"Authorization\":\"Bearer %s\",\"X-MCP-Toolsets\":\"repos,pull_requests,actions,issues\"}' \"$(gh auth token)\"",
+      "alwaysLoad": false
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "alwaysLoad": false
+    }
+  }
+}
