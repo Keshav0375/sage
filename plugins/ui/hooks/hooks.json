@@ -1,0 +1,4 @@
+{
+  "description": "UI mod: the status band above the prompt.",
+  "modules": ["./register.ts"]
+}

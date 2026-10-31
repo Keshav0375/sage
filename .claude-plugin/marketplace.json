@@ -25,6 +25,11 @@
       "name": "observe",
       "source": "./plugins/observe",
       "description": "Tool and subagent traces for later analysis."
+    },
+    {
+      "name": "ui",
+      "source": "./plugins/ui",
+      "description": "Status band above the prompt: clock, today's and all-time tokens and cost, context use, rate limits."
     }
   ]
 }

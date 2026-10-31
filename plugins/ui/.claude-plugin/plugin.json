@@ -1,0 +1,16 @@
+{
+  "name": "ui",
+  "displayName": "UI",
+  "version": "0.1.0",
+  "description": "A band above the prompt: clock, today's and all-time tokens and cost, context use, rate limits.",
+  "author": { "name": "Keshav" },
+  "license": "MIT",
+  "userConfig": {
+    "show_cost": {
+      "type": "boolean",
+      "title": "Show cost",
+      "description": "Show US dollar cost next to the token counts.",
+      "default": true
+    }
+  }
+}
