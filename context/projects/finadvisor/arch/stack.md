@@ -1,6 +1,63 @@
 # finadvisor: tech stack
 
-As built at commit d6c2bd3 (mapped 2026-11-01). Versions are what the repo pins; "floating" means a lower bound or a moving tag, so the resolved version changes with each build. Where `poetry.lock` resolves a version it is shown as "lock x.y.z" but the backend Dockerfile ignores the lock (`backend/Dockerfile:6-8`), so the lock is not what a container build installs. No target stack is decided yet; the Why column points to the as-built description.
+## Target (v2)
+
+Decided 2026-11-01 (ADR-002 to ADR-024 in `decisions.md`; rulings D14-D16 applied; architecture in `overview.md`). "Pin at implementation" means the brief gives no version: the implementing epic pins it in the lockfile or image digest and updates this table; no version here is guessed. Everything installs from lockfiles; images are referenced by digest.
+
+| Layer | Technology | Version / tag (pinned) | Why (ADR) | Official docs |
+|---|---|---|---|---|
+| Language (backend) | Python | 3.12 (as built); pin image by digest at implementation | ADR-019 | https://docs.python.org/3.12/ |
+| Backend framework | FastAPI | 0.162 | ADR-019 | https://fastapi.tiangolo.com/ |
+| SSE | `fastapi.sse` (`EventSourceResponse`, native in FastAPI 0.162) | with FastAPI 0.162 (alternative sse-starlette 3.6) | ADR-007 | https://fastapi.tiangolo.com/ |
+| ASGI server | uvicorn, one process per container | pin at implementation | ADR-019 | https://www.uvicorn.org/ |
+| Settings / schemas | pydantic, pydantic-settings (Pydantic generates the Schema Registry JSON Schemas) | pin at implementation | ADR-013, ADR-021 | https://docs.pydantic.dev/latest/ |
+| ORM / DB access | SQLAlchemy (asyncio) | 2.1 | ADR-002 | https://docs.sqlalchemy.org/ |
+| DB driver | asyncpg | 0.32 | ADR-002 | https://magicstack.github.io/asyncpg/current/ |
+| Migrations | Alembic (run as the `migrate` Cloud Run job) | 1.20 | ADR-002, ADR-021 | https://alembic.sqlalchemy.org/ |
+| Database | PostgreSQL 16 on Cloud SQL Enterprise (2 vCPU / 8 GiB, zonal, HA flag) | PG16; local and CI image `pgvector/pgvector:0.8.5-pg16` (matches Cloud SQL) | ADR-002, ADR-020 | https://www.postgresql.org/docs/16/ , https://docs.cloud.google.com/sql/docs/postgres |
+| Vector search | pgvector (halfvec(1024), HNSW m 16 / ef_construction 64, iterative scan) | 0.8.5 on Cloud SQL | ADR-008 | https://github.com/pgvector/pgvector |
+| Tenancy / isolation | PostgreSQL RLS (ENABLE + FORCE, LIST partitions by tenant) | PG16 | ADR-002, ADR-003 | https://www.postgresql.org/docs/16/ddl-rowsecurity.html |
+| Full-text search | tsvector + GIN, `websearch_to_tsquery` | PG16 built-in | ADR-008 | https://www.postgresql.org/docs/16/textsearch.html |
+| Edge | External Application Load Balancer + Cloud Armor | managed | ADR-012 | https://cloud.google.com/load-balancing/docs , https://cloud.google.com/armor/docs |
+| API gateway | Kong Gateway OSS, DB-less, `_format_version: "3.0"` | `kong:3.9.4` | ADR-011 | https://developer.konghq.com/gateway/ |
+| Gateway state | Valkey (Memorystore shared-core-nano in cloud; container locally) | pin at implementation | ADR-011 | https://cloud.google.com/memorystore/docs/valkey , https://valkey.io/docs/ |
+| Gateway audit | Kong `file-log` (stdout, field whitelist) to Cloud Logging, then a log sink to BigQuery `gateway_audit` | managed | ADR-023 | https://cloud.google.com/logging/docs/export/configure_export_v2 |
+| VPC egress | Direct VPC egress `private-ranges-only`, Private Google Access, Cloud DNS private zone mapping `run.app` to `private.googleapis.com`; no Cloud NAT | managed | ADR-024 | https://cloud.google.com/run/docs/configuring/vpc-direct-vpc |
+| Streaming (cloud) | Confluent Cloud Basic + Schema Registry Essentials (JSON Schema), us-central1; one service account + API key per service, Kafka ACLs (no RBAC), limits 50 keys / 1,000 ACLs / 1,500 partitions | managed | ADR-013 | https://docs.confluent.io/cloud/current/overview.html |
+| Streaming (local) | Apache Kafka KRaft single node; Confluent cp-schema-registry | `apache/kafka:4.4.0`; cp-schema-registry pin at implementation | ADR-013 | https://kafka.apache.org/documentation/ , https://docs.confluent.io/platform/current/schema-registry/ |
+| Kafka client | confluent-kafka (Python) | 2.16.1 | ADR-013 | https://github.com/confluentinc/confluent-kafka-python |
+| LLM (answer) | Anthropic `claude-sonnet-5-5` | model id from config; Anthropic SDK pin at implementation | ADR-006 | https://platform.claude.com/docs/en/about-claude/models |
+| LLM (judge, headers, extraction, condensation) | Anthropic `claude-haiku-5-5` (Batch API for offline work) | model id from config | ADR-006, ADR-016 | https://platform.claude.com/docs/en/about-claude/pricing |
+| LLM (fallback) | Anthropic `claude-sonnet-4-6` (same provider only; enabled only after passing the eval gate) | model id from config | ADR-005 | https://platform.claude.com/docs/en/about-claude/model-deprecations |
+| LLM client | In-process `LLMClient` over the Anthropic SDK (no LiteLLM) | pin at implementation | ADR-005 | https://docs.anthropic.com/en/api/client-sdks |
+| Embeddings | Voyage `voyage-4` (1024 dims, `input_type` query / document) | model id from config; voyageai SDK pin at implementation | ADR-008 | https://docs.voyageai.com/docs/embeddings |
+| Reranker | Voyage `rerank-2.5-lite` (or `rerank-2.5`; ablation decides) | model id from config | ADR-008 | https://docs.voyageai.com/docs/reranker |
+| PII | Microsoft Presidio (in-process pseudonymization) with spaCy `en_core_web_sm` | presidio-analyzer 2.2.x; spaCy model pin at implementation | ADR-009 | https://data-privacy-stack.github.io/presidio/ |
+| Prompt-injection screen | Google Cloud Model Armor (REST) | managed | ADR-009 | https://docs.cloud.google.com/model-armor/overview |
+| Auth | Google Identity Platform, multi-tenancy (one IdP tenant per firm), ID tokens (tenant claim `firebase.tenant`) | managed | ADR-010 | https://docs.cloud.google.com/identity-platform/docs/multi-tenancy |
+| Auth library | firebase-admin (Python), tenant-aware verification (`tenant_mgt.auth_for_tenant(tenant_id).verify_id_token`) | pin at implementation | ADR-010 | https://docs.cloud.google.com/identity-platform/docs/multi-tenancy-managing-tenants |
+| Document parsing | Docling | pin at implementation | ADR-014 | https://docling-project.github.io/docling/ |
+| Data validation | Pandera | pin at implementation | ADR-014 | https://pandera.readthedocs.io/ |
+| Orchestration | Dagster OSS, daemon-less (`dagster asset materialize` in Cloud Run jobs), run / event storage with `dagster-postgres` (database `dagster`, role `fa_dagster`); `dagster dev` locally | pin at implementation | ADR-014 | https://docs.dagster.io/ |
+| Transformation | dbt Core with `dbt-postgres` (gold models) and `dbt-bigquery` (BigQuery marts) | pin at implementation | ADR-014 | https://docs.getdbt.com/ |
+| Warehouse | BigQuery (day-partitioned, clustered by `tenant_id`, per-tenant authorized views primary + row access policies, `maximum_bytes_billed`) | managed | ADR-014 | https://cloud.google.com/bigquery/docs |
+| Object storage | GCS (bronze by sha256, silver, SPA bucket) | managed | ADR-014 | https://cloud.google.com/storage/docs |
+| Evaluation | Ragas (collections API), promptfoo (red team), Langfuse datasets / `run_experiment` | pin at implementation | ADR-017 | https://docs.ragas.io/ , https://www.promptfoo.dev/docs/ , https://langfuse.com/docs |
+| LLM observability | Langfuse Cloud Hobby; Python SDK 5.x (`@observe` with `capture_input` / `capture_output` off on sensitive spans, `mask_otel_spans`) behind a wrapper | 5.x (5.1.0 current) | ADR-018 | https://langfuse.com/docs |
+| Telemetry | OpenTelemetry (SDK + exporters) to Cloud Trace, Cloud Logging, Cloud Monitoring | pin at implementation | ADR-018 | https://opentelemetry.io/docs/ , https://cloud.google.com/trace/docs |
+| Logging | Structured JSON logs, redacted (library pin at implementation; as built: structlog) | pin at implementation | ADR-018 | https://www.structlog.org/ |
+| Frontend | Vite + React 19 + TypeScript SPA on GCS + CDN behind the ALB | React 19 (19.3.1 current in evidence); Vite and TypeScript pin at implementation | ADR-019 | https://vite.dev/ , https://react.dev/ |
+| Frontend tests | vitest, Playwright, eslint, tsc | pin at implementation | ADR-021 | https://vitest.dev/ , https://playwright.dev/ |
+| Compute | Cloud Run services (`fa-gateway`, `chat-api`), worker pool (`fa-worker`), jobs (migrate, etl, etl-public, dbt, eval, redteam, demo-ttl) | managed | ADR-019 | https://cloud.google.com/run/docs |
+| Scheduling | Cloud Scheduler | managed | ADR-020 | https://cloud.google.com/scheduler/docs |
+| Secrets, images | Secret Manager, Artifact Registry | managed | ADR-019, ADR-021 | https://cloud.google.com/secret-manager/docs , https://cloud.google.com/artifact-registry/docs |
+| IaC | Terraform, google provider; Confluent provider | provider versions pin at implementation | ADR-020, ADR-021 | https://registry.terraform.io/providers/hashicorp/google/latest/docs , https://registry.terraform.io/providers/confluentinc/confluent/latest/docs |
+| CI/CD | GitHub Actions with Workload Identity Federation; ruff, mypy, pytest, import-linter, trivy, gitleaks, pip-audit, `kong config parse`, deck | action and tool versions pin at implementation | ADR-021 | https://docs.github.com/en/actions , https://docs.astral.sh/ruff/ |
+| Local orchestration | Docker Compose (Postgres+pgvector, Kafka, Schema Registry, Kong, Valkey, api, worker, frontend dev image) | env-driven host ports | ADR-019 | https://docs.docker.com/compose/ |
+
+## As built (MVP, d6c2bd3)
+
+As built at commit d6c2bd3 (mapped 2026-11-01). Versions are what the repo pins; "floating" means a lower bound or a moving tag, so the resolved version changes with each build. Where `poetry.lock` resolves a version it is shown as "lock x.y.z" but the backend Dockerfile ignores the lock (`backend/Dockerfile:6-8`), so the lock is not what a container build installs. The target stack is in the section above; the Why column here points to the as-built description.
 
 | Layer | Technology | Version | Why (ADR) | Official docs |
 |---|---|---|---|---|
