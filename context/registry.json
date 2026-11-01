@@ -6,6 +6,14 @@
       "status": "active",
       "summary": "One-off questions and tasks that belong to no project.",
       "repos": {}
+    },
+    "finadvisor": {
+      "kind": "product",
+      "status": "active",
+      "summary": "Compliance-aware wealth advisor RAG assistant: cited product recommendations, jurisdiction and tier-based access control.",
+      "repos": {
+        "FinAdvisor": "~/Projects/FinAdvisor"
+      }
     }
   }
 }

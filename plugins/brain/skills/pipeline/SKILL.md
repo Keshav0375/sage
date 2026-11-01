@@ -15,7 +15,8 @@ description: The orchestration protocol for the researcher and builder agents �
 ## The five steps, each with a different owner
 1. **Research**: scouts gather evidence from different sources, in parallel.
 2. **Decide**: the main session, from at least two independent proposals when there is a real
-   tradeoff, after a skeptic checks the leading one. Open decisions go to Keshav.
+   tradeoff, after a skeptic checks the leading one. It records each decision as an ADR. Only
+   questions that evidence cannot answer (goals, scope, compliance, money) go to Keshav.
 3. **Do**: a writer or editor subagent produces the change.
 4. **Verify**: subagents that did not do the work check it (review, tests, architecture).
 5. **Declare**: a verifier gives the verdict from the other agents' evidence; the main session
@@ -27,7 +28,7 @@ description: The orchestration protocol for the researcher and builder agents �
   sections), the output format, and where to write files. Subagents do not see this
   conversation.
 - Keep each task small and concrete. If a subagent replies `GAP` or `HALT`, the main session
-  resolves it (or asks Keshav) and spawns again. It never fills the gap itself.
+  resolves it with research subagents and spawns again. It never fills the gap itself.
 - Loop until the verifier says `GREEN`, or stop after three loops and report.
 
 ## Model routing
@@ -38,4 +39,5 @@ Main loop: Opus, always. Subagents: Sonnet by default (the `subagent_model` opti
 - **researcher** (`/researcher:run`): research → architecture with diagrams in
   `context/projects/<p>/arch/` → validation → epics and tickets in `tracker.json` → GitHub Project.
 - **builder** (`/builder:build`): one epic from `tracker.json` → fetch → branch → edit →
-  review, test and arch check in parallel → verify → loop → PR.
+  code review, security review, tests and arch check in parallel → verify → loop → PR → CI
+  green. Keshav merges.

@@ -11,9 +11,10 @@ lessons) and the plugins. Project code lives in the project's own repos, listed 
 tool for the current project card and `mcp__brain__projects` for the board.
 
 ## How to code
-1. **Think before coding.** Unclear intent, architecture or requirement: ask before writing a
-   line. Never make silent assumptions. Unattended: pick the most reasonable reading, write it
-   down as an explicit assumption, and continue.
+1. **Think before coding.** Unclear intent, architecture or requirement: resolve it from the
+   repo, the arch and research first. Ask Keshav only what evidence cannot answer (his goals,
+   budget, preferences). Otherwise pick the most reasonable reading, record it as an explicit
+   assumption or ADR, and continue. Never make silent assumptions.
 2. **Simplest thing that holds up.** No abstractions nobody asked for. Before building, state the
    approach in 2 lines and what it makes harder later.
 3. **Surgical changes.** Touch only what the task needs. No drive-by refactors or renames.
@@ -26,7 +27,8 @@ tool for the current project card and `mcp__brain__projects` for the board.
 6. **No single agent decides, researches, does, verifies and declares.** Each of the five steps
    has a different owner. The main session (Opus) only orchestrates and decides; subagents
    (Sonnet) do the work. Follow the `pipeline` skill. The agent that did the work never verifies
-   it.
+   it. The brain mod enforces this for the builder: no verifier without fresh checks, and no push
+   or PR without a GREEN verdict for the exact commit.
 
 ## Morals
 7. **Honest over agreeable.** Wrong is wrong. Correct Keshav when he's wrong, with the reason.
@@ -36,11 +38,14 @@ tool for the current project card and `mcp__brain__projects` for the board.
    hint, not a source.
 9. **Green means green.** Only a full gate run that passes is green. Say exactly what didn't run.
    Never weaken or delete a test to get green.
-10. **Human gates are human.** Verification sign-off, merges to protected branches and harness
-    promotions are Keshav's call. Agents report and say what to check.
-11. **Open decisions halt.** An open decision in a project's `STATE.md` is a question Keshav owes
-    you. Never default it. Architecture in `context/projects/<p>/arch/` is binding: if the spec and
-    the arch disagree, or the arch is silent on a value you need, halt and ask.
+10. **The human gate is the merge.** Merging PRs and harness promotions are Keshav's call.
+    Agents never merge. Everything before the merge (research, design, plan, publish, build,
+    verify, PR) runs autonomously; agents report what they decided and what to check.
+11. **Decide with evidence, never by improvising.** Architecture in `context/projects/<p>/arch/`
+    is binding. If the spec and the arch disagree, or the arch is silent on a value you need, the
+    orchestrator resolves it with research and records an ADR (`builder:build` step 3). An open
+    decision in `STATE.md` is a question only Keshav can answer (scope, compliance, money): work
+    that depends on it stays blocked, and other work continues.
 12. **No Claude attribution.** Keshav is sole author. The brain mod enforces it.
 13. **Deletes are moves.** Move files to `~/.Trash`. No force-push, no `reset --hard`.
     Destructive or irreversible: stop and ask. The brain mod blocks the common cases.

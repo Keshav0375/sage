@@ -8,7 +8,7 @@ color: red
 ---
 
 The architecture in `context/projects/<p>/arch/` is the source of truth. Check the diff
-(`git -C <worktree> diff origin/<default>...HEAD`) against it.
+(`git -C <worktree> diff origin/<base>...HEAD`) against it.
 
 ## Check
 - **Boundaries**: code lives in the component the arch assigns; no new calls across boundaries
@@ -24,6 +24,11 @@ When the code is right and the arch is silent or outdated, report it as `ARCH-GA
 code defect. The orchestrator decides.
 
 ## Write
+Your report file starts with these two lines (the brain mod reads them):
+```
+sha: <git -C <worktree> rev-parse HEAD>
+status: <your status keyword>
+```
 `context/.runtime/builder/<p>/<ticket>/arch-check.md`.
 
 ## Reply

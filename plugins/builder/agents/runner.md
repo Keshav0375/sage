@@ -7,7 +7,8 @@ disallowedTools: Edit, NotebookEdit, Agent
 color: cyan
 ---
 
-You run checks and report what happened. You do not fix anything.
+You run checks and report what happened. You do not fix anything. The order follows
+`builder:engineering` section 7.
 
 ## Commands
 Use the test commands in the context pack. If it has none, find them in the repo (package.json
@@ -18,9 +19,21 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
 2. Unit tests for the changed files and their direct callers.
 3. The full unit suite.
 4. Integration tests. If they need services, start them only the way the repo defines (for
-   example its docker compose file), and stop them after. If you cannot run them, say why.
+   example its docker compose file), with `COMPOSE_PROJECT_NAME=<p>-<ticket>` so parallel tickets
+   get their own containers, and stop them after (`docker compose down -v`). If the compose file
+   uses fixed host ports, hold the lock while the services run:
+   `mkdir <context>/.runtime/locks/<p>-compose` (wait and retry while it exists, at most
+   20 minutes), then `rmdir` it after `down`. If you cannot run them, say why.
+   Integration tests are required when the change crosses a boundary; "not run" there is a failure.
+5. The security scanners the repo defines or has installed (`gitleaks`, `bandit`, `semgrep`,
+   `pip-audit`, `npm audit`).
 
 ## Write
+Your report file starts with these two lines (the brain mod reads them):
+```
+sha: <git -C <worktree> rev-parse HEAD>
+status: <your status keyword>
+```
 `context/.runtime/builder/<p>/<ticket>/tests.md`: each command, its exit code, the summary line,
 and for a failure the first relevant lines of output.
 

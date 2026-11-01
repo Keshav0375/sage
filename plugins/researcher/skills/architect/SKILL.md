@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Create or extend a project's binding architecture in context/projects/<p>/arch/ at solution-architect level — current docs, papers, competing designs, adversarial check, then Keshav's decision. Trigger /researcher:architect <project> <problem>.
+description: Create or extend a project's binding architecture in context/projects/<p>/arch/ at solution-architect level — current docs, papers, competing designs, adversarial check, then an evidence-based decision recorded as an ADR. Trigger /researcher:architect <project> <problem>.
 argument-hint: "<project> <problem or feature>"
 ---
 
@@ -14,7 +14,9 @@ Follow the `brain:pipeline` skill. The main session orchestrates; it never skips
 - Get the project card with `mcp__brain__where`. Read the existing `arch/` by section.
 - Write the requirements as numbers: users, QPS (peak and average), data size and growth,
   latency targets (p50, p99), availability, consistency needs, budget, team size, deadline.
-- Missing numbers are questions for Keshav. Ask them now, in one message. Do not guess them.
+- Take the numbers from the repo docs (README, architecture, MVP files) first. Estimate a number
+  from evidence when you can, and mark it as an estimate. Ask Keshav, in one message, only the
+  numbers that depend on his goals (users, budget, deadline, compliance scope).
 
 ## 2. Research (one message, in parallel)
 - `researcher:reference-scout` — well-known systems that solved a similar problem, and the cloud
@@ -40,11 +42,12 @@ compare. This is the same check `/researcher:validate` runs on an existing desig
 
 ## 5. Decide (main session → Keshav)
 Compare the options in one table: requirement fit, evidence strength, cost, operating burden,
-what each makes harder later. Recommend one, with the reason and the strongest dissent.
-Architecture decisions are Keshav's: present the recommendation and wait for his choice.
+what each makes harder later. **Pick one** from the evidence, with the reason and the strongest
+dissent. Wait for Keshav only when the options are equal on evidence and the choice depends on his
+preference, budget or compliance scope: then ask one short question with your recommendation.
 
 ## 6. Record (delegate the writing)
-After Keshav decides, spawn `researcher:arch-writer` with the decided design, the requirements,
+After the decision, spawn `researcher:arch-writer` with the decided design, the requirements,
 the evidence links and the rejected options. It writes:
 - `arch/overview.md` by section, with Mermaid diagrams: system context, containers/components,
   key flows (sequence), and deployment when infrastructure is in scope,

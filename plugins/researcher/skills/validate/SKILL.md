@@ -34,6 +34,8 @@ One table: decision, verdict, evidence, suggested change.
 - **Unknown**: the evidence does not settle it; say what would.
 
 ## 5. Hand off
-Changes to the architecture are Keshav's call. Present the table and the top three
-improvements. After he decides, record them with `/researcher:decide`. Save the evidence to
+Inside `/researcher:run` or `/builder:build`, apply every `improve` or `change` that the evidence
+supports through `researcher:arch-writer`, with an ADR each, and report them. When Keshav runs
+this skill by itself, present the table and the top three improvements, and record his choices
+with `/researcher:decide`. Save the evidence to
 `context/library/research/<yyyy-mm-dd>-validate-<project>.md`.

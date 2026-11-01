@@ -4,7 +4,7 @@
 - (what is in progress)
 
 ## Open decisions
-- (questions Keshav owes; agents never default these)
+- (only questions about scope, compliance or money; agents resolve the rest with evidence)
 
 ## Blockers
 - (none)

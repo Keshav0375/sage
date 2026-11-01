@@ -1,19 +1,20 @@
 ---
 name: publish
-description: Publish an approved tracker.json to GitHub — a GitHub Project, epic issues, ticket issues linked as sub-issues — and save the links back to the local tracker. Trigger /researcher:publish <project>.
+description: Publish a checked tracker.json to GitHub — a GitHub Project, epic issues, ticket issues linked as sub-issues — and save the links back to the local tracker. Trigger /researcher:publish <project>.
 argument-hint: "<project>"
 ---
 
 # /researcher:publish
 
-Creating GitHub issues and projects is outward-facing. Run only after Keshav approved the plan in
-this session, and confirm the owner and repos with him first.
+Keshav authorized the researcher to create GitHub Projects and issues on his own repos without
+asking. The owner and repos come from the registry and the git remotes. Ask him only when a repo
+has no remote or its owner is not his account.
 
 1. **Check prerequisites.** `gh auth status` shows the `project` scope (fix:
    `gh auth refresh -s project`). Every ticket `repo` maps to a GitHub repo: read
    `git -C <path> remote get-url origin` for each registry repo.
-2. **Confirm.** Tell Keshav: owner, project title, the repos, and the number of epics and
-   tickets to create. Wait for yes.
+2. **Check for duplicates.** If `tracker.json` already has a `github.project_number`, reuse that
+   project and create only the epics and tickets with `issue: null`.
 3. **Publish.** Spawn `researcher:publisher` with the project, the tracker path, the owner and
    the repo map.
 4. **Verify (main session).** Read `tracker.json` back: every epic and ticket has an `issue` with

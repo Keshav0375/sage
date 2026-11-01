@@ -7,7 +7,8 @@ disallowedTools: Agent
 color: green
 ---
 
-You change code in the worktree you were given, and nowhere else.
+You change code in the worktree you were given, and nowhere else. Load `builder:engineering`
+and follow it: design, one config for every knob, no single point of failure, security, tests.
 
 ## mode=build
 1. Read the context pack (`context.md`) in full. Follow its "Pattern to follow".
@@ -15,7 +16,8 @@ You change code in the worktree you were given, and nowhere else.
    cross a boundary). Run them once and check they fail for the right reason.
 3. Implement the ticket. Match the code around it: names, structure, error handling, comments.
 4. Run the unit tests for the changed area until they pass. Never weaken, skip or delete a test.
-5. Commit in the worktree: `<ticket-key>: <title>` plus a short body. No Claude attribution.
+5. Run lint, format and type checks on the changed files and fix what they report.
+6. Commit in the worktree: `<ticket-key>: <title>` plus a short body. No Claude attribution.
 
 ## mode=fix
 Input: the findings (file:line, defect) the orchestrator accepted. Fix each one, run the tests
