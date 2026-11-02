@@ -109,9 +109,16 @@ erDiagram
         uuid turn_id PK
         int seq PK
         uuid advisor_id
+        text request_hash
         text event
         jsonb data "redacted"
         timestamptz expires_at
+    }
+    tenant_usage {
+        uuid tenant_id PK
+        date day PK
+        bigint tokens_in
+        bigint tokens_out
     }
     escalations {
         uuid tenant_id PK
@@ -190,7 +197,8 @@ Types: `uuid` ids (time-ordered where possible), `timestamptz` times. All compos
 | `suitability_rules` | `(tenant_id, id)` | `rule_name`, `product_category`, `client_risk_profile` CHECK 3 values, `min_tier_required`, `jurisdiction`, `regulatory_ref`, `rule_text` (redacted), `source_document_id` (composite FK), `extractor_model`, `validated_at`, `last_reviewed_at` |
 | `conversations` | `(tenant_id, id)` | `advisor_id` (composite FK), `title` (redacted), `created_at`, `updated_at`, `deleted_at` |
 | `messages` | `(tenant_id, id, created_at)` | RANGE-partitioned by `created_at`, monthly (D11), owned by `fa_maint`. `conversation_id` (composite FK), `advisor_id` (owner clause), `turn_id`, `role` (`user`,`assistant`), `content` (redacted), `status` (`pending`,`streaming`,`complete`,`refused`,`failed`), `model`, `prompt_version`, `citations jsonb`, `retrieval_chunk_ids uuid[]`, `retrieval_degraded boolean` (rerank timeout or 429 fell back to RRF order), `usage jsonb` (input / output / cache-read tokens), `refusal_code`. The `maintenance` job creates partitions 3 months ahead and drops those past retention; a DEFAULT partition catches misses (alert if non-empty) |
-| `turn_events` | `(tenant_id, turn_id, seq)` | SSE replay buffer: `advisor_id` (owner clause), `event`, `data jsonb` (already redacted), `created_at`, `expires_at` (purged by `maintenance`; retention `SSE_REPLAY_TTL_S`, set in E4). `turn_id = uuid5(namespace, tenant_id \|\| advisor_id \|\| Idempotency-Key)`; inserting `seq 0` with `ON CONFLICT DO NOTHING` is what enforces idempotency |
+| `turn_events` | `(tenant_id, turn_id, seq)` | SSE replay buffer: `advisor_id` (owner clause), `event`, `data jsonb` (already redacted), `request_hash` (SHA-256 of the canonical JSON request body with sorted keys; the same `Idempotency-Key` with a different hash returns 409; ADR-025 R3, R48), `created_at`, `expires_at` (purged by `maintenance`; retention `SSE_REPLAY_TTL_S`, default 600, ADR-025 R49). `turn_id = uuid5(namespace, tenant_id \|\| advisor_id \|\| Idempotency-Key)`; inserting `seq 0` with `ON CONFLICT DO NOTHING` is what enforces idempotency |
+| `tenant_usage` | `(tenant_id, day)` | `tokens_in`, `tokens_out` (counters for the daily UTC window against `TENANT_TOKEN_BUDGET`, ADR-025 R47). RLS own-tenant. Written by `chat-api`; no Valkey dependency |
 | `escalations` | `(tenant_id, id)` | `advisor_id`, `reason`, `product_class`, `licenses` (copied from `advisors.licenses`, never from the model), `status` (`pending_review`,...), `message_id`, `created_at`. UUID id fixes the G-18 collision |
 | `acl_change_requests` | `(tenant_id, id)` | `requested_by` (composite FK to `advisors`), `target_type` (`document`), `document_id`, `action` (`update_acl`,`delete`), `new_tier_required`, `new_jurisdiction`, `status` (`pending`,`applied`,`failed`), `error_code`, `requested_at`, `applied_at`. Written by `chat-api` `admin` with the outbox row in one transaction; applied by the `acl-applier` worker |
 | `eval_scores` | `(tenant_id, id)` | `message_id` (logical), `judge_model`, `metric` (faithfulness, citation, ...), `score`, `rationale` (redacted), `created_at`. Written by the `eval-judge` worker; no grant to `fa_app` |

@@ -98,6 +98,7 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 |---|---|---|
 | `ENV_PROFILE` | `dev` / `demo` / `prod` | all; selects HA flag, min instances |
 | `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | required (secret); user is the process role (`fa_app`, `fa_worker`, ...) | all |
+| `DB_PORT` | 5432 (ADR-025 R7) | all |
 | `DB_POOL_SIZE`, `DB_STATEMENT_TIMEOUT_MS` | required; pool per instance x max instances over all services must stay <= 300 of Cloud SQL `max_connections` 400 (D15.7) | chat-api, worker |
 | `PUBLIC_TENANT_ID` | required uuid | migrate, principal |
 | `IDP_PROJECT_ID` | required; firebase-admin tenant-aware verification uses it (`aud`, `iss`) | `auth` |
@@ -108,37 +109,49 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 | `LLM_MODEL_AUX` / `LLM_MODEL_JUDGE` | `claude-haiku-5-5` (judge must differ from answer) | guardrails spot-check, condensation, ETL, evals |
 | `LLM_MODEL_FALLBACK`, `LLM_FALLBACK_ENABLED` | `claude-sonnet-4-6`, `false` until the gate passes against it | `llm` |
 | `LLM_MAX_ITERATIONS` | 3 | `agent` |
+| `MODEL_RETIRE_WARN_DAYS` | 30; a model in the config allowlist fails readiness when retired or retiring within this many days; unknown ids fail; a deprecated model with no retirement date passes with a warning (ADR-025 R6) | `llm`, `/readyz` |
 | `LLM_MAX_TOKENS`, `LLM_TIMEOUT_S`, `LLM_RETRIES`, `LLM_BREAKER_*` | required; set in E4 | `llm` |
+| `LLM_PRICE_TABLE_JSON` | required; input and output USD per million tokens per provider / model; feeds `llm_cost_usd_total` (ADR-025 R73) | `llm`, metrics |
+| `LLM_MONTHLY_BUDGET_USD` | 75; the LLM share of the $100-200 demo budget (ADR-025 R73) | budget alert |
 | `PROMPT_VERSION` | required; versions system prompt and tools | `agent`, cache key |
 | `VOYAGE_API_KEY` | required (secret) | `retrieval`, worker |
 | `EMBED_MODEL`, `EMBED_DIM` | `voyage-4`, 1024 | `retrieval`, indexer |
 | `RERANK_MODEL`, `RERANK_ENABLED` | `rerank-2.5-lite`, decided by the ablation | `retrieval` |
 | `RERANK_TIMEOUT_MS`, `RERANK_CANDIDATES`, `RERANK_TOP_N` | timeout: set in E3; candidates: default 15, range 10-30, the L1 ablation sets it (D14.1); top-n 6 | `retrieval` |
 | `RRF_K` | 60 | `retrieval` |
+| `EMBED_MAX_RETRIES` | 2, with jitter; then the turn fails with `RETRIEVAL_UNAVAILABLE` (ADR-025 R36) | `retrieval` |
 | `HNSW_EF_SEARCH`, `HNSW_MAX_SCAN_TUPLES` | ~80-100, 20000 | `retrieval` |
 | `GATE_MIN_SCORE` | required; set in E3 by eval | `retrieval` |
+| `GATE_MIN_RESULTS` | 2; degraded gate passes if RRF returns at least this many candidates and marks the answer `retrieval_degraded` (ADR-025 R37) | `retrieval` |
+| `SEARCH_TOP_K_MAX`, `RETRIEVAL_LEG_LIMIT` | 10, 40 (ADR-025 R40) | `retrieval` |
+| `STALE_AFTER_MONTHS` | 12; one key for retrieval, gold models and UI (ADR-025 R39) | `retrieval`, dbt, SPA |
+| `CITATION_MIN_OVERLAP` | 0.5; tuned by E7 (ADR-025 R46) | `guardrails` (citation verifier) |
 | `ANSWER_CACHE_ENABLED`, `ANSWER_CACHE_TTL_S` | true, 86400 | `retrieval` |
 | `HISTORY_MAX_TURNS`, `HISTORY_MAX_TOKENS` | 6, 3000 | `agent` |
-| `INPUT_MAX_CHARS` | required; set in E4 | `guardrails`, Kong size limit |
+| `INPUT_MAX_CHARS` | 4000; Kong request-size limit 64 KB (ADR-025 R27) | `guardrails`, Kong size limit |
 | `MODEL_ARMOR_TEMPLATE`, `MODEL_ARMOR_TIMEOUT_MS`, `MODEL_ARMOR_FAIL_OPEN` | required, 500, `false` | `guardrails` |
-| `TENANT_TOKEN_BUDGET`, `TENANT_MAX_CONCURRENCY` | required; set in E4 | `agent` |
-| `SSE_HEARTBEAT_S`, `SSE_REPLAY_TTL_S`, `TURN_LEASE_S` | required; set in E4 | `agent` |
-| `FACTSHEET_MAX_CHUNKS` | required; set in E4 | `retrieval` |
+| `TENANT_TOKEN_BUDGET`, `TENANT_MAX_CONCURRENCY` | 2,000,000 tokens per UTC day (counters in Postgres `tenant_usage`), 20 (ADR-025 R47) | `agent` |
+| `SSE_HEARTBEAT_S`, `TURN_LEASE_S` | required; set in E4 | `agent` |
+| `SSE_REPLAY_TTL_S` | 600; after it resume returns 410 `TURN_EXPIRED` (ADR-025 R49) | `agent` |
+| `FACTSHEET_MAX_CHUNKS` | 8; E4 can change it (ADR-025 R43) | `retrieval` |
 | `CONTEXTUAL_RETRIEVAL_ENABLED` | true; the L1 ablation decides | worker |
 | `KAFKA_BOOTSTRAP`, `KAFKA_API_KEY`, `KAFKA_API_SECRET` | required; one service account and key per service (`fa-worker`, `etl`, `etl-public`, `eval`); none for `chat-api` | outbox-relay, worker, jobs |
 | `SCHEMA_REGISTRY_URL`, `SCHEMA_REGISTRY_API_KEY`, `SCHEMA_REGISTRY_API_SECRET` | required | producers, consumers |
+| `KAFKA_CONSUMER_MAX_ATTEMPTS`, `KAFKA_RETRY_BACKOFF_MS` | 5, 500 (ADR-025 R53) | worker |
+| `OUTBOX_RELAY_BATCH`, `OUTBOX_RELAY_POLL_MS` | 100, 500 (ADR-025 R53) | `outbox-relay` |
 | `WORKER_ROLES` | comma list of `outbox-relay`, `silver`, `contextualizer`, `indexer`, `acl-applier`, `eval-judge`, `bq-sink` | worker |
 | `GCS_DATA_BUCKET`, `BQ_DATASET`, `BQ_MAX_BYTES_BILLED` | required | jobs, worker |
 | `LANGFUSE_ENABLED`, `LANGFUSE_HOST`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | secrets required when enabled | wrapper |
 | `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_DB_CAPTURE_PARAMS` | required, `false` | all |
 | `CORS_ALLOWED_ORIGINS` | the SPA origin | Kong |
-| `RATE_LIMIT_IP_PER_MIN`, `RATE_LIMIT_TOKEN_PER_MIN`, `RATE_LIMIT_CHAT_PER_MIN` | required; set in E2 | Kong |
-| `DEMO_TTL_HOURS` | required; set in E10 | `demo-ttl` job |
+| `RATE_LIMIT_IP_PER_MIN`, `RATE_LIMIT_TOKEN_PER_MIN`, `RATE_LIMIT_CHAT_PER_MIN` | 300 (all routes), 120 (api routes), 20 per session (chat routes); Valkey down fails open, chat-api budgets still apply (ADR-025 R26) | Kong |
+| `AUDIT_IP_SALT` | secret (Secret Manager); salt for the client IP HMAC-SHA256 in the gateway audit (ADR-025 R28) | Kong |
+| `DEMO_TTL_HOURS` | 4 (ADR-025 R81) | `demo-ttl` job |
 | `OUTBOX_DRAIN_TIMEOUT_MIN` | 10 (then force; remaining outbox rows are delivered on the next `demo-up`) | `demo-down` |
 | `VALKEY_INSTANCE_NAME` | fixed Memorystore name; endpoint passed to Kong as an env var by `demo-up` | demo script, Kong |
 | `EVAL_SAMPLE_RATE` | 0.05-0.10 (5-10% of completed turns); value set in E7 | `agent`, `eval-judge` |
 | `EVAL_TENANT_ID` | required uuid of the dedicated `eval` tenant (bound into `fa_eval` policies) | migrate, eval jobs |
-| `MESSAGES_PARTITIONS_AHEAD`, `MESSAGES_RETENTION_MONTHS` | 3; retention set in E1 | `maintenance` |
+| `MESSAGES_PARTITIONS_AHEAD`, `MESSAGES_RETENTION_MONTHS` | 3, 6 (ADR-025 R20) | `maintenance` |
 | `PRESIDIO_SPACY_MODEL` | `en_core_web_sm` | `guardrails`, `silver` |
 | `KONG_EGRESS_KEY` | secret (Secret Manager) for the `key-auth` consumer `chat-api` on the egress route; only if the spike adopts it | `llm`, Kong |
 | `DAGSTER_PG_DB`, `DAGSTER_PG_USER`, `DAGSTER_PG_PASSWORD` | `dagster`, `fa_dagster`, secret | `etl`, `etl-public` |

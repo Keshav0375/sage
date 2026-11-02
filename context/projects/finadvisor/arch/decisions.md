@@ -2,6 +2,140 @@
 
 Newest first. Each entry: status (date, decided-by), context, options with costs, evidence (docs, papers, council), decision, dissent, what it makes harder later, trigger to revisit.
 
+## ADR-025: Planning resolutions for the v2 tickets
+
+**Status.** Accepted 2026-11-01. decided-by: researcher (orchestrator resolutions R1-R85, round 3 ticket questions). Source: `context/.runtime/research/finadvisor/resolutions-r3.md`. Amends ADR-010 (R19). Items K1-K5 are account and money inputs for Keshav, not design.
+
+**Context.** The ticket-writers for epics E0-E10 raised questions the architecture left open or set "in Ex". Each resolution follows the arch or picks the simplest default the arch allows. Numbers below are exact as decided; keys named here are in overview §6.6 (cited to this ADR).
+
+**Options.** None compared here. Each item was decided by the orchestrator; where an earlier ADR already decided the matter, that ADR wins (R19).
+
+**Evidence.** resolutions-r3.md (R1-R85); ADR-002 and ADR-004 (entitlement cache TTL, R19); ADR-003 (ANN trigger, R16); ADR-022 (acl-applier); ADR-024 (VPC egress, R4). No new external sources were added by this ADR.
+
+**Decision.**
+
+Cross-cutting
+- R1 Spike ADRs: a spike ticket writes `docs/adr/<topic>.md` in FinAdvisor with measurements and the fallback taken; after merge the researcher copies it into `arch/decisions.md` as the next ADR number.
+- R2 Migrations: E0-T9 creates revision 0001 = MVP `schema.sql`, immutable. E1 adds 0002+ that drop and recreate the MVP content tables with no data migration (never deployed).
+- R3 Table ownership: E1 creates every table in overview §5.2, including `answer_cache`, `turn_events` (with `request_hash`), `escalations`, the `halfvec(1024)` and `tsv` columns. E3-T4 adds only the HNSW and GIN indexes and the iterative-scan settings. E3-T13 adds only the `AnswerCache` class.
+- R4 Cloud provisioning: local and CI bootstrap is E1-T3. Cloud SQL roles, passwords, the `dagster` database, Cloud Run jobs (`migrate`, `etl`, `etl-public`, `dbt`, `maintenance`, `eval`) and Cloud Scheduler are E10. VPC, Private Google Access, the private `run.app` zone, fa-gateway, ALB, Cloud Armor and the log sink are E2 (`terraform/edge/`); E10 reuses them. The SPA bucket is E10; E2-T8 takes it as a variable. BigQuery datasets, tables, authorized views and row policies are repo-managed idempotent DDL in E6-T17.
+- R5 Weekly eval runs from a GitHub Actions cron (E7-T13); no Cloud Scheduler for evals.
+
+E0 (repo and tooling)
+- R6 Model lifecycle check: an allowlist in config of known model ids with retirement dates. Unknown ids fail. A model fails when retired or retiring within 30 days (`MODEL_RETIRE_WARN_DAYS`, default 30). A deprecated model with no retirement date passes with a warning.
+- R7 `DB_PORT` (default 5432) added to §6.6.
+- R8 E0-T10 adds vitest and the dev image to the current Next.js app; E8-T1 replaces it with Vite (accepted throwaway).
+- R9 E0 compose holds postgres, kafka, migrate, api, frontend. Kong + Valkey come in E2-T11, Schema Registry in E5-T3, worker in E5-T9. The self-hosted Langfuse compose and Redis are removed.
+- R10 The root Poetry project is removed; `backend/poetry.lock` is the one lockfile (G-28).
+- R11 Historical MVP docs stay as history under an allowlist; `.claude/settings.local.json` is untracked and removed from git.
+- R12 Removing the MVP Kong service from Terraform in E0-T7 is intended; E2 adds the target gateway.
+- R13 E0-T13 deletes `eval-gate.yml`; E7-T11 adds the new gate.
+- R14 Branch protection required checks are a manual step for Keshav after E0-T14, listed in its acceptance criteria as a `gh api` check the builder can only report.
+- R15 `JWT_SECRET` stays required with no default until E1-T15 removes it. `EMBED_MODEL` / `EMBED_DIM` belong to E3-T3.
+
+E1 (data, auth)
+- R16 Planner-cost pass line for the partition spike: planning time p95 <= 10 ms at 52 partitions, and the ADR-003 trigger (ANN p95 <= 100 ms).
+- R17 Neutral `app.*` values for principal load: nil uuid, empty role, tier `0`, empty jurisdictions. With these values RLS returns no content rows.
+- R18 First advisors come from a seed command `migrate --seed-advisors <file>` in E1-T11, used by demo setup. No auto-provision on first login.
+- R19 Entitlement cache: TTL-only, 60 s (ADR-002 and ADR-004 win). The ADR-010 text is fixed accordingly (ADR-010 "amended by ADR-025").
+- R20 `MESSAGES_RETENTION_MONTHS` default 6.
+- R21 The DEFAULT-partition alert for `chunks` and `messages` is E9 (log-based metric + alert).
+- R22 `fa_tenant_lookup(NULL, NULL)` returns no rows. Discovery never resolves the PUBLIC tenant (404).
+- R23 Auth tests: Firebase Auth emulator in CI if the E1-T1 spike shows it supports multi-tenancy; else locally signed test JWTs with a test JWKS. E1-T1 records which.
+
+E2 (gateway and edge)
+- R24 `X-RL-Key` fallback: if `pre-function` cannot run before `rate-limiting`, limit by IP only and rely on the chat-api per-tenant budget; record it in the spike ADR.
+- R25 The 50 ms SSE budget compares ALB+Kong against ALB direct to a test route on chat-api.
+- R26 Rate limits (from 10 QPS peak, ~300 advisors): `RATE_LIMIT_IP_PER_MIN` 300 on all routes; `RATE_LIMIT_TOKEN_PER_MIN` 120 on api routes; `RATE_LIMIT_CHAT_PER_MIN` 20 per session on chat routes. Valkey down: fail open (`fault_tolerant: true`); chat-api budgets still apply.
+- R27 `INPUT_MAX_CHARS` 4000; Kong request-size limit 64 KB until E4 and after.
+- R28 Client IP hash: HMAC-SHA256 with a secret salt from Secret Manager (`AUDIT_IP_SALT`).
+- R29 `pre-function`: metadata server failure returns 503 (fail closed). Missing `Authorization` on chat/api routes returns 401 at Kong.
+- R30 Client identity headers are stripped on all routes, including tenant-discovery.
+- R31 Cloud Armor: no geo allow-list (demo users travel); throttle 600 req/min per IP; OWASP CRS preconfigured rules `sqli-v33-stable`, `xss-v33-stable` in preview first. Cost pass: <= $10/month idle.
+- R32 E2-T21 cloud acceptance uses the E10 demo-up Valkey; E2-T21 moves to depend on E10's demo-up ticket. Pin Valkey 8.0 (Memorystore) and `valkey/valkey:8.0` locally.
+- R33 nginx `error_log` level `crit` on proxied routes; the T15 test proves no query string reaches Cloud Logging.
+- R34 Two Kong services, same upstream: chat routes with `read_timeout` 3,600,000 ms; others default.
+- R35 The Kong ID-token check runs against the stub in E2; E10 re-runs it against the real chat-api.
+
+E3 (retrieval)
+- R36 Other rerank errors (5xx, network, bad response) fall back like a timeout with reason `error`. `embed_query`: 2 retries with jitter, then the turn fails with `RETRIEVAL_UNAVAILABLE` (`EMBED_MAX_RETRIES` = 2).
+- R37 Degraded gate: pass if RRF returns at least `GATE_MIN_RESULTS` (default 2) candidates; the answer is marked `retrieval_degraded`.
+- R38 E3-T16 sets the initial `GATE_MIN_SCORE`; E7-T7 sets the final value.
+- R39 `STALE_AFTER_MONTHS` default 12; one key for retrieval, gold models and UI.
+- R40 `SEARCH_TOP_K_MAX` 10 and `RETRIEVAL_LEG_LIMIT` 40 become §6.6 keys.
+- R41 E4 owns verifier and cache wiring in the orchestrator; E5-T11 (acl-applier) and E1-T12 (maintenance) own purge call sites.
+- R42 PUBLIC changes rely on the PUBLIC `corpus_version` in the cache key; no cross-tenant purge.
+- R43 `FACTSHEET_MAX_CHUNKS` default 8; E4 can change it.
+- R44 import-linter names the chat-api source roots; worker and job code stay outside.
+- R45 Seeded synthetic vectors are fine for ANN latency; recall is measured in E7 with real embeddings.
+
+E4 (agent)
+- R46 Citation verifier on rejection: strip the unverified `[n]` marker, keep the sentence, count `citation_rejected_total`. If no verified citation is left in an answer that needs one, the turn becomes a refusal. Overlap threshold `CITATION_MIN_OVERLAP` default 0.5, tuned by E7.
+- R47 Tenant token budget: daily window (UTC), counters in Postgres `tenant_usage` (no Valkey dependency in chat-api), `TENANT_TOKEN_BUDGET` default 2,000,000 tokens/day, `TENANT_MAX_CONCURRENCY` 20.
+- R48 `turn_id` = uuid5(namespace, tenant_id || advisor_id || Idempotency-Key) (as overview §5.2). `turn_events.request_hash` = SHA-256 of the canonical JSON request body (sorted keys); the same Idempotency-Key with a different hash returns 409. Deltas batch every 250 ms or 512 chars.
+- R49 Resume tails by polling `turn_events` every 250 ms. After `SSE_REPLAY_TTL_S` (default 600) resume returns 410 `TURN_EXPIRED`.
+- R50 Presidio pseudonyms stay redacted in output; no re-identification.
+- R51 MVP `litellm/` directory removal is E0-T6.
+
+E5 (events)
+- R52 E5 defines minimal payload models; E4, E6, E7 add fields when they produce the event.
+- R53 Keys: `KAFKA_CONSUMER_MAX_ATTEMPTS` 5, `KAFKA_RETRY_BACKOFF_MS` 500, `OUTBOX_RELAY_BATCH` 100, `OUTBOX_RELAY_POLL_MS` 500; added to §6.6.
+- R54 E4-T21 owns the outbox insert helper; E5-T12 depends on it.
+- R55 The metrics conventions module is E9; E5 emits `outbox_unpublished` as an OTel gauge now.
+- R56 One `oneOf` schema per topic under `<topic>-value`; `dlq.v1-value` registered.
+- R57 Gap closed: no ticket built the `bq-sink` worker role; it is added to E5.
+
+E6 (ETL)
+- R58 Pipeline payloads: E5 envelope + id-only payloads.
+- R59 Pandera: a failed chunk is rejected alone; a document with > 20% failed chunks is rejected whole.
+- R60 Synthetic corpus: 60 documents per tenant, 3 tenants; 10k-chunk set for benchmarks.
+- R61 E6 depends on E5-T7 (consumer framework), E5-T9 (worker entrypoint), E5-T11 (acl-applier, which updates the denormalised ACL columns).
+
+E7 (eval)
+- R62 E7-T16 owns the `eval.sample.v1` outbox row; E4 owns the feedback endpoint.
+- R63 Judge acceptance: Cohen's kappa >= 0.6 against human labels.
+- R64 PR gate uses the point estimate; the weekly full run uses the CI lower bound.
+- R65 Baselines live in `data/eval/` in the repo.
+
+E8 (frontend)
+- R66 Playwright runs against a stubbed API and the Firebase Auth emulator; one smoke spec runs against compose.
+- R67 Firebase web config comes from `VITE_*` build env; E10 sets it in the deploy job.
+- R68 `GET /v1/conversations/{id}/messages` returns `retrieval_degraded` and the caller's feedback score; E4 adds them.
+- R69 `escalate_offer=true` shows a hint and an "Ask compliance" button that sends the follow-up turn.
+- R70 SSE resume: 5 attempts, backoff 1, 2, 4, 8, 16 s.
+
+E9 (observability)
+- R71 Shared metrics module `backend/src/observability/metrics.py` is created by E9-T5. Earlier epics emit with plain OTel meters and E9-T5 moves them to the registry.
+- R72 Alert numbers: outbox oldest age > 300 s, ACL apply lag > 120 s, consumer lag > 1000 for 10 min; availability burn rate 14.4x / 1 h and 6x / 6 h.
+- R73 `llm_cost_usd_total{provider,model}` computed from token counts and a price table in config (`LLM_PRICE_TABLE_JSON`); the budget alert uses GCP billing plus this metric, against `LLM_MONTHLY_BUDGET_USD` = 75.
+- R74 `readiness_failing` and `model_retirement_days` (gauge) added to §9.2.
+- R75 Notification channel: email to `alert_email`.
+- R76 The maintenance job runs every 15 min in demo mode (E10 schedules it); the DEFAULT-partition alert window is 30 min (with R21).
+- R77 OTel export: direct OTLP to the Google Cloud Telemetry API endpoint with ADC, no sidecar. E9-T2 checks this first; fallback is an OTel Collector sidecar, recorded as a spike ADR.
+
+E10 (infrastructure and demo ops)
+- R78 Backups: demo profile daily automated backups, 7 retained, PITR off (RPO 24 h, RTO 1 h); prod profile PITR on, 7-day log retention (RPO 5 min, RTO 1 h).
+- R79 A `db-bootstrap` Cloud Run job as `fa_owner` creates roles and writes passwords to Secret Manager versions; no passwords in Terraform state.
+- R80 Scheduler pause state goes in `ignore_changes`. Crons (UTC): etl daily 02:00, etl-public weekly Mon 03:00, dbt daily 04:00, redteam weekly Sun 05:00, maintenance every 15 min (R76); eval weekly is GitHub Actions (R5). Demo-down pauses all.
+- R81 `DEMO_TTL_HOURS` 4.
+- R82 Kong reads the Valkey endpoint from env `KONG_VALKEY_HOST` / `KONG_VALKEY_PORT` (E2-T11 sets the names); fa-gateway Terraform does not ignore them; demo-up applies them.
+- R83 SPA bucket: uniform bucket-level access, `allUsers` with `roles/storage.legacyObjectReader` only (object read, no listing). Static assets only, no data. This is an explicit, recorded exception to "no allUsers"; the rule covers Cloud Run services and stays in force for them.
+- R84 Demo-down drain checks run inside a Cloud Run job.
+- R85 Terraform apply and deploy use the GitHub environment `prod` with Keshav as required reviewer.
+
+Inputs from Keshav (accounts and money, not design)
+- K1 A GCP project id with billing, Identity Platform multi-tenancy enabled (E1-T1, all cloud tickets).
+- K2 Langfuse Cloud Hobby project keys, stored as GitHub secrets `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` and in local `.env` (E0-T1).
+- K3 A domain for the ALB managed certificate (E2-T8, E10).
+- K4 About 30 human labels for the judge spike: Keshav labels them with the CLI (E7-T1).
+- K5 Enable branch protection on `main` after E0-T14 (R14).
+
+**Dissent.** None recorded.
+
+**What it makes harder later.** The SPA bucket is publicly readable (R83): nothing but static assets may ever be placed in it. The 60 s TTL-only entitlement cache (R19) means an entitlement revocation takes up to 60 s to apply. Tenant budgets in Postgres (R47) add a write per turn to `tenant_usage`. Dropping and recreating the MVP tables in E1 (R2) is safe only while nothing is deployed.
+
+**Trigger to revisit.** A spike ADR (R1) records a fallback; the R16 or R25 pass lines fail; the R47 default budget does not fit the measured demo load; the SPA bucket gains non-static content.
+
 ## ADR-024: VPC egress mode: Direct VPC egress private-ranges-only, no Cloud NAT
 
 **Status.** Accepted 2026-11-01. decided-by: researcher (orchestrator rulings D15.2, D16.12). Resolves G-11 (wiring) and keeps G-26 closed.
@@ -316,7 +450,7 @@ Newest first. Each entry: status (date, decided-by), context, options with costs
 
 **Evidence.** https://docs.cloud.google.com/identity-platform/docs/multi-tenancy ; PostgreSQL docs on SECURITY DEFINER risk via D13m review.
 
-**Decision.** FastAPI verifies ID tokens tenant-aware with firebase-admin: the `firebase.tenant` claim names the IdP tenant and `tenant_mgt.auth_for_tenant(tenant_id).verify_id_token` checks signature, `aud`, `iss`, `exp` and raises `TenantIdMismatchError` (D15.3; https://docs.cloud.google.com/identity-platform/docs/multi-tenancy-managing-tenants ). The token identifies only `sub` and the IdP tenant; entitlements (tier, jurisdictions, licenses, role) come from `advisors` (60 s cache, invalidated on `acl.changes.v1`). Tenant discovery: the SPA resolves the firm from `/t/<slug>` through the public `GET /v1/tenants/{slug}`, which returns only `{display_name, idp_tenant_id}` from a `SECURITY DEFINER` function `fa_tenant_lookup`, reviewed in CI and the only such function allowed (D13m); it is owned by the NOLOGIN role `fa_lookup` (not `fa_owner`), which has a SELECT policy on `tenants` only, with `EXECUTE` revoked from PUBLIC and granted to `fa_app` (D16.2). It serves both slug discovery and the `idp_tenant_id` to `tenants.id` mapping (D14.4). The IdP tenant id maps to `tenants.id` before settings are set.
+**Decision.** FastAPI verifies ID tokens tenant-aware with firebase-admin: the `firebase.tenant` claim names the IdP tenant and `tenant_mgt.auth_for_tenant(tenant_id).verify_id_token` checks signature, `aud`, `iss`, `exp` and raises `TenantIdMismatchError` (D15.3; https://docs.cloud.google.com/identity-platform/docs/multi-tenancy-managing-tenants ). The token identifies only `sub` and the IdP tenant; entitlements (tier, jurisdictions, licenses, role) come from `advisors` (60 s TTL-only cache, no event invalidation, per ADR-002 and ADR-004) (amended by ADR-025, R19). Tenant discovery: the SPA resolves the firm from `/t/<slug>` through the public `GET /v1/tenants/{slug}`, which returns only `{display_name, idp_tenant_id}` from a `SECURITY DEFINER` function `fa_tenant_lookup`, reviewed in CI and the only such function allowed (D13m); it is owned by the NOLOGIN role `fa_lookup` (not `fa_owner`), which has a SELECT policy on `tenants` only, with `EXECUTE` revoked from PUBLIC and granted to `fa_app` (D16.2). It serves both slug discovery and the `idp_tenant_id` to `tenants.id` mapping (D14.4). The IdP tenant id maps to `tenants.id` before settings are set.
 
 **Dissent.** Cost and simplicity proposals: a single pool.
 
