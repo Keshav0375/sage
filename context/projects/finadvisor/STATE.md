@@ -13,7 +13,13 @@
   Kong docs check → `decision-r2.md` (D1-D13, epics E0-E10). Keshav: Kong stays (D12).
   Stage 2-3 done: arch written (overview.md, stack.md target, ADR-002..024, plan.md E0-E10),
   validated (docs check + consistency skeptic) and fixed (D14-D17 in decision-r2.md).
-  Stage 4: 11 ticket-writers running (one per epic). Next: check tickets → tracker.json → publish.
+  Stage 4 stopped: the 11 ticket-writers hit the 5-hour usage limit before writing tickets.
+  Restart Stage 4 in a FRESH session with per-epic slices, waves of ≤ 4 (new pipeline rules);
+  do not resume the old ticket-writers (each carries ~100k of stale context of the old overview.md).
+- 2026-11-02 Token audit of this session (observe usage.py, `context/.runtime/traces/usage-*.md`):
+  main loop Opus 28.4M cache read / 1.9M write; arch-writer 16.9M / 3.3M; ticket-writers 4.3M / 1.1M;
+  docs-readers 4.7M / 0.8M. Fixes: model tiers (Haiku for mechanical + depth-2 page-readers),
+  file handoff, slices, waves ≤ 4, fresh session per stage, overview.md split into overview/*.md.
 - URGENT for builder: `claude-sonnet-4-20250514` retired 2026-06-15; app and evals fail today.
 
 ## Open decisions

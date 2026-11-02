@@ -16,6 +16,28 @@ def trace_dir() -> str:
     return os.path.join(os.environ.get("CLAUDE_PLUGIN_DATA", "."), "traces")
 
 
+def add_usage(row: dict, event: dict) -> None:
+    """Token usage of the agent that stopped (SubagentStop) or the main loop so far (Stop)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from usage import transcript_usage, total_of  # noqa: E402  (same folder)
+
+    main = event.get("transcript_path") or ""
+    if event.get("hook_event_name") == "SubagentStop":
+        path = event.get("agent_transcript_path") or ""
+        if not path and main and event.get("agent_id"):
+            session_dir = main[: -len(".jsonl")] if main.endswith(".jsonl") else main
+            path = os.path.join(session_dir, "subagents", f"agent-{event['agent_id']}.jsonl")
+        row["scope"] = "agent"
+    else:
+        path = main
+        row["scope"] = "session_cumulative"
+    if not path or not os.path.exists(path):
+        return
+    by_model = transcript_usage(path)
+    row["tokens"] = total_of(by_model)
+    row["models"] = sorted(by_model)
+
+
 def record(event: dict) -> dict:
     name = event.get("hook_event_name", "")
     row = {
@@ -28,6 +50,8 @@ def record(event: dict) -> dict:
         row["agent_id"] = event.get("agent_id")
     if event.get("agent_type"):
         row["agent_type"] = event.get("agent_type")
+    if name in ("SubagentStop", "Stop"):
+        add_usage(row, event)
     if name == "PostToolUse":
         row["tool"] = event.get("tool_name")
         response = event.get("tool_response")

@@ -35,3 +35,10 @@ a diagram appears in section 4 of `overview.md`, and the reverse.
 
 ## Reply
 Start with `DONE` (or `GAP`). Then the files and sections you changed, and the diagrams you added.
+
+## Write by section (token rule)
+`arch/overview.md` is an index. Each section lives in `arch/overview/NN-<slug>.md` (one file per
+`## N.` heading). Create or replace a whole section file in one Write; do not make many small
+Edits to a large file. Keep each section file under ~400 lines; split a larger one into
+`NN.M-<slug>.md`. Update the index links when you add a file. References like `overview.md#5`
+resolve to `overview/05-*.md`.

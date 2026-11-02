@@ -1,6 +1,6 @@
 import { parseRegistry, resolveCwd, renderCard, renderBoard, expandHome } from './registry.ts'
 import { checkBash } from './guard.ts'
-import { parseRouting, routeModel } from './routing.ts'
+import { parseRoutingConfig, routeModel, leafDecision, writeAllowed } from './routing.ts'
 import {
   parseHeader, isTicketKey, parseReport, staleChecks, ticketPaths, ticketOfPath, shipTarget, shipBlock,
   parseClaim, claimedByOther, fixAttempts, deriveStep, renderRuns, updateTicket, activeTickets, CHECKS, CLAIM_MS,
@@ -133,6 +133,15 @@ async function shipGate($, contextDir, command) {
 
 let trackerWrites = Promise.resolve()
 
+// Subagent id → type, filled at spawn, read by the write guard.
+const agentTypes = new Map()
+
+async function loadRoutingConfig($, contextDir) {
+  const path = `${contextDir}/routing.json`
+  if (!contextDir || !(await $.fs.exists(path))) return { agents: {}, leaves: [], leafModel: 'haiku', reportOnly: [] }
+  return parseRoutingConfig(await $.fs.read(path))
+}
+
 export function register(on, options) {
   const contextDir = options?.context_dir ? String(options.context_dir).replace(/\/$/, '') : ''
   const mainModel = String(options?.main_model ?? 'opus')
@@ -236,17 +245,37 @@ export function register(on, options) {
   // Model routing for subagents: the orchestrator's explicit choice, then context/routing.json,
   // then the subagent_model option.
   on('agent.spawn', async ($, e, next) => {
+    const cfg = await loadRoutingConfig($, contextDir)
+    const record = async (spawn) => {
+      const r = await next(spawn)
+      if (r?.agentId) agentTypes.set(r.agentId, String(spawn.subagentType))
+      return r
+    }
+    // Depth 2: leaf agents only, always on the leaf model.
+    const leaf = leafDecision(String(e.subagentType), e.parentAgentId, cfg)
+    if (leaf.deny) return { deny: leaf.deny }
+    if (leaf.model) return record({ ...e, model: leaf.model })
     if (contextDir && String(e.subagentType).startsWith('builder:')) {
       const r = await ledgerSpawn($, contextDir, e)
       if (r.deny) return { deny: r.deny }
-      if (r.model) return next({ ...e, model: r.model })
+      if (r.model) return record({ ...e, model: r.model })
     }
-    let overrides = {}
-    const path = `${contextDir}/routing.json`
-    if (contextDir && (await $.fs.exists(path))) overrides = parseRouting(await $.fs.read(path))
-    const model = routeModel(e.subagentType, e.model, overrides, subagentModel)
-    return next(model ? { ...e, model } : e)
+    const model = routeModel(e.subagentType, e.model, cfg.agents, subagentModel)
+    return record(model ? { ...e, model } : e)
   })
+
+  // Report-only agents (scouts, skeptics, reviewers) may write only their reports under .runtime/.
+  for (const tool of ['Write', 'Edit']) {
+    on('tool.call', { tool }, async ($, e, next) => {
+      if (!e.agentId || !contextDir) return next(e)
+      const cfg = await loadRoutingConfig($, contextDir)
+      const path = String(e.file_path ?? '')
+      if (!writeAllowed(agentTypes.get(e.agentId), path, `${contextDir}/.runtime`, cfg)) {
+        return { deny: `This agent writes reports only, under ${contextDir}/.runtime/. Return the content instead.` }
+      }
+      return next(e)
+    })
+  }
 
   // The main loop always runs on the main model. Subagent steps carry an agentId and pass through.
   on('turn.step', async function* ($, e, next) {

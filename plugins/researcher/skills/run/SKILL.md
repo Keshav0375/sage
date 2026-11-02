@@ -39,7 +39,7 @@ Run it on the written arch. Fold every `improve` or `change` that the evidence s
 through `arch-writer`, with an ADR for each change.
 
 ## Stage 4. Plan → `/researcher:plan`
-`ticket-writer` per epic in parallel; you check the tickets against the arch; they go into
+`ticket-writer` per epic in waves of ≤ 4 with per-epic slices; you check the tickets against the arch; they go into
 `tracker.json`. No approval gate: the plan is ready when every check in `/researcher:plan` passes.
 
 ## Stage 5. Publish → `/researcher:publish`

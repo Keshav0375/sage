@@ -16,7 +16,10 @@ Load `brain:tracker` for the format. The arch must be decided first: `arch/overv
    Actions workflow that runs lint, type check, unit and integration tests and security scans on
    pull requests; the single typed config; a way to start dependencies for integration tests.
    Add one `E0` ticket for each missing item. Every other epic depends on `E0`.
-2. **Tickets (one message, in parallel).** Spawn one `researcher:ticket-writer` per epic, each
+2. **Tickets (waves of ≤ 4; epics are independent once the arch is fixed).** First write one slice
+   file per epic, `context/.runtime/research/<p>/slice-<epic>.md`, with the epic section from
+   `plan.md` and the list of arch sections and ADRs it references (paths + headings, not copies).
+   Then spawn one `researcher:ticket-writer` per epic, each
    with the project, the epic, and the arch file paths.
 3. **Check (main session).** For each reply:
    - every arch component in the epic's scope is covered by a ticket, and no ticket goes beyond

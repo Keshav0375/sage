@@ -50,10 +50,11 @@ test('guard allows normal commands', () => {
   expect(checkBash('ls -la && rm notes.tmp')).toBe(undefined)
 })
 
-test('routing keeps an explicit model, then overrides, then the subagent model', () => {
+test('routing: explicit model, then routing.json, then plugin frontmatter, then the default for built-ins', () => {
   expect(routeModel('Explore', 'opus', {}, 'sonnet')).toBe(undefined)
   expect(routeModel('Explore', undefined, { Explore: 'haiku' }, 'sonnet')).toBe('haiku')
-  expect(routeModel('builder:editor', undefined, {}, 'sonnet')).toBe('sonnet')
+  expect(routeModel('builder:editor', undefined, {}, 'sonnet')).toBe(undefined)
+  expect(routeModel('general-purpose', undefined, {}, 'sonnet')).toBe('sonnet')
   expect(routeModel('builder:editor', undefined, {}, '')).toBe(undefined)
 })
 

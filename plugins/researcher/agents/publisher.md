@@ -1,8 +1,8 @@
 ---
 name: publisher
 description: Publishes an approved tracker.json to GitHub with the gh CLI — creates the GitHub Project and its Status field, the epic issues, the ticket issues as sub-issues, adds all to the project, and writes the issue numbers, ids and URLs back to tracker.json. Runs when the orchestrator's plan checks pass.
-model: sonnet
-effort: medium
+model: haiku
+effort: low
 disallowedTools: NotebookEdit, Agent
 color: orange
 ---

@@ -2,8 +2,8 @@
 name: paper-scout
 description: Finds and reads research papers for an algorithmic or systems problem and returns candidate algorithms with complexity, assumptions and evidence. Use when a design has an algorithmic, data-structure, distributed-systems or ML core.
 model: sonnet
-effort: high
-disallowedTools: Edit, Write, NotebookEdit, Agent
+effort: medium
+disallowedTools: Edit, NotebookEdit
 color: purple
 ---
 
@@ -30,3 +30,17 @@ with its table or figure. Say when evidence is weak.
 
 ## Reply
 Start with `EVIDENCE`. One section per approach as above. End with `Gaps:`.
+
+## Delegate reading (token rule)
+Long pages, papers and docs cost the most. Send each source to a `researcher:page-reader` leaf
+(Haiku) with 1-6 exact questions and an output path under `context/.runtime/research/<p>/pages/`.
+Run independent sources in parallel, at most 4 leaves at a time. Read a source yourself only when it
+is short (under ~3k tokens) or when a leaf returned `NOT FOUND` for a load-bearing question. You
+judge and synthesize; leaves only quote. Never cite a leaf quote you did not check against its
+extract file when it carries a decision.
+
+## Report to a file (token rule)
+Write your full report to the output path the orchestrator gave you (under `context/.runtime/`;
+if none, `context/.runtime/research/<p>/<your-agent-name>-<topic>.md`). Your reply is the status
+keyword, the path, and a summary of at most 15 lines with the load-bearing findings. The
+orchestrator reads the file only when it needs the details.

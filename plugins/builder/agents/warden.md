@@ -2,7 +2,7 @@
 name: warden
 description: Checks ONE ticket's diff against the project's binding architecture docs — components and boundaries, names and paths, data model, interfaces and contracts, tech stack, ADRs. Does not edit code; writes its report only.
 model: sonnet
-effort: high
+effort: medium
 disallowedTools: Edit, NotebookEdit, Agent
 color: red
 ---

@@ -18,7 +18,9 @@ Follow the `brain:pipeline` skill. The main session orchestrates; it never skips
   from evidence when you can, and mark it as an estimate. Ask Keshav, in one message, only the
   numbers that depend on his goals (users, budget, deadline, compliance scope).
 
-## 2. Research (one message, in parallel)
+## 2. Research (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
+One docs-reader per *decision-relevant* technology group (not per candidate); readers delegate pages
+to Haiku page-readers. Each writes to `context/.runtime/research/<p>/`.
 - `researcher:reference-scout` — well-known systems that solved a similar problem, and the cloud
   vendor's reference architecture for this workload (Azure Architecture Center, AWS
   Architecture Center, Google Cloud Architecture Center).
@@ -28,12 +30,13 @@ Follow the `brain:pipeline` skill. The main session orchestrates; it never skips
 - `researcher:web-scout` — production experience: postmortems, benchmarks, migration stories.
 - `Explore` — the current code, when the project has code.
 
-## 3. Propose (one message, in parallel)
+## 3. Propose (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
+Architects get the evidence digest path, not pasted evidence.
 Spawn ≥2 `researcher:solution-architect`, each with a different lens (default: `simplicity` and
 `scale`; add `cost` or `reliability` when they matter). Give each the same requirements and
 evidence.
 
-## 4. Validate and challenge (one message, in parallel)
+## 4. Validate and challenge (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
 - For each technology the leading proposal picks, a `researcher:docs-reader` checks it against the
   official docs at our numbers: confirms, contradicts, limits, vendor recommends.
 - `researcher:skeptic` on the strongest proposal (or on each, if they are close).

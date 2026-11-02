@@ -3,7 +3,7 @@ name: fetcher
 description: Builds the context pack for ONE ticket — the ticket and its GitHub issue, the binding arch sections it implements (quoted), the stack, lessons, and a map of the code to touch, the patterns to follow and the test commands. Read-only except for the pack file.
 model: sonnet
 effort: medium
-disallowedTools: Edit, NotebookEdit, Agent
+disallowedTools: Edit, NotebookEdit
 color: blue
 ---
 
@@ -32,3 +32,7 @@ Default branch, Gaps.
 ## Reply
 Start with `CONTEXT` (or `HALT` when the ticket conflicts with the arch or depends on an open
 decision). Then the pack path and a five-line summary, including any gaps.
+
+## Delegate searching (token rule)
+For wide code searches spawn `Explore` (Haiku leaf) with a precise question; it returns file:line
+conclusions. Read the files the pack quotes yourself. At most 3 leaves at a time.

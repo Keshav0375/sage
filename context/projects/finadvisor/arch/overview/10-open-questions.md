@@ -1,0 +1,14 @@
+## 10. Open questions
+
+Spikes and measurements only. Each runs first in its epic and its result is recorded as an ADR (conditional ADRs are named in ADR-011, ADR-020 and ADR-024). Values the brief left open are set by the implementing ticket and appear in §6.6 as "set in Ex".
+
+1. **Kong SSE pass-through (E2).** Verify tokens stream without buffering through ALB, Kong (`response_buffering: false`, `request_buffering: false`, `read_timeout` 3,600,000 ms) and chat-api. Pass: SSE through Kong adds <= 50 ms p95 over a direct chat-api stream (D16.16). Fail: ADR on routing the SSE route around Kong.
+2. **`X-Serverless-Authorization` passthrough smoke test (E2).** A Kong `pre-function` sets `X-Serverless-Authorization` (metadata-server ID token, audience = chat-api URL) and Cloud Run IAM accepts it while the user `Authorization` header reaches FastAPI unchanged (documented for IAM; "unchanged" is inferred). Fail: ingress internal only plus application JWT on that hop, recorded as an ADR.
+3. **Private-DNS `run.app` egress (E2 / E10).** With Direct VPC egress `private-ranges-only`, Private Google Access and a Cloud DNS private zone mapping `run.app` to `private.googleapis.com`, Kong reaches `chat-api` (ingress internal) through the VPC. Fail: all-traffic egress + Cloud NAT (about +$32/month) with an ADR (ADR-024).
+4. **ai-proxy `preserve` egress (E2).** `route_type: preserve` (or a plain proxy service) to `api.anthropic.com` with streaming and tool use in the native Messages format, protected by `key-auth` + `ip-restriction`. Pass: `LLMClient` uses the internal Kong route (API key from env, global LLM rate limit, `log_statistics`). Fail: `LLMClient` calls Anthropic directly and the egress route is dropped (ADR).
+5. **Kong `X-RL-Key` behaviour (E2).** The `pre-function` sets `X-RL-Key = sha256(Authorization)` before `rate-limiting` runs, the limit keys on it, and raw tokens never reach Valkey keys.
+6. **Cloud SQL start time (E10).** The stopped-to-RUNNABLE time is not documented; measure it. Also confirm stopped-instance billing is storage only, the basis of the idle budget.
+7. **Rerank latency and TPM (E3).** Measure rerank-2.5-lite p95 against the 700 ms target and TPM / QPS at Tier 1 (~5 QPS); request the tier upgrade before load tests. The ablation sets `RERANK_CANDIDATES` and decides rerank on recall and latency.
+8. **Docling on 497K and inline XBRL (E6).** Confirm Docling parses the EDGAR fund summary prospectus (497K HTML) and inline-XBRL tables; chunk sizes measured with Voyage `count_tokens`.
+9. **Cloud Armor and Confluent cost (E2 / E5 / E10).** The Cloud Armor ~$6-10/month and the Confluent Basic ~$0-5/month in the idle budget are UNVERIFIED; confirm in billing.
+10. **Presidio latency (E4).** No official figure; benchmark `presidio-analyzer` 2.2.x with `en_core_web_sm` on the synthetic corpus for latency and recall.

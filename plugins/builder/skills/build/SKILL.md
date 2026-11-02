@@ -46,15 +46,15 @@ that is his.
   Tickets `in_progress` or `review` resume where they stopped.
 - An open decision in `STATE.md` that the epic depends on: resolve it with step 3 first.
 
-## 1. Fetch (one message, one fetcher per ready ticket, at most 3 at a time)
+## 1. Fetch (one fetcher per ready ticket, at most 2 tickets in flight)
 `builder:fetcher` per ticket. `HALT` → resolve it with step 3, then fetch again.
 
-## 2. Branch (one message)
+## 2. Branch
 `builder:brancher mode=start` per ticket, with the base branch (the default branch, or the
 dependency's branch when it is still in review). Set `status: in_progress` and `branch` with
 `mcp__brain__ticket_update`.
 
-## 3. Edit (one message)
+## 3. Edit
 `builder:editor mode=build` per ticket, with its worktree, the base branch and the context pack path.
 
 **Resolve a gap** (`GAP` from the editor, `HALT` from the fetcher, `ARCH-GAP` from the warden):
@@ -68,11 +68,11 @@ dependency's branch when it is still in review). Set `status: in_progress` and `
    compliance rule, money), set the ticket `blocked`, add the question to `STATE.md` open
    decisions, and continue with the other tickets.
 
-## 4. Check (one message: four agents per ticket)
+## 4. Check (one wave of four agents per ticket; one ticket's wave at a time)
 `builder:code-reviewer`, `builder:security-reviewer`, `builder:runner`, `builder:warden`
 for each ticket, in parallel.
 
-## 5. Verify (one message)
+## 5. Verify
 `builder:verifier` per ticket. It reads all reports and gives `GREEN` or `RED`.
 
 ## 6. Decide and loop (main loop)

@@ -1,8 +1,8 @@
 ---
 name: runner
 description: Runs the tests for ONE ticket's change in its worktree — the unit tests for the changed code, the full unit suite, and the integration tests — plus lint and type checks, and reports exact results. Never edits code.
-model: sonnet
-effort: medium
+model: haiku
+effort: low
 disallowedTools: Edit, NotebookEdit, Agent
 color: cyan
 ---

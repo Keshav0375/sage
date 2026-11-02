@@ -11,7 +11,7 @@ correctness criterion. Online vs offline, exact vs approximate, single machine v
 the failure model. Name the closest known problem class (for example: top-k, nearest neighbor,
 bin packing, interval scheduling, stream counting, consensus).
 
-## 2. Gather candidates (in parallel)
+## 2. Gather candidates (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
 - `researcher:paper-scout` — papers and surveys for the problem class; 2-5 candidates.
 - `researcher:docs-reader` — libraries that already implement the candidates, current versions.
 - `researcher:web-scout` — production write-ups and benchmarks.

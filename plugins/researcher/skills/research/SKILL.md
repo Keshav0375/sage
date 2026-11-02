@@ -14,7 +14,7 @@ ambiguous, ask Keshav one question first.
 Search `context/library/` (research, papers, patterns, council) for earlier work. Reuse it and
 note its date.
 
-## 3. Scout (one message, in parallel)
+## 3. Scout (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
 Spawn the scouts that fit: `researcher:docs-reader` (official docs, one per technology),
 `researcher:reference-scout` (similar well-known systems, vendor reference architectures),
 `researcher:paper-scout` (papers), `researcher:web-scout` (practitioner evidence). Give each the same sharpened question and its source.

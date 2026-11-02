@@ -14,7 +14,7 @@ section). List:
   with the version when known,
 - the **requirements as numbers** the design must meet.
 
-## 2. Gather (one message, in parallel)
+## 2. Gather (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
 - One `researcher:docs-reader` per technology. Give each the decisions that rely on it and the
   numbers it must meet.
 - One `researcher:reference-scout` with the problem, the scale and the cloud in use: similar
