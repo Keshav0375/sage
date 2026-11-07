@@ -1,6 +1,6 @@
 import { parseRegistry, resolveCwd, renderCard, renderBoard, expandHome } from './registry.ts'
 import { checkBash } from './guard.ts'
-import { parseRoutingConfig, routeModel, leafDecision, writeAllowed } from './routing.ts'
+import { parseRoutingConfig, spawnTier, leafDecision, writeAllowed, budgetGuard } from './routing.ts'
 import {
   parseHeader, isTicketKey, parseReport, staleChecks, ticketPaths, ticketOfPath, shipTarget, shipBlock,
   parseClaim, claimedByOther, fixAttempts, deriveStep, renderRuns, updateTicket, activeTickets, CHECKS, CLAIM_MS,
@@ -135,10 +135,12 @@ let trackerWrites = Promise.resolve()
 
 // Subagent id → type, filled at spawn, read by the write guard.
 const agentTypes = new Map()
+// Subagent id → { model, effort } decided at spawn, enforced on every model request of that agent.
+const agentTiers = new Map()
 
 async function loadRoutingConfig($, contextDir) {
   const path = `${contextDir}/routing.json`
-  if (!contextDir || !(await $.fs.exists(path))) return { agents: {}, leaves: [], leafModel: 'haiku', reportOnly: [] }
+  if (!contextDir || !(await $.fs.exists(path))) return { agents: {}, leaves: [], leafModel: 'haiku', reportOnly: [], tiers: {} }
   return parseRoutingConfig(await $.fs.read(path))
 }
 
@@ -146,6 +148,9 @@ export function register(on, options) {
   const contextDir = options?.context_dir ? String(options.context_dir).replace(/\/$/, '') : ''
   const mainModel = String(options?.main_model ?? 'opus')
   const subagentModel = String(options?.subagent_model ?? 'sonnet')
+  const guardContext = Number(options?.guard_context_percent ?? 50)
+  const guardWindow = Number(options?.guard_window_percent ?? 75)
+  const budget = { context: undefined, window: 0 }
 
   on('session.start', async ($, e, next) => {
     await $.tool.register({
@@ -174,13 +179,25 @@ export function register(on, options) {
     return next(e)
   })
 
-  // Context: the project card goes into the first message of each conversation.
+  // Context: the project card goes into the first message of each conversation, plus the budget
+  // guard when the main loop's context or the usage window runs high.
   on('prompt.context', async ($, e, next) => {
     const text = await contextFor($, contextDir, await $.session.cwd())
     const runs = await runsText($, contextDir)
     const blocks = [...e.blocks, { name: 'project', text }]
     if (runs && !runs.startsWith('No unfinished')) blocks.push({ name: 'builder-runs', text: runs })
+    const guard = budgetGuard(budget, guardContext, guardWindow)
+    if (guard) blocks.push({ name: 'budget-guard', text: guard })
     return next({ ...e, blocks })
+  })
+
+  // Budget readings for the guard: main-loop context fill and the highest rate-limit window.
+  on('session.measure', async ($, e, next) => {
+    budget.context = e.context?.percent
+    budget.window = Math.max(0, ...(e.rateLimits ?? []).map((r) => r.percentUsed ?? 0))
+    const guard = budgetGuard(budget, guardContext, guardWindow)
+    await $.ui.status(guard ? `budget: context ${Math.round(budget.context ?? 0)}%, window ${Math.round(budget.window)}%` : undefined)
+    return next(e)
   })
 
   // Compaction keeps the run state, so a long build resumes at the right step.
@@ -246,22 +263,27 @@ export function register(on, options) {
   // then the subagent_model option.
   on('agent.spawn', async ($, e, next) => {
     const cfg = await loadRoutingConfig($, contextDir)
-    const record = async (spawn) => {
+    const type = String(e.subagentType)
+    const record = async (spawn, tier) => {
       const r = await next(spawn)
-      if (r?.agentId) agentTypes.set(r.agentId, String(spawn.subagentType))
+      const id = r?.agentId ?? e.resume?.agentId
+      if (id) {
+        agentTypes.set(id, type)
+        agentTiers.set(id, tier)
+      }
       return r
     }
     // Depth 2: leaf agents only, always on the leaf model.
-    const leaf = leafDecision(String(e.subagentType), e.parentAgentId, cfg)
+    const leaf = leafDecision(type, e.parentAgentId, cfg)
     if (leaf.deny) return { deny: leaf.deny }
-    if (leaf.model) return record({ ...e, model: leaf.model })
-    if (contextDir && String(e.subagentType).startsWith('builder:')) {
+    let chosen = e.model
+    if (!leaf.model && contextDir && type.startsWith('builder:')) {
       const r = await ledgerSpawn($, contextDir, e)
       if (r.deny) return { deny: r.deny }
-      if (r.model) return record({ ...e, model: r.model })
+      if (r.model) chosen = r.model
     }
-    const model = routeModel(e.subagentType, e.model, cfg.agents, subagentModel)
-    return record(model ? { ...e, model } : e)
+    const tier = spawnTier(type, !!leaf.model, leaf.model ? undefined : chosen, cfg, subagentModel)
+    return record(tier.model ? { ...e, model: tier.model } : e, tier)
   })
 
   // Report-only agents (scouts, skeptics, reviewers) may write only their reports under .runtime/.
@@ -278,8 +300,17 @@ export function register(on, options) {
   }
 
   // The main loop always runs on the main model. Subagent steps carry an agentId and pass through.
+  // Subagent steps run on the tier decided at spawn (model and effort), whatever the engine resolved.
   on('turn.step', async function* ($, e, next) {
-    if (e.agentId || !mainModel || e.model.includes(mainModel)) return yield* next(e)
+    if (e.agentId) {
+      const tier = agentTiers.get(e.agentId)
+      if (!tier) return yield* next(e)
+      const step = { ...e }
+      if (tier.model && !e.model.includes(tier.model)) step.model = tier.model
+      if (tier.effort && e.effort !== undefined && e.effort !== tier.effort) step.effort = tier.effort
+      return yield* next(step)
+    }
+    if (!mainModel || e.model.includes(mainModel)) return yield* next(e)
     return yield* next({ ...e, model: mainModel })
   })
 

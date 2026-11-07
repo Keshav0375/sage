@@ -30,18 +30,18 @@ verifier, or the orchestrator). Never put a step that decides or declares on Hai
 ## Waves: parallel only when inputs are independent
 - Before spawning, write the dependency graph of the step in one line (`A, B → C → D, E`). Agents
   that need another agent's output wait for it; agents with independent inputs share a wave.
-- Wave size: at most **4 depth-1 agents at a time** (each may run up to 4 leaves). A bigger set
+- Wave size: at most **3 depth-1 agents at a time** (each may run up to 2 leaves). A bigger set
   runs in successive waves of 4. Bursts of large parallel reads are what exhaust the usage window.
 - Prefer **one agent with a clear list** over many agents with one item each when the items share
   the same inputs (one docs-reader for three related libraries, not three).
-- **Cost line before a wave of 4 or more**: tell Keshav one line — agents, tier, rough tokens
+- **Cost line before every wave of 2 or more**: tell Keshav one line — agents, tier, rough tokens
   (≈ 100k per Sonnet reader, ≈ 30k per Haiku leaf, writers ≈ size of the files they touch × calls).
   Continue unless he objects.
 - Loop until the verifier says `GREEN`, or stop after three loops and report.
 
 ## Token rules
 1. **Files, not replies.** Every agent writes its full output to a file under `context/.runtime/`
-   and replies with the status keyword, the path and ≤ 15 lines. The orchestrator reads a file only
+   and replies with the status keyword, the path and ≤ 8 lines. The orchestrator reads a file only
    for the part it needs (Grep, Read with offset/limit). Never paste an agent's long report back
    into another prompt: pass the path.
 2. **Slices, not whole documents.** Give each agent the exact sections it needs
@@ -55,7 +55,16 @@ verifier, or the orchestrator). Never put a step that decides or declares on Hai
    The orchestrator's own context is the most expensive context in the system.
 5. **Write by section.** Writers create or replace a whole section file in one write; they do not
    make many small edits to one large file (each call re-reads it).
-6. **Measure.** After each stage, run `/observe:traces` and note tokens by agent type in `STATE.md`.
+6. **Hard stop per stage.** The orchestrator finishes ONE stage per session: when the stage's
+   files are written, it updates `STATE.md` with the exact resume command and stops, even if Keshav
+   says "continue". The brain mod's `budget-guard` block (main-loop context ≥ 50% or usage window
+   ≥ 75%) is an order: save progress and hand off, or drop to one agent at a time.
+7. **Write early.** Every agent writes its output file in its first turns and extends it, so a
+   usage-limit stop loses nothing; a stopped agent is resumed by SendMessage, never respawned.
+8. **Tiers are enforced.** `context/routing.json` `tiers` sets model and effort per agent type and
+   the brain mod applies them on every model request. Do not pass `model` on an Agent call unless
+   you mean to override the tier for that one run.
+9. **Measure.** After each stage, run `/observe:traces` and note tokens by agent type in `STATE.md`.
 
 ## How to spawn
 - Give each subagent everything it needs in the prompt: the goal, the input paths and sections,

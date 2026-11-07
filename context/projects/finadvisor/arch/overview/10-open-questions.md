@@ -1,6 +1,8 @@
 ## 10. Open questions
 
-Spikes and measurements only. Each runs first in its epic and its result is recorded as an ADR (conditional ADRs are named in ADR-011, ADR-020 and ADR-024). Values the brief left open are set by the implementing ticket and appear in §6.6 as "set in Ex".
+Spikes and measurements only; every decided item is in `decisions.md` (ADR-026 to ADR-038 for round 4). Each spike runs first in its epic and its result is recorded as an ADR or an ADR addendum (conditional ADRs are named in ADR-011, ADR-020 and ADR-024). Values the brief left open are set by the implementing ticket and appear in §6.6 as "set in Ex". Items marked UNVERIFIED are facts the docs do not state.
+
+### 10.1 Platform spikes (rounds 1-3, still open)
 
 1. **Kong SSE pass-through (E2).** Verify tokens stream without buffering through ALB, Kong (`response_buffering: false`, `request_buffering: false`, `read_timeout` 3,600,000 ms) and chat-api. Pass: SSE through Kong adds <= 50 ms p95 over a direct chat-api stream (D16.16). Fail: ADR on routing the SSE route around Kong.
 2. **`X-Serverless-Authorization` passthrough smoke test (E2).** A Kong `pre-function` sets `X-Serverless-Authorization` (metadata-server ID token, audience = chat-api URL) and Cloud Run IAM accepts it while the user `Authorization` header reaches FastAPI unchanged (documented for IAM; "unchanged" is inferred). Fail: ingress internal only plus application JWT on that hop, recorded as an ADR.
@@ -8,7 +10,23 @@ Spikes and measurements only. Each runs first in its epic and its result is reco
 4. **ai-proxy `preserve` egress (E2).** `route_type: preserve` (or a plain proxy service) to `api.anthropic.com` with streaming and tool use in the native Messages format, protected by `key-auth` + `ip-restriction`. Pass: `LLMClient` uses the internal Kong route (API key from env, global LLM rate limit, `log_statistics`). Fail: `LLMClient` calls Anthropic directly and the egress route is dropped (ADR).
 5. **Kong `X-RL-Key` behaviour (E2).** The `pre-function` sets `X-RL-Key = sha256(Authorization)` before `rate-limiting` runs, the limit keys on it, and raw tokens never reach Valkey keys.
 6. **Cloud SQL start time (E10).** The stopped-to-RUNNABLE time is not documented; measure it. Also confirm stopped-instance billing is storage only, the basis of the idle budget.
-7. **Rerank latency and TPM (E3).** Measure rerank-2.5-lite p95 against the 700 ms target and TPM / QPS at Tier 1 (~5 QPS); request the tier upgrade before load tests. The ablation sets `RERANK_CANDIDATES` and decides rerank on recall and latency.
-8. **Docling on 497K and inline XBRL (E6).** Confirm Docling parses the EDGAR fund summary prospectus (497K HTML) and inline-XBRL tables; chunk sizes measured with Voyage `count_tokens`.
+7. **Rerank latency and TPM (E3).** Measure the rerank model's p95 against the 700 ms target and the TPM / QPS limit that applies to the account (the earlier 2M TPM figure and the round-4 listing of rerank-2.5-lite at 4M TPM disagree); request the tier upgrade before load tests. The confirmatory ablation arm 3 (rerank-3 vs rerank-2.5) sets the model; `RERANK_CANDIDATES` is set on recall and latency.
+8. **Docling on 497K, KID fee tables and inline XBRL (E6 / E11).** Confirm Docling parses the EDGAR 497K HTML, KID cost tables and inline-XBRL tables; chunk sizes measured with Voyage `count_tokens`; TEDS spot check on 20 KID cost tables (feeds ablation arm 4).
 9. **Cloud Armor and Confluent cost (E2 / E5 / E10).** The Cloud Armor ~$6-10/month and the Confluent Basic ~$0-5/month in the idle budget are UNVERIFIED; confirm in billing.
-10. **Presidio latency (E4).** No official figure; benchmark `presidio-analyzer` 2.2.x with `en_core_web_sm` on the synthetic corpus for latency and recall.
+
+### 10.2 Round-4 UNVERIFIED facts to spike or measure
+
+10. **Identity Platform: the same email in two tenants (spike, gates the E1 identity tickets).** The pages are silent. Pass: one email can hold an account in two Identity Platform tenants, with separate `currentUser` per auth instance. Fail: per-firm email aliases and a new ADR (ADR-032). E1 is not built, so the result costs no rework.
+11. **Model Armor latency (E4).** Latency, SLA and precision are NOT FOUND. Measure from the Cloud Run region (p50, p95, p99) before `MODEL_ARMOR_TIMEOUT_MS` is fixed; also measure the first-sentence latency of the numeric gate and the items missing from the §2.1 budget (Kong hop, `auth` and `principal`, Presidio on the prompt, cache lookup, cold start). Reconcile the 300 ms first-stage target with the serial p95 estimates for embed (0.25 s) and first-stage SQL (0.30 s).
+12. **Presidio recall (E4).** Benchmark `presidio-analyzer` 2.2.x with `en_core_web_sm` for latency, and measure DE and FR PII recall on the guardrail sets of §2.10 before any DE/FR claim; the pass line (recall >= 0.90 on must-redact classes) is the author's proposal. Until measured, ADR-009 keeps "no recall guarantee" and ADR-038 notes that redacted prompts may still carry PII.
+13. **Second-region prices (ADR-031).** Verified prices do not exist; the ESTIMATE of $15-40/month on demand or $90-150 standing is UNVERIFIED. Also unpriced: ALB host rules per cell, Cloud SQL stopped-instance billing in a second region, Claude on Vertex AI in an EU region (availability UNVERIFIED).
+14. **Cloud SQL PITR log retention days.** The retention range is not on the pages read; set it explicitly and confirm in the console (UNVERIFIED; ADR-029).
+15. **Backup expiry while the instance is stopped.** A stopped instance takes no new backups, and whether old backups still expire on schedule is not documented. Test it (§7.4 #31); the "backups within 7 d" promise holds only if they do.
+16. **Recall with superseded rows (E3 spike).** pgvector iterative scan post-filters superseded rows under RLS and LIST partitions with no recall guarantee. Spike with 30% superseded rows; the trigger for the partial index `WHERE is_current` is a recall or p95 miss (ADR-027).
+17. **Ambiguous date formats in the `as_of` parser (E11).** A date such as `03/04/2024` differs between US and EU advisors, and "under the 2023 rules" has no unique date. The locale rule is decided in E11.
+18. **HNSW build time at 100k to 1M chunks (E3).** Unmeasured; also the Voyage backfill throughput, which the 20 min and 200 min figures of §7.5 only bound.
+19. **Kafka limits on Basic.** The maximum of `retention.ms` on Basic was not found, and `segment.ms` 1 d must be confirmed on the real topics (minimum 4 h is documented).
+20. **Langfuse deletion.** No confirmation is returned and the deletion rate limit has no number; the canary measures when a trace disappears, and the 24 h alert covers a miss.
+21. **Two-cell compose footprint.** RAM of 4-6 GB for the two-cell docker compose suite is an ASSUMPTION; measure it.
+22. **Golden-set detectable effect.** The effect size the 200 items can detect is computed after the 30-item pilot and recorded (no ICC is assumed); labelling effort (about 39-56 h) is an ESTIMATE; judge-human agreement (rho^2 >= 0.4) decides whether the judged tier can gate.
+23. **Publisher-document legal view (evidence-r4.md §0.3).** Whether private demo use of KIDs, 497K and ADV brochures is acceptable is pending counsel; K-R4-3 accepted the risk. FCA revocation behaviour is drilled quarterly.

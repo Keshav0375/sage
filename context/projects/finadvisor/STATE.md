@@ -27,6 +27,33 @@
   6 epics + 103 tickets (E0-E3 full, E4 to T17) + 5 phase milestones. Plan will change.
 - NEXT: research round 4 (real data, data engineering at scale, multi-region, guardrails,
   advanced RAG). Brief: context/.runtime/research/finadvisor/brief-r4.md. Run in a FRESH session.
+- 2026-11-02 Round 4 stage 1 DONE: 8 evidence files + 2 skeptic passes in r4/, merged into
+  evidence-r4.md. Keshav's checkpoint answers in checkpoint-r4.md (K-R4-1..4: keep D-R4-1;
+  FCA API + legislation.gov.uk; publisher docs private only; 200-item golden set).
+  NEXT: stage 2 design (2-3 proposals for the changed parts, skeptic, decision-r4.md) in a FRESH
+  session: `/researcher:run finadvisor Continue round 4 at stage 2 per brief-r4.md`.
+- 2026-11-07 Round 4 stage 2 DONE (decision-r4.md R4-D1..D17: base P-reliability, PG16 ranges,
+  physical delete + tombstone ledger, Postgres queues for deletion and ACL, cells.json, E11-E13).
+  Stage 3 arch WRITTEN: ADR-026..038 + amendments, overview 01-10 (04 split into 04/04.1/04.2,
+  05 into 05/05.1), stack.md, plan.md. Stage 3 validation IN PROGRESS (r4/V-docs-db.md,
+  V-docs-ai.md, V-consistency.md). Then: fold fixes, stage 4 re-plan + publish diff, report.
+- 2026-11-07 HALTED by Keshav for token use. Harness fixed: brain mod enforces model+effort tiers
+  per step (routing.json `tiers`), budget guard (context ≥ 50%, window ≥ 75%), waves ≤ 3, replies
+  ≤ 8 lines, leaves only for long sources. Validation state: V-docs-db.md DONE, V-docs-ai.md DONE,
+  V-consistency.md STOPPED (partial). Verdicts so far: rerank-3 replaces rerank-2.5 as default
+  (arm 3 = rerank-3 vs rerank-3-lite); BigQuery project default_max_time_travel_hours=48; Model
+  Armor behind a flag + fallback; Voyage llm_egress_ack wording (opt-out, no region); spikes:
+  Cloud SQL backups while stopped, Identity Platform same email.
+  RESUME in a FRESH session: `/researcher:run finadvisor Continue round 4 at stage 3 validation:
+  rerun the consistency check (r4/V-consistency.md), then fold the validation fixes per STATE.md`.
+- (history) Round 4 stage 1 was stopped twice by the 5-hour limit. Evidence in
+  context/.runtime/research/finadvisor/r4/. Done: A-us-sources.md, A-eu-uk-sources.md,
+  A-eval-sets.md, BC-prior-art.md, leaf pages in r4/pages/. Missing: B-lifecycle-docs.md (pages
+  saved, PG18/pgvector leaf missing), C-regions-docs.md, D-guardrail-tools.md, E-rag-papers.md,
+  then Anthropic/Voyage rate limits, skeptic, merge to evidence-r4.md, Keshav checkpoint.
+  Early findings: FINRA Rulebook terms forbid bulk copy and ML use (drop or licence); no public
+  human-checked advisor-regulation QA set (own golden set 150-300 items); FCA site terms vs
+  Handbook OGL conflict (unresolved).
 - 2026-11-01 IMPLEMENTATION GATE: no build work (builder agents, branches, code edits in FinAdvisor)
   until Keshav says research is complete and tickets are ready to execute.
 

@@ -41,5 +41,5 @@ and every `questions` entry.
 ## Report to a file (token rule)
 Write your full report to the output path the orchestrator gave you (under `context/.runtime/`;
 if none, `context/.runtime/research/<p>/<your-agent-name>-<topic>.md`). Your reply is the status
-keyword, the path, and a summary of at most 15 lines with the load-bearing findings. The
+keyword, the path, and a summary of at most 8 lines with the load-bearing findings. The
 orchestrator reads the file only when it needs the details.

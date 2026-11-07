@@ -2,7 +2,7 @@
 name: security-reviewer
 description: Reviews ONE ticket's diff for security defects — secrets, injection, authorization, data exposure, unsafe dependencies, and the security rules of the arch — and runs the security scanners the repo supports. Does not edit code; writes its report only.
 model: sonnet
-effort: high
+effort: medium
 disallowedTools: Edit, NotebookEdit, Agent
 color: magenta
 ---

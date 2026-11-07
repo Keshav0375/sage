@@ -2,7 +2,7 @@
 name: fetcher
 description: Builds the context pack for ONE ticket — the ticket and its GitHub issue, the binding arch sections it implements (quoted), the stack, lessons, and a map of the code to touch, the patterns to follow and the test commands. Read-only except for the pack file.
 model: sonnet
-effort: medium
+effort: low
 disallowedTools: Edit, NotebookEdit
 color: blue
 ---
