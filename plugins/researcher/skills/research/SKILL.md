@@ -1,6 +1,6 @@
 ---
 name: research
-description: Deep research on a question — parallel scouts over current docs, papers, the web and Keshav's library, then a cited synthesis by the main session and an adversarial fact-check. Saves the note to context/library/research/. Use for tech choices, "what's the best way to…", "is X worth it", tool comparisons.
+description: Deep research on a question — parallel scouts over current docs, papers, the web and Keshav's library, then a cited synthesis by the main session and an adversarial fact-check. Saves the note to projects/<p>/library/research/. Use for tech choices, "what's the best way to…", "is X worth it", tool comparisons.
 argument-hint: "<question>"
 ---
 
@@ -11,7 +11,7 @@ Restate it in one sentence with the decision it serves and the constraints that 
 ambiguous, ask Keshav one question first.
 
 ## 2. Check the library
-Search `context/library/` (research, papers, patterns, council) for earlier work. Reuse it and
+Search `projects/<p>/library/index.md` and `projects/<p>/library/research/` for earlier work. Reuse it and
 note its date.
 
 ## 3. Scout (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
@@ -29,5 +29,6 @@ Spawn `researcher:skeptic` on the synthesis. Fix or drop every `WRONG` or `UNSUP
 `WEAK` ones.
 
 ## 6. Save
-Write `context/library/research/<yyyy-mm-dd>-<slug>.md`: question, answer, evidence table with
-links and dates, open gaps, and the skeptic's verdicts.
+Write `projects/<p>/library/research/<round>/<slug>.md`: question, answer, evidence table with
+links and dates, open gaps, and the skeptic's verdicts. Add a row for every cited source to
+`projects/<p>/library/index.md`.

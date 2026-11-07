@@ -1,0 +1,382 @@
+{
+  "epic": "E0",
+  "tickets": [
+    {
+      "key": "E0-T1",
+      "title": "Spike: confirm Langfuse Cloud accepts SDK 5.x with masking",
+      "summary": "Prove that Langfuse Python SDK 5.x exports traces to Langfuse Cloud with masked and capture-off spans, and record the exact parameter names the wrapper must use.",
+      "description": "Why: ADR-018 chooses Langfuse Cloud Hobby with Python SDK 5.x (5.1.0 current) behind one wrapper, using `@observe` with `capture_input` / `capture_output` off on sensitive spans and `mask_otel_spans` for export masking. The MVP pins langfuse 4.6.1 and calls v2 methods that do not exist (G-15). plan.md E0: \"confirm Langfuse Cloud accepts SDK 5.x as the first ticket\". The wrapper ticket E0-T8 must not start until this passes.\n\nBuild:\n- Bump `langfuse` in `backend/pyproject.toml` to the 5.x line (5.1.0 or newer 5.x) and re-lock (`poetry lock`), keeping every other locked version unchanged where possible. Do not touch `backend/src/observability/tracing.py` or its mocked tests (E0-T8 replaces them).\n- Add `backend/scripts/spike_langfuse_v5.py`. It reads `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST` from the environment (Settings does not exist in its final form yet), creates one trace with (a) a normal span whose input contains the marker `SPIKE-SSN-123-45-6789` and which is exported through SDK-level masking (`mask_otel_spans`, confirm the exact name and signature against the SDK 5.1.0 docs via Context7 or langfuse.com/docs) that replaces the marker with `[REDACTED]`, and (b) a sensitive span created with `capture_input=False, capture_output=False` and non-empty input/output. It flushes, then polls the Langfuse public API (`GET {host}/api/public/traces/{id}`, basic auth with the key pair) for up to 60 s.\n- The script exits 0 only if: the trace is retrievable; no observation input/output contains `SPIKE-SSN`; the sensitive span has no input and no output. Otherwise it prints the reason and exits 1. A transport or auth error exits non-zero.\n- Write `docs/spikes/langfuse-sdk5.md`: verdict (pass/fail), SDK version, the exact masking and capture-off parameter names that worked, host/region used, and any limitation found (for example if the legacy `mask=` does not cover OTel spans, which ADR-018 says it does not).\n\nOut of scope: the production wrapper, orchestrator changes, Settings keys (E0-T3 and E0-T8). Needs a Langfuse Cloud Hobby project with a key pair supplied by Keshav (see questions).",
+      "acceptance_criteria": [
+        "`cd backend && poetry lock --check` exits 0 and `poetry run python -c \"import langfuse, importlib.metadata as m; print(m.version('langfuse'))\"` prints a version starting with `5.`.",
+        "Given a valid Langfuse Cloud key pair in the environment, when `poetry run python scripts/spike_langfuse_v5.py` runs, then it exits 0 and prints the trace id it fetched from `/api/public/traces/{id}`.",
+        "Given the same run with `LANGFUSE_SECRET_KEY` set to a wrong value, when the script runs, then it exits non-zero (the check can fail).",
+        "The script exits 1 if any fetched observation input or output contains the string `SPIKE-SSN`, and exits 1 if the sensitive span has a non-empty input or output (demonstrated by running once with masking disabled via a `--no-mask` flag and seeing exit 1).",
+        "`docs/spikes/langfuse-sdk5.md` exists and contains a `Verdict:` line with `pass` or `fail`, the installed SDK version, and the exact masking and capture-off parameter names."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "decisions.md#adr-018",
+        "stack.md#llm-observability"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T2",
+      "title": "Build the backend image from poetry.lock with dev and runtime stages",
+      "summary": "The backend image installs only what `backend/poetry.lock` pins, has a real `dev` stage, and the build fails when the lock is stale.",
+      "description": "Why: G-28: `backend/Dockerfile:6-8` runs `pip install -e \".\"` from `>=` floors and ignores `poetry.lock`, so rebuilds change major versions. G-49: `docker-compose.override.yml` targets a `dev` stage that does not exist. ADR-021: lockfile installs only, images referenced by digest. ADR-019: one Python image (entrypoints are added in E0-T9).\n\nBuild `backend/Dockerfile` as a multi-stage build:\n- `base`: `python:3.12-slim` referenced by `@sha256:` digest (resolve the current digest and add a comment with the tag).\n- `builder`: installs a pinned Poetry version, runs `poetry check --lock` then `poetry install --no-root --only main --no-interaction` into a virtualenv at `/opt/venv` using `backend/poetry.lock`.\n- `dev`: adds the `dev` dependency group, runs as non-root, keeps `CMD uvicorn src.main:app --reload --host 0.0.0.0 --port 8000` (the override file mounts `src/` and `tests/`).\n- `runtime` (the last stage, so a plain `docker build` produces it): main group only, source copied, non-root user, `CMD uvicorn src.main:app --host 0.0.0.0 --port 8000`.\n- Add `backend/.dockerignore` excluding `.venv`, `.env`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`.\n- Pin the poetry-core build requirement in `backend/pyproject.toml` (`requires = [\"poetry-core==<locked version>\"]`) so builds do not float.\n- Leave `docker-compose.yml` ports/services alone (E0-T11 rewrites it); only make sure `docker-compose.override.yml` `target: dev` now resolves.\n\nOut of scope: the `api | worker | jobs` entrypoint dispatcher (E0-T9), compose rewrite (E0-T11), CI (E0-T13), Trivy image scan (E0-T14).",
+      "acceptance_criteria": [
+        "Given a clean checkout, when `docker build --target runtime -t fa-backend:test backend` runs, then it succeeds, and `docker run --rm fa-backend:test python -c \"import fastapi,anthropic,langfuse,importlib.metadata as m; print(m.version('fastapi'), m.version('anthropic'), m.version('langfuse'))\"` prints exactly the three versions listed in `backend/poetry.lock`.",
+        "Given `backend/pyproject.toml` has a new dependency added without re-locking, when the image is built, then the build fails at `poetry check --lock` (verified once by adding `rich` to pyproject and confirming a non-zero build exit).",
+        "`docker build --target dev` succeeds and `docker run --rm <dev-image> pytest --version` exits 0, while `docker run --rm fa-backend:test pytest --version` exits non-zero (no dev tools in runtime).",
+        "`docker run --rm fa-backend:test id -u` prints a non-zero uid.",
+        "Every `FROM` line in `backend/Dockerfile` contains `@sha256:` (checked by `! grep -E '^FROM' backend/Dockerfile | grep -v '@sha256:'`)."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "overview.md#4",
+        "decisions.md#adr-021",
+        "decisions.md#adr-019"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T3",
+      "title": "Replace Settings with one typed config that fails boot on missing secrets",
+      "summary": "A single pydantic-settings `Settings` holds the E0 keys from the config table, has no secret defaults, and the app refuses to start without its required keys.",
+      "description": "Why: G-25: `backend/src/config.py` has code defaults for secrets (`localdev` DB password, `[dev key, redacted]`, `[dev secret, redacted]`) and a missing variable falls back silently. \u00a76.6: \"One typed `Settings` class (pydantic-settings). No secret has a default; a missing required key fails boot.\" ADR-006: \"Model ids only from config.\"\n\nRewrite `backend/src/config.py` (one class, `Settings(BaseSettings)`, env names are the upper-case keys below, secrets as `SecretStr`):\n- `ENV_PROFILE` (`dev` | `demo` | `prod`, default `dev`).\n- `DB_HOST`, `DB_PORT` (see questions; int, default 5432), `DB_NAME`, `DB_USER`, `DB_PASSWORD` (secret), `DB_POOL_SIZE`, `DB_STATEMENT_TIMEOUT_MS`: no defaults except `DB_PORT`. Provide a `database_dsn` property (`postgresql+asyncpg://...`, URL-encoded password) replacing `database_url`.\n- `ANTHROPIC_API_KEY` (secret, required), `ANTHROPIC_BASE_URL` (default `https://api.anthropic.com`).\n- `LLM_MODEL_ANSWER` (default `claude-sonnet-5-5`), `LLM_MODEL_AUX` and `LLM_MODEL_JUDGE` (default `claude-haiku-5-5`), `LLM_MODEL_FALLBACK` (default `claude-sonnet-4-6`), `LLM_FALLBACK_ENABLED` (default `false`), `LLM_MAX_ITERATIONS` (default 3). A validator rejects `LLM_MODEL_JUDGE == LLM_MODEL_ANSWER` (\u00a76.6: judge must differ from answer). The model-id values are not checked against the retirement table here (E0-T4 does that, and `/readyz` must still be able to boot and report it).\n- `VOYAGE_API_KEY` (secret, required).\n- `LANGFUSE_ENABLED` (default `false`), `LANGFUSE_HOST`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`; the three Langfuse values are required only when `LANGFUSE_ENABLED=true`.\n- Keys still read by MVP code that E1 replaces: `PII_MODE` (default `regex`), `GCP_PROJECT_ID` (default empty), `JWT_SECRET` (secret, required, no default; E1 deletes it).\n- Remove `openai_api_key`, `google_api_key`, `litellm_master_key`, `kong_url`, `llm_base_url`, `database_url`.\nOnly keys the E0 code consumes are added; later epics add theirs from \u00a76.6.\n\nUpdate every consumer: `backend/src/main.py` (build the engine from `database_dsn`, never log credentials), `backend/src/db/session.py` (`pool_size=DB_POOL_SIZE`, per-connection `statement_timeout` from `DB_STATEMENT_TIMEOUT_MS`), `backend/src/pii/__init__.py`, `backend/scripts/ingest.py`, `backend/scripts/generate_corpus.py`, `backend/tests` fixtures. Tests get their values from an autouse fixture / `pytest` env setup that sets dummy non-secret-looking values; the code itself holds none. Rewrite `.env.example` with placeholders only (`REPLACE_ME`), listing exactly these keys.\n\nOut of scope: embeddings model keys (E3), Kafka and other keys (their epics), swapping the LLM call sites to the new model keys (E0-T6), role/RLS config (E1).",
+      "acceptance_criteria": [
+        "Given each of `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `DB_PASSWORD`, `JWT_SECRET`, `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_POOL_SIZE`, `DB_STATEMENT_TIMEOUT_MS` removed in turn from an otherwise valid environment, when `Settings()` is built, then it raises `ValidationError` naming that key (parametrized unit test, `backend/tests/test_settings.py`).",
+        "Given `ANTHROPIC_API_KEY` is unset, when `uvicorn src.main:app` is started in a subprocess, then the process exits non-zero within 15 s, stderr names `ANTHROPIC_API_KEY`, and no secret value from the environment appears in stderr (subprocess test).",
+        "Given `LANGFUSE_ENABLED=true` with no Langfuse keys, `Settings()` raises; given `LANGFUSE_ENABLED=false` and no keys, it succeeds.",
+        "Given `LLM_MODEL_JUDGE` equal to `LLM_MODEL_ANSWER`, `Settings()` raises `ValidationError`.",
+        "`repr(Settings(...))` and `str(Settings(...))` contain none of the secret values, and `grep -rEn \"localdev|[dev secret, redacted]|sk-litellm\" backend/src backend/scripts .env.example` returns no match.",
+        "`ruff check`, `ruff format --check`, `mypy src/` and the full existing `pytest` suite pass (97 passed before this ticket)."
+      ],
+      "arch_refs": [
+        "overview.md#6.6",
+        "overview.md#1",
+        "decisions.md#adr-006",
+        "decisions.md#adr-005"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T4",
+      "title": "Add a retired-model check for configured model ids",
+      "summary": "A tested function and CLI report any configured model id that is retired, soon retiring or deprecated, so CI and readiness can fail on it.",
+      "description": "Why: ADR-006: `claude-sonnet-4-20250514` retired 2026-06-15 (app and evals fail today); \"Model ids only from config; CI and readiness fail on a retired or soon-retiring model.\" \u00a77 failure modes: \"Retired or soon-retiring model id: readiness check, CI check; `/readyz` fails; CI blocks.\"\n\nBuild `backend/src/model_lifecycle.py`:\n- A static table of known lifecycle facts from ADR-006: `claude-sonnet-4-20250514` retired 2026-06-15; `claude-sonnet-4-5` retires 2026-11-30; `claude-haiku-4-5` deprecated about 2026-10-15 (retirement date not in the arch; see questions). Each row carries the source URL (https://platform.claude.com/docs/en/about-claude/model-deprecations).\n- `check_models(settings, *, today: date) -> list[ModelProblem]` checks `LLM_MODEL_ANSWER`, `LLM_MODEL_AUX`, `LLM_MODEL_JUDGE` and `LLM_MODEL_FALLBACK` (the fallback is checked even while disabled). A problem is: retired (date <= today), soon retiring (within `SOON_RETIRING_DAYS`, one named module constant; value per questions, use 30 until answered) or deprecated. Each problem names the settings key and the model id and the reason code (`retired`, `retiring_soon`, `deprecated`). Ids absent from the table pass (denylist; see questions).\n- CLI: `python -m src.model_lifecycle` builds `Settings()` from the environment, prints one line per problem, exits 1 on any problem and 0 otherwise. This is what CI (E0-T13) calls.\n\nOut of scope: the `/readyz` endpoint (E0-T5), calling the Anthropic models API, the fallback eval gate.",
+      "acceptance_criteria": [
+        "Given `LLM_MODEL_ANSWER=claude-sonnet-4-20250514`, `check_models(settings, today=date(2026,11,1))` returns a problem with key `LLM_MODEL_ANSWER` and reason `retired` (unit test).",
+        "Given `LLM_MODEL_AUX=claude-sonnet-4-5`, `check_models` returns `retiring_soon` for `today=date(2026,11,1)` and returns no problem for `today=date(2026,9,1)` (unit test with the injected clock).",
+        "Given the default models (`claude-sonnet-5-5`, `claude-haiku-5-5`, `claude-sonnet-4-6`), `check_models(..., today=date(2026,11,1))` returns an empty list.",
+        "Given `LLM_MODEL_FALLBACK=claude-sonnet-4-20250514` with `LLM_FALLBACK_ENABLED=false`, the check still reports it.",
+        "`LLM_MODEL_ANSWER=claude-sonnet-4-20250514 python -m src.model_lifecycle` exits 1 and prints the key name; the same command with default model ids exits 0 (subprocess test)."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-006",
+        "overview.md#6.6",
+        "overview.md#1"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T3"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T5",
+      "title": "Add /healthz and /readyz with database and model checks",
+      "summary": "The API exposes a liveness probe and a readiness probe that fails when the database is unreachable or a configured model is retired.",
+      "description": "Why: \u00a76.1 and observability: `/healthz` (liveness) and `/readyz` (readiness, including \"model availability (configured models not retired or soon-retiring)\"). plan.md E0 done-when: \"`claude-sonnet-4-20250514` in config makes CI and `/readyz` fail (test)\". Docker healthchecks in E0-T11 use `/healthz`.\n\nBuild (root paths, not under `/api`; the existing `/api/health` stays until E4 replaces the router):\n- `GET /healthz`: 200 `{\"status\": \"ok\"}`; touches no dependency.\n- `GET /readyz`: runs `SELECT 1` on the app's DB engine with a 2 s timeout and `check_models(settings, today=date.today())` from E0-T4. 200 `{\"status\":\"ready\",\"checks\":{\"db\":\"ok\",\"models\":\"ok\"}}` when both pass; otherwise 503 `{\"status\":\"not_ready\",\"checks\":{\"db\":\"ok|fail\",\"models\":\"ok|fail\"}}`. Responses carry check names and codes only: no exception text, connection strings, key values (the arch rule that errors carry codes, not exception text). Log the failing key/model at warning level.\n- The app must still start with a retired model id configured (so readiness can report it).\n\nOut of scope (later epics add them to `/readyz`): DB role flags and FORCE RLS assertions (E1), pgvector >= 0.8 assertion, Kafka reachability (E5), firebase-admin verifier initialised (E1).",
+      "acceptance_criteria": [
+        "Given the app with a stub DB that answers `SELECT 1` and default models, `GET /readyz` returns 200 and `checks.models == \"ok\"` (unit test).",
+        "Given `LLM_MODEL_ANSWER=claude-sonnet-4-20250514`, `GET /readyz` returns 503 with `checks.models == \"fail\"`, while `GET /healthz` still returns 200 (unit test).",
+        "Given a DB that raises on `SELECT 1`, `GET /readyz` returns 503 with `checks.db == \"fail\"`, and the response body contains neither the DB host nor the exception message (unit test asserting on `response.text`).",
+        "Integration test (`requires_db`): against the real pgvector Postgres, `/readyz` returns 200; with `DB_PORT` pointed at a closed port it returns 503 within 5 s.",
+        "mypy strict and ruff pass on the new routes."
+      ],
+      "arch_refs": [
+        "overview.md#6",
+        "overview.md#9",
+        "decisions.md#adr-006",
+        "decisions.md#adr-018"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T3",
+        "E0-T4"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T6",
+      "title": "Remove LiteLLM and Kong wiring; call Anthropic directly with config models",
+      "summary": "No LiteLLM service, config, dependency or doc remains; the backend calls Anthropic at `ANTHROPIC_BASE_URL` with model ids from Settings.",
+      "description": "Why: ADR-005: drop LiteLLM; its config shuffles Claude, GPT-4o and Gemini under one name (G-08) and its fallback key matches nothing (G-09). plan.md E0: \"Remove LiteLLM and the Kong/LiteLLM wiring\". The in-process `LLMClient` with same-provider fallback is E4; this ticket only removes the old path and makes the existing code call Anthropic directly. Kong returns in E2 with a new `kong.yml`; the MVP Kong config only fronts LiteLLM and posts to a non-existent audit route, so it goes.\n\nDo:\n- Delete `litellm/`, `kong/` (Dockerfile and kong.yml), `backend/tests/test_fallback_chain.py`, `backend/scripts/test_fallback_live.py`.\n- `backend/src/main.py`: `anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY, base_url=settings.ANTHROPIC_BASE_URL)`; remove the `kong_url` / `litellm_master_key` branch. Do not pass `temperature`, `top_p` or `top_k` anywhere (ADR-006: removed from the API, 400).\n- Model ids from config at every call site: `backend/src/agent/orchestrator.py` (drop `DEFAULT_MODEL`; `model` becomes a required constructor argument, `backend/src/dependencies.py` passes `settings.LLM_MODEL_ANSWER`), `backend/scripts/run_eval.py` (`JUDGE_MODEL` from `LLM_MODEL_JUDGE`), `backend/scripts/generate_corpus.py` (`LLM_MODEL_AUX`). Update tests that referenced the old string (`tests/test_tracing.py` line 43 is replaced by E0-T8).\n- `docker-compose.yml`: delete the `litellm` and `kong` services and the backend env `KONG_URL`, `LITELLM_MASTER_KEY`, the `depends_on: kong`. Pass `ANTHROPIC_API_KEY` and `ANTHROPIC_BASE_URL` instead. (E0-T11 rewrites the file fully.)\n- Update `README.md` (architecture diagram, stack table, directory list, \"Fallback Chain\" paragraph) and `CLAUDE.md` (routing and stack lines) to say: Anthropic direct, Kong arrives in E2. Update `.env.example` already done in E0-T3, confirm no leftovers.\n- Add `scripts/check_no_litellm.sh`: fails if `git grep -il litellm` matches any tracked file outside the allowlist `Story-Reports/`, `TODO.md`, `mvp.md`, `architecture.md`, `docs/threat_model.md`, `scripts/check_no_litellm.sh` itself (historical MVP records; see questions), and fails if `backend/poetry.lock` or `backend/pyproject.toml` contains `litellm`.\n\nOut of scope: Terraform (E0-T7), the LLMClient, fallback, circuit breaker (E4), the Kong egress route (E2).",
+      "acceptance_criteria": [
+        "Given the repo after this change, `bash scripts/check_no_litellm.sh` exits 0; after temporarily adding the word `LiteLLM` to `backend/src/main.py` it exits 1 (verified in the PR description).",
+        "`git ls-files litellm kong` prints nothing, and `docker compose config --services` lists no `litellm` or `kong` service.",
+        "`grep -rEn \"claude-sonnet-4-20250514|DEFAULT_MODEL|JUDGE_MODEL = \" backend/src backend/scripts` returns no hard-coded model id, and a unit test asserts `FinAdvisorAgent` sends `model == settings.LLM_MODEL_ANSWER` to the (mocked) Anthropic client.",
+        "A unit test asserts the client built in `src.main.lifespan` has `base_url` equal to `ANTHROPIC_BASE_URL` and the API key from `ANTHROPIC_API_KEY`.",
+        "`ruff check`, `mypy src/` and `pytest` pass (the two deleted fallback test files are the only removed tests)."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "decisions.md#adr-005",
+        "decisions.md#adr-006",
+        "overview.md#6.6"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T3"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T7",
+      "title": "Remove LiteLLM and Kong resources from Terraform",
+      "summary": "The Terraform files no longer define LiteLLM or the MVP Kong service and validate cleanly.",
+      "description": "Why: plan.md E0 done-when: \"the repo contains no LiteLLM service, config or dependency\". `terraform/cloud_run.tf` defines `google_cloud_run_v2_service.litellm` (line ~162) and a Kong service that fronts it, `secrets.tf` holds `litellm_master_key`, `variables.tf` has `litellm_image` and `kong_image`, `outputs.tf` exports `litellm_url` and `kong_url`, and the backend service sets `KONG_URL`. The target Terraform (Kong `fa-gateway`, worker pool, jobs) is rebuilt in E2 and E10.\n\nDo in `terraform/`:\n- Delete the litellm service, the MVP Kong service (its image is built from the `kong/` directory deleted in E0-T6), the `litellm_master_key` secret and any IAM bindings for them, the OpenAI and Google API key secrets if present, and the variables and outputs that referenced them.\n- Backend service env: remove `KONG_URL`; add `ANTHROPIC_BASE_URL` (variable, default `https://api.anthropic.com`).\n- Do not add new infrastructure; do not change anything unrelated.\n\nOut of scope: any target-state Terraform (E2, E10).",
+      "acceptance_criteria": [
+        "`cd terraform && terraform fmt -check -recursive` exits 0.",
+        "`cd terraform && terraform init -backend=false && terraform validate` exits 0.",
+        "`grep -rniE \"litellm|KONG_URL|kong_image|openai|gemini\" terraform` returns no match.",
+        "The backend Cloud Run service definition contains an `ANTHROPIC_BASE_URL` env entry (checked by grep in the PR)."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "decisions.md#adr-005",
+        "overview.md#4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T6"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T8",
+      "title": "Replace Langfuse v2 tracing with an SDK 5.x wrapper",
+      "summary": "Tracing uses real Langfuse 5.x calls behind one wrapper with export masking and capture off on sensitive spans, and a tracing failure never fails a chat.",
+      "description": "Why: G-15: `backend/src/observability/tracing.py` calls `trace()/generation()/span()` which do not exist in the installed SDK, so chat fails with Langfuse keys set, and tests pass only because Langfuse is a `MagicMock`. ADR-018: \"Langfuse Cloud Hobby with Python SDK 5.x behind one wrapper: `@observe` with `capture_input` / `capture_output` off on sensitive spans and `mask_otel_spans` for export masking (the legacy `mask=` does not cover OTel spans)\". Use the exact parameter names recorded in `docs/spikes/langfuse-sdk5.md` from E0-T1.\n\nDo:\n- Rewrite `backend/src/observability/tracing.py` as the only module importing `langfuse`: `init_tracing(settings) -> Tracer | None` (returns `None` and creates no client when `LANGFUSE_ENABLED=false`), a span helper/decorator `traced(name, *, sensitive=True, tenant_id=None)` (sensitive spans record no input or output; tenant tag optional until E1), a masking function applied through `mask_otel_spans` that scrubs text with the existing `src/pii` redactor in regex mode, `flush()` and `shutdown()`. Prompt fetch (`get_prompt_from_langfuse`) stays, failing soft to the fallback prompt.\n- Every call into the SDK is wrapped so an exception is logged (`tracing_error`, no payload) and swallowed.\n- Update `backend/src/agent/orchestrator.py` (one trace per turn, one generation per LLM iteration, one span per tool call; tool inputs/outputs and message content are sensitive, so capture off) and `backend/src/main.py` (init in lifespan, shutdown on exit). Remove all Langfuse v2 method usage.\n- Rewrite `backend/tests/test_tracing.py` against the real installed SDK (no `MagicMock` of the Langfuse class) using an in-memory OpenTelemetry span exporter.\n\nOut of scope: tenant tagging values (E1), OTel exporters to Cloud Trace (later epic), eval datasets and scores (E7).",
+      "acceptance_criteria": [
+        "Given the real SDK with an in-memory span exporter, when a `traced(\"x\", sensitive=True)` span runs with input containing `ssn 123-45-6789` and output text, then the exported span has no input attribute and no output attribute.",
+        "Given a non-sensitive span whose input contains `jane@example.com`, the exported span attributes do not contain that string (the masking function ran) (unit test).",
+        "Given `LANGFUSE_ENABLED=false`, `init_tracing` returns `None`, no `Langfuse` object is constructed and the agent still completes a mocked turn (unit test).",
+        "Given an exporter or client that raises on every call, a mocked agent turn still yields its normal events and the failure is only logged (unit test); this is the regression for G-15.",
+        "A test builds `unittest.mock.create_autospec(langfuse.Langfuse, instance=True)` and runs the wrapper against it; it fails if the wrapper calls any method the installed SDK does not have (`trace`, `generation`, `span` as on v2).",
+        "`grep -rn \"import langfuse\\|from langfuse\" backend/src` matches only `backend/src/observability/tracing.py`; ruff, mypy and pytest pass."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-018",
+        "overview.md#1",
+        "stack.md#llm-observability"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T1",
+        "E0-T3",
+        "E0-T6"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T9",
+      "title": "Create the Alembic baseline from schema.sql and the migrate entrypoint",
+      "summary": "`python -m src.entrypoint jobs migrate` upgrades an empty database to a schema identical to `backend/db/schema.sql`, and the image gets its `api` and `jobs` entrypoints.",
+      "description": "Why: G-12: `schema.sql` is never applied by the app and there is no migration tool. plan.md E0: \"Alembic baseline created from `schema.sql`; `migrate` entrypoint\"; done when \"Alembic upgrade on an empty database equals the baseline schema\". ADR-019: one image with entrypoints `api | worker | jobs`; \u00a74.8: the `migrate` job runs Alembic upgrade before traffic (in the cloud as `fa_owner`; roles arrive in E1, so locally it runs as the configured `DB_USER`).\n\nBuild:\n- Add Alembic 1.20 (stack.md) as a main dependency and re-lock.\n- `backend/alembic.ini` (no URL inside), `backend/migrations/env.py` (async engine on asyncpg, URL from `Settings().database_dsn`), `backend/migrations/versions/0001_baseline.py` whose `upgrade()` creates exactly the objects in `backend/db/schema.sql` (extensions `vector` and `pgcrypto`, the four tables, indexes, RLS and policy, the guarded role creation) embedded as SQL in the migration so it stays immutable; `downgrade()` drops them. asyncpg runs one statement per execute: split statements or use a sync-style `exec_driver_sql` per statement. Keep `backend/db/schema.sql` untouched as the golden reference for the equality test.\n- `backend/src/entrypoint.py`: `python -m src.entrypoint api` starts uvicorn (`0.0.0.0`, port from `PORT`, default 8000, one process); `python -m src.entrypoint jobs migrate` runs `alembic upgrade head`; any other command exits 2 with usage. Set the Dockerfile `ENTRYPOINT [\"python\",\"-m\",\"src.entrypoint\"]` and `CMD [\"api\"]` for the runtime stage (the dev stage keeps its reload command).\n- Copy `alembic.ini` and `migrations/` into the image.\n\nOut of scope: the target data model, partitioning, roles and RLS v2 (E1 adds further revisions), the `worker` entrypoint (E5; see questions), tenant onboarding flag.",
+      "acceptance_criteria": [
+        "Given an empty Postgres (`pgvector/pgvector:0.8.5-pg16`), when `python -m src.entrypoint jobs migrate` runs, then it exits 0 and `SELECT version_num FROM alembic_version` returns `0001`; a second run exits 0 and changes nothing (integration test).",
+        "Given database A built with `psql -f backend/db/schema.sql` and database B built by the migrate entrypoint, `pg_dump --schema-only --no-owner --no-privileges` of both, normalised for the `alembic_version` table, is byte-identical (integration test; fails on any drift).",
+        "Given database B at head, `alembic downgrade base` leaves zero tables in `public` other than `alembic_version` (integration test).",
+        "Given `DB_PORT` pointing at a closed port, `jobs migrate` exits non-zero within 30 s and the output contains no DB password (subprocess test).",
+        "`docker run --rm fa-backend:test bogus` exits 2, and `docker run --rm fa-backend:test jobs migrate` against the compose Postgres exits 0 (checked in the PR).",
+        "`poetry check --lock`, ruff and mypy pass with the new files."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "overview.md#4",
+        "decisions.md#adr-019",
+        "decisions.md#adr-021",
+        "stack.md#migrations"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T2",
+        "E0-T3"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T10",
+      "title": "Add vitest and a frontend dev image",
+      "summary": "The frontend has a working unit-test runner, a type-check script and a dev Dockerfile so CI and compose can use them.",
+      "description": "Why: plan.md E0 CI scope lists eslint, tsc and vitest, and the compose scope lists \"a frontend dev image\" (G-13: no frontend Dockerfile). ADR-019 moves the product frontend to a Vite SPA in E8; this ticket works on the current Next.js 14 app in `frontend/` and does not migrate it (see questions).\n\nDo in `frontend/`:\n- Add `vitest` (pin in `package-lock.json`) with `vitest.config.ts` (node or jsdom environment as needed), scripts `\"test\": \"vitest run\"` and `\"typecheck\": \"tsc --noEmit\"`; keep `\"lint\": \"next lint\"`.\n- Add one real test file for the existing pure function `src/lib/parseCitations.ts` (plain text, one citation marker, multiple markers, malformed marker) so the suite asserts behaviour.\n- Add `frontend/Dockerfile` with a `dev` target: Node 20 base referenced by `@sha256:` digest, `npm ci` from the lockfile, runs `npm run dev -- -H 0.0.0.0 -p 3000` as a non-root user; and `frontend/.dockerignore` (`node_modules`, `.next`, `.env*`).\n\nOut of scope: Vite migration and any UI change (E8), Playwright, the compose service (E0-T11), CI wiring (E0-T13).",
+      "acceptance_criteria": [
+        "`cd frontend && npm ci && npm test` exits 0 and reports at least 4 passing tests in `parseCitations`; changing the expected value of one assertion makes `npm test` exit non-zero (verified once).",
+        "`cd frontend && npm run typecheck` exits 0 on the repo and exits non-zero after introducing `const x: number = \"a\"` in a source file (verified once).",
+        "`cd frontend && npm run lint` exits 0 on the repo.",
+        "`docker build --target dev -t fa-frontend:dev frontend` succeeds; `docker run --rm -d -p 13000:3000 fa-frontend:dev` then `curl -fsS localhost:13000/` returns HTTP 200 within 60 s.",
+        "The `FROM` line of `frontend/Dockerfile` contains `@sha256:`."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "decisions.md#adr-019",
+        "decisions.md#adr-021",
+        "stack.md#frontend-tests"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T11",
+      "title": "Rewrite docker compose with healthchecks and env-driven host ports",
+      "summary": "`docker compose up --wait` brings postgres, kafka, migrate, api and frontend healthy using the pinned pgvector image, with every host port overridable.",
+      "description": "Why: G-49: the override file targets a missing stage, nothing has healthchecks, `kong` waits only for start, host ports are fixed, and a duplicate standalone Langfuse compose conflicts on ports. ADR-019: \"Local dev = docker compose with the same image.\" ADR-021 / stack.md: local and CI Postgres is `pgvector/pgvector:0.8.5-pg16` to match Cloud SQL; local Kafka is `apache/kafka:4.4.0` KRaft single node. G-25: no secret defaults.\n\nRewrite `docker-compose.yml` (and fix `docker-compose.override.yml`):\n- `postgres`: `pgvector/pgvector:0.8.5-pg16`, credentials from `DB_NAME`, `DB_USER`, `DB_PASSWORD` (`${DB_PASSWORD:?set DB_PASSWORD in .env}`), named volume, `pg_isready` healthcheck; remove the `schema.sql` initdb mount (Alembic owns the schema).\n- `kafka`: `apache/kafka:4.4.0` single-node KRaft, healthcheck using the bundled `kafka-broker-api-versions.sh`, an in-network listener for containers and a host listener whose advertised port equals `KAFKA_HOST_PORT`.\n- `migrate`: same backend image, command `jobs migrate`, `depends_on: postgres: service_healthy`, `restart: \"no\"`.\n- `api`: backend image (override uses the `dev` target with source mounts), `depends_on` migrate `service_completed_successfully`, healthcheck GET `/healthz` using Python's stdlib (slim image has no curl), env from Settings keys (`ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `VOYAGE_API_KEY`, `JWT_SECRET`, `DB_*`, pool and timeout keys), all secrets required via `${VAR:?...}`.\n- `frontend`: `frontend/Dockerfile` dev target from E0-T10, `depends_on: api: service_healthy`, healthcheck on `/`.\n- Host ports bound to `127.0.0.1` and env-driven with defaults: `POSTGRES_HOST_PORT`, `KAFKA_HOST_PORT`, `API_HOST_PORT`, `FRONTEND_HOST_PORT`.\n- Remove the unused `redis`, the self-hosted `langfuse` and `langfuse-db` services and delete `langfuse/docker-compose.langfuse.yml` (ADR-018 rejected self-hosting; Langfuse Cloud is used when `LANGFUSE_ENABLED=true`; see questions).\n- Update `backend/src/cli.py` (`finadvisor` launcher): stop piping `schema.sql` into the removed initdb path; run the `migrate` service and use `docker compose up --wait`. Update `.env.example` with the host-port variables.\n\nOut of scope: Kong, Valkey, Schema Registry and the `worker` service (E2 / E5 add them), Terraform.",
+      "acceptance_criteria": [
+        "Given a valid `.env`, `docker compose up -d --wait` exits 0 and `docker compose ps --format json` shows `postgres`, `kafka`, `api` and `frontend` as `healthy` and `migrate` as `exited (0)`.",
+        "Given a stray listener on 5432, 8000, 3000 and 9092 (for example `python -m http.server` on each) and `POSTGRES_HOST_PORT=15432 API_HOST_PORT=18000 FRONTEND_HOST_PORT=13000 KAFKA_HOST_PORT=19092`, `docker compose up -d --wait` still exits 0 (no fixed host-port collision), and a second project (`-p other`) with different ports runs side by side.",
+        "Given `DB_PASSWORD` unset, `docker compose config` exits non-zero with the `set DB_PASSWORD` message (no secret default).",
+        "`docker compose config | grep -E \"image:\"` shows `pgvector/pgvector:0.8.5-pg16` and `apache/kafka:4.4.0` and no `redis`, `langfuse`, `litellm` or `kong` image.",
+        "Given a clean DB volume, after `up --wait`, `docker compose exec postgres psql -U $DB_USER -d $DB_NAME -c \"select version_num from alembic_version\"` returns `0001`; `curl -fsS localhost:$API_HOST_PORT/healthz` returns 200 and `/readyz` returns 200.",
+        "`docker compose down -v` leaves no containers or volumes for the project (`docker compose ps -a` empty)."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "overview.md#4",
+        "decisions.md#adr-019",
+        "decisions.md#adr-021",
+        "stack.md#local-orchestration"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T2",
+        "E0-T5",
+        "E0-T6",
+        "E0-T9",
+        "E0-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T12",
+      "title": "Split unit and integration tests and add a dependency start script",
+      "summary": "Tests are marked unit or integration, integration tests cannot silently skip when services are required, and one command starts the dependencies and runs them.",
+      "description": "Why: the suite shows `97 passed, 25 skipped`: every DB test uses `requires_db`, which skips silently when Postgres is absent and hard-codes `localhost:5432` with the `localdev` password in `backend/tests/conftest.py`. A CI that skips them is green and dishonest (G-05 intent: CI can fail). builder:engineering needs \"a way to start dependencies for integration tests\".\n\nDo:\n- Register pytest markers `unit` (default for tests without a marker) and `integration` in `backend/pyproject.toml`; mark all DB-backed tests (`requires_db` users: test_rls, test_rls_context, test_rls_e2e, test_integration, test_search_kb and similar) as `integration`.\n- `conftest.py`: build the test database URL from the Settings env keys (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`), not a literal. When env `REQUIRE_SERVICES=1` is set, an unreachable database makes the test fail (not skip).\n- Add `backend/tests/integration/test_kafka_reachable.py`: lists topics through the Kafka admin client against `KAFKA_BOOTSTRAP` (test-only env var for now; add `confluent-kafka==2.16.1` to the dev group, stack.md pin) and fails if the broker is unreachable. The same test is skipped unless `REQUIRE_SERVICES=1` or the broker answers.\n- Add a `Makefile` at the repo root with targets `deps-up` (`docker compose up -d --wait postgres kafka migrate`), `deps-down` (`docker compose down -v`), and `test-integration` (`deps-up` then `REQUIRE_SERVICES=1 pytest -m integration`, then `deps-down` on exit), plus `test-unit` (`pytest -m \"not integration\"`).\n\nOut of scope: the CI workflow (E0-T13), the eval gate (E7), Kafka produce/consume logic (E5).",
+      "acceptance_criteria": [
+        "`cd backend && pytest -m \"not integration\" -q` passes with Postgres stopped and reports 0 skipped.",
+        "Given Postgres stopped and `REQUIRE_SERVICES=1`, `pytest -m integration` fails (non-zero exit, tests reported failed, not skipped); given Postgres stopped and `REQUIRE_SERVICES` unset the tests skip with a reason naming the missing service.",
+        "`make test-integration` on a clean machine brings up postgres and kafka, runs the integration tests with 0 skipped and 0 failed, and removes the containers afterwards (`docker compose ps -a` empty).",
+        "`grep -rn \"localdev\" backend/tests` returns no match.",
+        "`pytest --collect-only -m integration -q` lists every test that previously used `requires_db` (count equals the 25 formerly skipped tests, none lost)."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "overview.md#6.6",
+        "decisions.md#adr-021",
+        "stack.md#kafka-client"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T3",
+        "E0-T9",
+        "E0-T11"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T13",
+      "title": "Rewrite the CI workflow: lockfile installs, service containers, all checks",
+      "summary": "A pull request runs ruff, mypy, unit and integration tests, the model-id check, eslint, tsc and vitest from lockfiles, and any failure blocks the PR.",
+      "description": "Why: G-05: `.github/workflows/ci.yml` runs `pip install -e \".[dev]\"` but no `dev` extra exists, so ruff, mypy and pytest are not installed and CI fails at Lint; `eval-gate.yml` has the same install and cannot run (G-06, owned by E7). ADR-021: \"Lockfile installs only. Python: ruff, mypy, pytest, import-linter; frontend: eslint, tsc, vitest\". plan.md E0: \"CI with lockfile installs, Postgres and Kafka service containers (`pgvector/pgvector:0.8.5-pg16`)\". The security scans are E0-T14. Unit-testing import-linter contracts is a later epic (no contracts exist yet).\n\nReplace `.github/workflows/ci.yml`. Triggers `pull_request` to `main` and `push` to `main`; `permissions: contents: read`; concurrency cancels superseded runs; every `uses:` action pinned to a full commit SHA with the tag in a comment. Jobs:\n- `backend-static`: Python 3.12, `pip install poetry==<pinned>`, `poetry check --lock`, `poetry install --with dev --no-interaction` from `backend/poetry.lock`; `ruff check .`, `ruff format --check .`, `mypy src/`; `python -m src.model_lifecycle` (E0-T4, with default env so the check runs on the configured ids); `bash scripts/check_no_litellm.sh` (E0-T6).\n- `backend-unit`: same install; `pytest -m \"not integration\"`.\n- `backend-integration`: service containers `pgvector/pgvector:0.8.5-pg16` and `apache/kafka:4.4.0` (KRaft, health options so the job waits for healthy), `postgresql-client-16` installed for `pg_dump`, `REQUIRE_SERVICES=1`, runs `python -m src.entrypoint jobs migrate` then `pytest -m integration`. Test-only DB credentials come from workflow env generated for the job (not repository defaults in code).\n- `frontend`: Node 20, `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.\n- Delete `.github/workflows/eval-gate.yml` (it cannot run; E7 re-creates the gate on the service containers defined here; see questions).\n- Document in `docs/ci.md` the job list and the negative-control procedure below.\n\nOut of scope: trivy, gitleaks, pip-audit (E0-T14), terraform and `kong config parse` jobs (E2, E10), deploy and WIF (E10), eval gate (E7). Making the jobs required checks is a GitHub branch-protection setting, not a file in the repo (see questions).",
+      "acceptance_criteria": [
+        "Given a clean clone of the PR branch, the `CI` workflow completes green on GitHub with all four jobs passing and installs coming only from `backend/poetry.lock` and `frontend/package-lock.json` (`poetry check --lock` and `npm ci` steps present).",
+        "Negative controls, each on a throwaway branch with the run link recorded in `docs/ci.md`: an unused import turns `backend-static` red (ruff); a wrong return type turns it red (mypy); a failing unit test turns `backend-unit` red; a failing integration test turns `backend-integration` red; an eslint error, a TypeScript error and a failing vitest test each turn `frontend` red.",
+        "Given `LLM_MODEL_ANSWER=claude-sonnet-4-20250514` in the job env, `backend-static` fails at the model-id step (negative control), and passes with the default.",
+        "In `backend-integration` the pytest summary reports 0 skipped (the job greps the summary line and fails if `skipped` appears).",
+        "`grep -rn \"\\.\\[dev\\]\" .github` returns no match and `.github/workflows/eval-gate.yml` does not exist.",
+        "`actionlint` run on `.github/workflows/ci.yml` reports no errors, and every `uses:` line carries a 40-hex SHA."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "overview.md#4",
+        "decisions.md#adr-021",
+        "stack.md#cicd"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T2",
+        "E0-T4",
+        "E0-T6",
+        "E0-T9",
+        "E0-T10",
+        "E0-T12"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E0-T14",
+      "title": "Add trivy, gitleaks and pip-audit jobs that fail the PR",
+      "summary": "Every PR is scanned for vulnerable dependencies, leaked secrets and image vulnerabilities, and findings fail the job.",
+      "description": "Why: G-05 / plan.md E0: CI runs \"trivy, gitleaks, pip-audit\" and \"each ... runs and can fail a PR\". ADR-021: security: trivy, gitleaks, pip-audit.\n\nAdd to `.github/workflows/ci.yml` (or a `security.yml` called from it; tool and action versions pinned, actions by SHA):\n- `pip-audit`: export the locked main and dev dependencies from `backend/poetry.lock` (`poetry export --with dev --without-hashes`, or the supported equivalent) and run `pip-audit -r <file> --strict`; non-zero on any known vulnerability.\n- `gitleaks`: scan the full git history of the PR (`fetch-depth: 0`) with a repo `.gitleaks.toml` that extends the default rules; the only allowlist entries are `.env.example` placeholders and test fixtures with a written reason each.\n- `trivy`: `fs` scan of the repo (lockfiles, Dockerfiles, IaC misconfig) and an `image` scan of the `runtime` backend image from E0-T2 and the frontend dev image, `--severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed`, with `.trivyignore` entries allowed only with a comment and expiry date.\n- If the first run reports existing findings, fix them by upgrading the locked dependency or base image; do not blanket-ignore. Record any unavoidable exception in `.trivyignore` / pip-audit `--ignore-vuln` with an expiry.\n- Extend `docs/ci.md` with these jobs and their negative controls.\n\nOut of scope: SBOM, image signing, Model Armor, `terraform` scanning of the target state (E10).",
+      "acceptance_criteria": [
+        "Given a clean PR branch, the `pip-audit`, `gitleaks` and `trivy` jobs all pass on GitHub.",
+        "Negative control (recorded run links in `docs/ci.md`): adding a fake high-entropy cloud key such as `AKIAIOSFODNN7EXAMPLE` with a matching secret pattern to a tracked file turns `gitleaks` red.",
+        "Negative control: pinning a package with a known CVE in `backend/poetry.lock` (for example an old `urllib3` or `jinja2` version) turns `pip-audit` red.",
+        "Negative control: a Dockerfile base image with a known HIGH/CRITICAL OS vulnerability (an old `python:3.8` image) turns `trivy` red.",
+        "`gitleaks detect --source . --config .gitleaks.toml` run locally on the merged branch exits 0, and `.trivyignore` and the gitleaks allowlist contain only entries with a reason (checked in review)."
+      ],
+      "arch_refs": [
+        "overview.md#1",
+        "decisions.md#adr-021",
+        "stack.md#cicd"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T2",
+        "E0-T10",
+        "E0-T13"
+      ],
+      "size": "M",
+      "status": "todo"
+    }
+  ],
+  "questions": [
+    "Langfuse Cloud spike (E0-T1) needs a Langfuse Cloud Hobby project and key pair created by Keshav. Where are they stored for local runs and for the CI secret store (names LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY)? The spike cannot run without them.",
+    "Where is the spike result recorded as an ADR? E0-T1 writes docs/spikes/langfuse-sdk5.md in the FinAdvisor repo only; the harness decisions.md is outside the builder repo.",
+    "Model lifecycle policy (E0-T4): ADR-006 says CI and readiness fail on a 'retired or soon-retiring' model but gives no window. T4 uses 30 days as a named constant until decided. Also: is the table a denylist (unknown ids pass) or should unknown ids fail? And claude-haiku-4-5 has only 'deprecation ~2026-10-15' with no retirement date; should a deprecated model fail?",
+    "DB_PORT is not in the section 6.6 config table. Host-port remapping in compose and CI needs a port for tests run outside containers; E0-T3 adds DB_PORT (default 5432). Confirm adding it to 6.6.",
+    "Frontend mismatch: the arch target is a Vite + React 19 SPA (ADR-019, E8) but the repo has Next.js 14. E0-T10 adds vitest and a dev image to the existing Next app (throwaway if E8 replaces it). Is that acceptable, or should E0 start the Vite scaffold?",
+    "Compose scope: stack.md lists Kong, Valkey, Schema Registry and a worker in local compose, but those belong to E2 and E5. E0-T11 includes only postgres, kafka, migrate, api, frontend. Confirm. Also confirm removing the self-hosted Langfuse services, langfuse/docker-compose.langfuse.yml and the unused Redis (ADR-018 rejects self-hosting; G-49 names the duplicate Langfuse compose).",
+    "Entrypoints: ADR-019 lists api | worker | jobs, but the worker has no code until E5. E0-T9 implements api and jobs migrate only and exits 2 on others. Confirm.",
+    "Two Poetry projects exist: root pyproject.toml/poetry.lock (package-mode false, path dependency on backend) and backend/pyproject.toml/poetry.lock. E0 treats backend/poetry.lock as authoritative for the image and CI and leaves the root files untouched. Should the root project be removed (G-28)?",
+    "Schema baseline vs E1: E0 baseline is the current MVP schema.sql (E0-T9). E1 says 'Schema for the whole target model in the baseline migration'. Does E1 add revision 0002 on top of 0001, or edit 0001 (no deployed database exists yet)? Affects whether 0001 must stay immutable.",
+    "No-LiteLLM check (E0-T6) allowlists historical MVP records (Story-Reports/, TODO.md, mvp.md, architecture.md, docs/threat_model.md) that still mention LiteLLM and Kong. Purge or rewrite them in E0, or leave as history? Also .claude/settings.local.json (tracked) contains litellm/kong path permissions.",
+    "Terraform (E0-T7) deletes the MVP LiteLLM and Kong Cloud Run services, secrets, variables and outputs so the repo has no LiteLLM; the target Terraform comes in E2/E10. Confirm that removing the MVP Kong service from Terraform is intended.",
+    "eval-gate.yml is deleted in E0-T13 because it cannot run (G-06 lists E0 and E7). Confirm E0 only provides the service containers and E7 recreates the gate with the keys from the CI secret store.",
+    "Required status checks ('can fail a PR') are GitHub branch-protection settings, not repo files. Who enables them on main for the E0-T13 and E0-T14 jobs, and does the project plan include that as a manual step?",
+    "JWT_SECRET stays a required, default-free Settings key in E0 only because the MVP mock auth still uses it (E1 removes it). Confirm no placeholder default is wanted for local dev (.env.example carries REPLACE_ME).",
+    "EMBED_MODEL / EMBED_DIM (section 6.6: voyage-4, 1024) are not added to Settings in E0; the MVP hard-codes voyage-3 in src/retrieval/embeddings.py and src/main.py. Confirm this stays with E3 (re-embedding needed) rather than E0 (G-58)."
+  ]
+}

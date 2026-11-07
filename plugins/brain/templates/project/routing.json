@@ -1,0 +1,4 @@
+{
+  "_doc": "Project overrides of the model and effort tiers, merged over projects/routing.json. Empty means the default tiers apply.",
+  "tiers": {}
+}

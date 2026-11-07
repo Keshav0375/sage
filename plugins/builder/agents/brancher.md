@@ -14,7 +14,7 @@ dependency's branch for a stacked ticket), issue number.
 2. Branch name: `<type>/<ticket-key>-<slug>`, where type is `feat`, `fix`, `refactor`, `chore`
    or `test` from the ticket, and slug is the title in lower-case kebab-case, at most 40
    characters. Example: `feat/E1-T2-login-api`.
-3. Worktree: `git -C <repo> worktree add <context>/.runtime/worktrees/<p>/<ticket-key> -b <branch> origin/<base>`.
+3. Worktree: `git -C <repo> worktree add <context_dir>/.runtime/worktrees/<p>/<ticket-key> -b <branch> origin/<base>`.
    If the branch already exists, reuse it and its worktree.
 4. Comment on the issue: `gh issue comment <n> --repo <r> --body "Started on branch <branch>"`.
 Reply `DONE` with the branch and the worktree path.

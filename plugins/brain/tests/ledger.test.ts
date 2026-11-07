@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 import {
   parseHeader, parseReport, shaMatches, staleChecks, ticketOfPath, shipTarget, shipBlock, claimedByOther,
-  fixAttempts, deriveStep, renderRuns, updateTicket, activeTickets,
+  fixAttempts, deriveStep, renderRuns,
 } from '../hooks/ledger.ts'
 
 const CTX = '/h/sage/context'
@@ -96,26 +96,4 @@ test('the run list shows step, loops, next action and foreign claims', () => {
   expect(text).toContain('- finadvisor E1-T3 Audit log: red, fix loop 2 → next: fix, then check')
   expect(text).toContain('- finadvisor E1-T4: checked → next: verify  [claimed by another session]')
   expect(renderRuns([], 'a', 0)).toBe('No unfinished builder tickets.')
-})
-
-const TRACKER = JSON.stringify({
-  epics: [{ key: 'E1', tickets: [
-    { key: 'E1-T1', title: 'Schema', status: 'done' },
-    { key: 'E1-T2', title: 'API', status: 'in_progress', pr: null },
-    { key: 'E1-T3', title: 'UI', status: 'blocked' },
-  ] }],
-  updated: '2026-01-01',
-})
-
-test('ticket updates change only allowed fields of one ticket', () => {
-  const out = JSON.parse(updateTicket(TRACKER, 'E1-T2', { status: 'review', pr: 'u' }, '2026-11-01'))
-  expect(out.epics[0].tickets[1]).toEqual({ key: 'E1-T2', title: 'API', status: 'review', pr: 'u' })
-  expect(out.updated).toBe('2026-11-01')
-  expect(() => updateTicket(TRACKER, 'E1-T2', { title: 'x' }, 'd')).toThrow('not allowed')
-  expect(() => updateTicket(TRACKER, 'E1-T2', { status: 'finished' }, 'd')).toThrow('status must be')
-  expect(() => updateTicket(TRACKER, 'E9-T1', { status: 'done' }, 'd')).toThrow('not in tracker')
-})
-
-test('active tickets are the in-progress and blocked ones', () => {
-  expect(activeTickets(TRACKER).map((t) => t.ticket)).toEqual(['E1-T2', 'E1-T3'])
 })

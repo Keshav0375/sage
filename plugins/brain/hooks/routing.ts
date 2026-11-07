@@ -105,10 +105,15 @@ export function leafDecision(
   return { model: cfg.leafModel }
 }
 
-// Report-only agents may write files only under the runtime folder.
-export function writeAllowed(agentType: string | undefined, path: string, runtimeDir: string, cfg: RoutingConfig): boolean {
+// Report-only agents may write files only under the runtime folder or a project's library/.
+export function writeAllowed(agentType: string | undefined, path: string, contextDir: string, cfg: RoutingConfig): boolean {
   if (!agentType || !cfg.reportOnly.includes(agentType)) return true
-  return !!runtimeDir && path.startsWith(runtimeDir.replace(/\/$/, '') + '/')
+  if (!contextDir) return false
+  const root = contextDir.replace(/\/$/, '') + '/'
+  if (!path.startsWith(root) || path.includes('/../')) return false
+  const rest = path.slice(root.length).split('/')
+  if (rest[0] === '.runtime' && rest.length > 1) return true
+  return rest.length > 2 && rest[1] === 'library' && !rest[0].startsWith('.')
 }
 
 // The orchestrator's budget guard: text for the next prompt when the main loop's context fill or
@@ -120,7 +125,7 @@ export function budgetGuard(
 ): string | undefined {
   const lines: string[] = []
   if ((b.context ?? 0) >= contextLimit) {
-    lines.push(`Main-loop context is ${Math.round(b.context ?? 0)}% full (limit ${contextLimit}%). Finish the current step, write progress and the exact resume command to STATE.md, and ask Keshav to /clear and resume. Do not start a new stage or wave in this session.`)
+    lines.push(`Main-loop context is ${Math.round(b.context ?? 0)}% full (limit ${contextLimit}%). Finish the current step, write progress and the exact resume command to the project state.md, and ask Keshav to /clear and resume. Do not start a new stage or wave in this session.`)
   }
   if ((b.window ?? 0) >= windowLimit) {
     lines.push(`The usage window is ${Math.round(b.window ?? 0)}% used (limit ${windowLimit}%). Spawn at most one agent at a time, prefer Haiku tiers, and save progress to files before each spawn.`)

@@ -1,0 +1,538 @@
+{
+  "epic": "E1",
+  "tickets": [
+    {
+      "key": "E1-T1",
+      "title": "Spike: verify Identity Platform tenant claim and billing",
+      "summary": "The exact ID-token tenant claim, firebase-admin tenant-aware verification behaviour and the >2-tenant billing rule are confirmed against a real Identity Platform project and recorded as an ADR.",
+      "description": "Spike, first ticket of E1 (D14.17). Arch text to confirm: \"the `firebase.tenant` claim names the IdP tenant, and `tenant_mgt.auth_for_tenant(tenant_id).verify_id_token(...)` checks signature, `aud`, `iss`, `exp` and raises `TenantIdMismatchError` on a tenant mismatch\" (overview 4.5 `auth`; 8.2 step 4: \"The claim name is verified in the first E1 ticket\"). Also 8.2 step 7: \"Identity Platform multi-tenancy needs billing enabled for more than 2 tenants; email/password tier free to 50k MAU\".\n\nBuild a throwaway probe script `backend/scripts/spikes/idp_claim_probe.py` (not imported by app code). With a real GCP project that has Identity Platform and multi-tenancy enabled (project id from `IDP_PROJECT_ID`, credentials via ADC):\n1. Create 3 IdP tenants (more than 2, to observe the billing requirement), enable email/password on each, create one user per tenant, sign in through the REST sign-in endpoint with the tenant id and obtain an ID token.\n2. Decode each token (no verification) and record the exact JSON path of the tenant claim, plus `sub`, `aud`, `iss`.\n3. Verify with `firebase_admin.tenant_mgt.auth_for_tenant(<tenant>).verify_id_token`: (a) token of tenant A against tenant A (ok), (b) token of tenant B against tenant A (expect `TenantIdMismatchError`), (c) an expired token, (d) a token with a different project audience. Record the exception class raised for each.\n4. Record whether creating the 3rd tenant is rejected without billing and succeeds with billing (operator action: the project owner enables billing; note the date).\n5. Add `firebase-admin` to the lockfile (pinned; stack.md says \"pin at implementation\") and record the version.\n\nRecord the result as `docs/adr/idp-multitenancy-claim.md` in this repo (the researcher copies it into `arch/decisions.md` as the next ADR number after merge; do not write to the harness repo) with: the claim path, the exceptions per case, the billing observation, the pinned firebase-admin version, whether the Firebase Auth emulator supports multi-tenancy (if yes, E1-T13 and CI use the emulator; if no, locally signed test JWTs with a test JWKS), and which one is chosen for E1-T13.\n\nOut of scope: any production auth code (E1-T13), Terraform, SSO.",
+      "acceptance_criteria": [
+        "Given a token issued by IdP tenant B, when `idp_claim_probe.py --check` verifies it with `auth_for_tenant(A)`, then it raises `TenantIdMismatchError`; the script exits non-zero if any of cases (a)-(d) behaves differently from the ADR's recorded outcome.",
+        "The ADR file `docs/adr/idp-multitenancy-claim.md` exists and names the exact claim JSON path found in a real decoded token (matching the claims printed by the probe and saved in `docs/adr/idp-probe-output.json`, which contains no secrets or raw tokens).",
+        "The ADR records, for 3 tenants in one project, whether the 3rd tenant creation succeeded and under which billing state, with the date.",
+        "`poetry.lock` contains a pinned `firebase-admin` version and the ADR states the same version (`poetry show firebase-admin` equals the ADR value).",
+        "The ADR states whether the Auth emulator supports multi-tenancy and names the single approach E1-T13 uses (emulator, else locally signed JWTs with a test JWKS)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#8.2",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T2",
+      "title": "Spike: LIST-partition pruning and planner cost at 52 partitions",
+      "summary": "Partition pruning under the RLS current_setting policy and planning/query cost at about 52 chunks partitions are measured and recorded as an ADR.",
+      "description": "Spike. ADR-003: \"Runtime pruning with the RLS `current_setting` policy confirmed by test on the 8-partition setup (\"Subplans Removed: 6 of 8\") ... planner and migration cost at ~50 partitions is unmeasured (E1 measures it); the pruning test must be repeated on LIST partitions.\" Scope line: \"LIST-partition pruning with the RLS `current_setting` policy plus planner cost at ~52 partitions.\"\n\nBuild `backend/scripts/spikes/list_partition_probe.py` (throwaway, uses the `pgvector/pgvector:0.8.5-pg16` image from E0 compose/CI):\n1. Create a scratch database and a `chunks` table `PARTITION BY LIST (tenant_id)` with 50 tenant partitions, 1 PUBLIC partition and 1 DEFAULT partition (52 total), columns reduced to those needed: `tenant_id, id, kind, content, tsv, embedding halfvec(1024), tier_required, jurisdiction`, with the per-partition indexes declared on the parent exactly as in overview 5.5 (HNSW `halfvec_cosine_ops` m=16 ef_construction=64 partial `WHERE kind='child'`, GIN on tsv, btrees).\n2. Enable `ENABLE` + `FORCE ROW LEVEL SECURITY` and the `chunks_select_app` policy text from overview 5.4 (own tenant OR PUBLIC, tier, jurisdiction) for a non-owner NOBYPASSRLS role; seed 200 child chunks per partition with random embeddings.\n3. As that role, in a transaction with `set_config('app.tenant_id', ..., true)` etc., run the dense leg and the FTS leg of the overview 5.6 hybrid statement with `SET LOCAL hnsw.iterative_scan = relaxed_order` and `EXPLAIN (ANALYZE, VERBOSE)`; capture which partitions executed vs \"never executed\"/removed, planning time and execution time over 200 runs; repeat for 2, 8 and 52 partitions to show the trend.\n4. Measure the wall time to create one partition with its indexes (the onboarding cost).\n\nRecord the result as `docs/adr/list-partition-pruning.md` in this repo (the researcher copies it into `arch/decisions.md` as the next ADR number after merge; do not write to the harness repo) with the numbers, the EXPLAIN excerpt, the fallback taken if a check failed, and a keep / change decision on LIST partitions.\n\nOut of scope: production migrations (E1-T5), tuning HNSW parameters.",
+      "acceptance_criteria": [
+        "Given 52 partitions and the RLS policy, when the probe runs `EXPLAIN (ANALYZE)` on the dense leg for one tenant, then no partition other than the caller's tenant partition, the PUBLIC partition and the DEFAULT partition is executed; the script exits non-zero otherwise and prints the 'Subplans Removed' value.",
+        "The probe's p95 of planning time + execution time over 200 runs of the hybrid statement at 52 partitions is <= 100 ms (the ADR-003 revisit trigger) and the planning-time p95 alone is <= 10 ms; the script exits non-zero if either is exceeded and prints both measured p95 values.",
+        "`docs/adr/list-partition-pruning.md` exists and contains a table of planning time p50/p95 for 2, 8 and 52 partitions and the measured time to create one partition with indexes.",
+        "The ADR ends with an explicit decision line (keep LIST partitions, or change with the reason); if the 52-partition check failed, the line names the fallback."
+      ],
+      "arch_refs": [
+        "overview.md#5.5",
+        "overview.md#5.4",
+        "decisions.md#adr-003"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T3",
+      "title": "Bootstrap DB roles and the separate dagster database",
+      "summary": "All ten database roles exist with the exact attributes the arch requires, created by an idempotent bootstrap script that compose and CI run.",
+      "description": "Implement overview 5.3: \"One login role per process ... All are NOSUPERUSER, NOCREATEDB, NOCREATEROLE, NOBYPASSRLS. Runtime roles own nothing, with two explicit exemptions.\"\n\nCreate `backend/db/bootstrap/roles.sql` (idempotent: `DO` blocks / `\\gexec`), run by the compose Postgres init and by the CI Postgres service step (E0 compose and CI files updated). Roles: `fa_owner` (login; used by `migrate` only), `fa_lookup` (NOLOGIN), `fa_app`, `fa_worker`, `fa_etl`, `fa_etl_public`, `fa_dbt`, `fa_maint`, `fa_eval`, `fa_dagster` (login). Passwords come from env vars (`DB_PASSWORD_<ROLE>`), none hard-coded. Database `dagster` is created and owned by `fa_dagster`; `fa_dagster` has no CONNECT on the app database (`REVOKE CONNECT ON DATABASE <app> FROM PUBLIC`, then grant CONNECT to the app roles only). `fa_owner` is the owner of the app database and (via later migrations) of all objects except schema `gold` and table `messages`. Create schema `gold` owned by `fa_dbt`.\n\nCompose services get `DB_USER` set to their process role (`fa_app` for the api, `fa_worker` for the worker); `Settings` keys used: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.\n\nOut of scope: Cloud SQL role creation and secrets (E10 Terraform), grants and policies on tables (E1-T8 to E1-T10).",
+      "acceptance_criteria": [
+        "Given the bootstrap has run, when `tests/db/test_roles.py` queries `pg_roles`, then for each of the 10 roles `rolsuper`, `rolcreatedb`, `rolcreaterole` and `rolbypassrls` are all false, and `fa_lookup.rolcanlogin` is false while the other nine can log in.",
+        "Given the script is run twice on the same database, then the second run exits 0 and `pg_roles` is unchanged (test).",
+        "Given a connection as `fa_dagster`, when it tries to connect to the app database, then it fails with permission denied; and `pg_database` shows `dagster` owned by `fa_dagster` (test).",
+        "Given a connection as `fa_app`, when it runs `CREATE TABLE x(a int)` in schema public, then it fails with permission denied (runtime roles own nothing and cannot create objects)."
+      ],
+      "arch_refs": [
+        "overview.md#5.3",
+        "decisions.md#adr-002"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T4",
+      "title": "Migration: tenants and advisors tables",
+      "summary": "The tenants and advisors tables exist with all target columns, constraints and FORCE RLS, and the PUBLIC tenant row is seeded.",
+      "description": "Add an Alembic revision (0002 or later; E0 owns the immutable baseline 0001 = MVP schema.sql) creating, as `fa_owner`, the two identity tables per overview 5.2:\n\n- `tenants` (key `id uuid`): `slug` unique, `display_name`, `kind` CHECK in (`firm`,`public`), `idp_tenant_id` unique (nullable for the PUBLIC row), `corpus_version bigint` default 0, `acl_version bigint` default 0, `budgets jsonb` default `{}` (values set in E4), `shard_id text` (seam, D2), `status`, `created_at`.\n- `advisors` (key `(tenant_id, id)`): `idp_uid` (token `sub`) with unique `(tenant_id, idp_uid)`, `display_name`, `role` CHECK in (`advisor`,`compliance_officer`,`tenant_admin`), `tier smallint CHECK 1..4`, `jurisdictions text[]` CHECK subset of (`US`,`EU`,`UK`), `licenses text[]`, `entitlement_version bigint` default 0, `status`, FK `tenant_id` to `tenants(id)`.\n\nBoth tables: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY; ... FORCE ROW LEVEL SECURITY;` at creation (no policy yet, so they deny everything until E1-T9 adds policies and grants). Seed the reserved PUBLIC row: id = `PUBLIC_TENANT_ID` (from Settings, substituted by the migration), `kind='public'`, `slug='public'`. Every table in the target model carries `tenant_id uuid NOT NULL` (on `tenants` the key `id`).\n\nOut of scope: policies and grants (E1-T9), the other tables (E1-T5 to E1-T7), advisor seeding (E1-T11).",
+      "acceptance_criteria": [
+        "Given an empty database, when `alembic upgrade head` runs, then `tests/db/test_schema_identity.py` passes: both tables exist with `relrowsecurity` and `relforcerowsecurity` true in `pg_class`.",
+        "Given an insert of an advisor with `tier = 5`, or `jurisdictions = '{XX}'`, or an unknown `role`, then each raises a CheckViolation (three test cases).",
+        "Given two advisors with the same `(tenant_id, idp_uid)`, then the second insert raises a UniqueViolation; the same `idp_uid` in two different tenants succeeds.",
+        "Given the migration ran with `PUBLIC_TENANT_ID=<uuid>`, then `SELECT kind FROM tenants WHERE id = '<uuid>'` returns `public` (test run as `fa_owner`)."
+      ],
+      "arch_refs": [
+        "overview.md#5.1",
+        "overview.md#5.2",
+        "decisions.md#adr-002"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T3"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T5",
+      "title": "Migration: content tables with LIST-partitioned chunks",
+      "summary": "documents, chunks (LIST by tenant), suitability_rules and ingest_rejects exist in the target shape with composite FKs, raw_content dropped, and the PUBLIC and DEFAULT partitions.",
+      "description": "Add an Alembic revision (0002 or later; baseline 0001 is immutable) as `fa_owner` that replaces the MVP content tables with the target shape of overview 5.2 and 5.5. The MVP `documents.raw_content` column is dropped (G-03: \"No `raw_content` column\"). The service has never been deployed, so the revision drops and recreates the MVP content tables without a data migration.\n\nTables, all `FORCE` + `ENABLE` RLS at creation, all with `tenant_id uuid NOT NULL`:\n- `documents (tenant_id, id)`: columns per 5.2 (`title, doc_type, jurisdiction, tier_required CHECK 1..4, regulatory_ref, last_reviewed_at, product_category, risk_level, source CHECK in (edgar, synthetic), source_uri, bronze_uri, bronze_sha256, parser_version, status CHECK in (active, superseded, deleted), created_at`); unique `(tenant_id, bronze_sha256)`; index `(tenant_id, doc_type, jurisdiction)`.\n- `chunks (tenant_id, id)` `PARTITION BY LIST (tenant_id)`; columns per 5.2 including `embedding halfvec(1024)` and `tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', coalesce(context_header,'') || ' ' || content)) STORED`; composite FKs `(tenant_id, document_id)` to documents and `(tenant_id, parent_id)` self; unique `(tenant_id, chunk_hash, embed_model)`. Indexes declared on the parent so each partition gets its own: HNSW on `embedding halfvec_cosine_ops` `m=16, ef_construction=64` partial `WHERE kind = 'child'`; GIN on `tsv`; btree `(tenant_id, document_id)`, `(tenant_id, parent_id)`, `(tenant_id, tier_required, jurisdiction)`.\n- `suitability_rules (tenant_id, id)`: per 5.2, composite FK `(tenant_id, source_document_id)`, `client_risk_profile` CHECK 3 values (use the values already in the MVP schema).\n- `ingest_rejects (tenant_id, id)`: per 5.2.\nPartitions: one for the PUBLIC tenant (`chunks_public`) and a DEFAULT partition (`chunks_default`); rows in DEFAULT are a bug. Write a reusable function `src/db/partitions.create_chunks_partition(conn, tenant_id)` (partition name from the uuid, no `GRANT`) that E1-T11 reuses. The partitions are created without any grants.\n\nIf E1-T2's ADR changed the partition design, follow the ADR.\n\nOut of scope: policies and grants (E1-T8), tenant partitions (E1-T11), changing the retrieval code that reads these tables (E3).",
+      "acceptance_criteria": [
+        "Given `alembic upgrade head` on an empty database, then `tests/db/test_schema_content.py` passes: `chunks` has `relkind='p'` and `partstrat='l'`, partitions `chunks_public` and `chunks_default` exist, and `documents` has no column named `raw_content`.",
+        "Given a chunk row whose `(tenant_id, document_id)` points to a document of another tenant, when inserted as `fa_owner`, then it raises a ForeignKeyViolation (composite FK; test).",
+        "Given the PUBLIC partition, then `pg_indexes` shows for it an HNSW index with `halfvec_cosine_ops`, `m='16'`, `ef_construction='64'` and predicate `kind = 'child'`, a GIN index on `tsv`, and the unique index on `(tenant_id, chunk_hash, embed_model)` (test).",
+        "Given `create_chunks_partition(conn, <uuid>)` is called, then a partition bound to that uuid exists and `has_table_privilege` for `fa_app`, `fa_worker`, `fa_etl`, `fa_etl_public` and `fa_dbt` on it is false for every privilege (test).",
+        "Given two chunks with the same `(tenant_id, chunk_hash, embed_model)`, then the second insert raises a UniqueViolation."
+      ],
+      "arch_refs": [
+        "overview.md#5.2",
+        "overview.md#5.5",
+        "decisions.md#adr-003"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T2",
+        "E1-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T6",
+      "title": "Migration: conversation, message and cache tables",
+      "summary": "conversations, messages (monthly partitions, owned by fa_maint), turn_events, escalations, feedback and answer_cache exist in the target shape.",
+      "description": "Add an Alembic revision (0002 or later; baseline 0001 is immutable) as `fa_owner` creating the user-activity tables per overview 5.2 and 5.5. All have `tenant_id uuid NOT NULL`, `ENABLE` + `FORCE` RLS at creation, and composite FKs starting with `tenant_id`.\n\n- `conversations (tenant_id, id)`: `advisor_id` (composite FK to advisors), `title`, `created_at`, `updated_at`, `deleted_at`; index `(tenant_id, advisor_id, updated_at DESC)`.\n- `messages (tenant_id, id, created_at)` `PARTITION BY RANGE (created_at)` monthly: `conversation_id` (composite FK), `advisor_id` (composite FK; used by the owner clause), `turn_id`, `role` CHECK (user, assistant), `content`, `status` CHECK (pending, streaming, complete, refused, failed), `model`, `prompt_version`, `citations jsonb`, `retrieval_chunk_ids uuid[]`, `retrieval_degraded boolean`, `usage jsonb`, `refusal_code`; local index `(tenant_id, conversation_id, created_at)`. A DEFAULT partition catches misses. The parent is owned by `fa_maint` (\"Postgres requires ownership of the parent for partition DDL\"); create the initial partitions (current month and 3 months ahead) in the migration and `ALTER ... OWNER TO fa_maint` on the parent and those partitions. Put the partition-creation SQL in a reusable function `src/db/partitions.create_messages_partitions(conn, months_ahead)` that E1-T12 reuses. No grants on partitions.\n- `turn_events (tenant_id, turn_id, seq)`: `request_hash` (text, hash of the request body, used by E4 for idempotency-key reuse detection), `advisor_id`, `event`, `data jsonb`, `created_at`, `expires_at`; no FK.\n- `escalations (tenant_id, id)`: `advisor_id` (composite FK), `reason`, `product_class`, `licenses`, `status`, `message_id`, `created_at`.\n- `feedback (tenant_id, id)`: `message_id` (logical, no FK because the partitioned PK includes `created_at`), `advisor_id`, `score CHECK in (-1, 1)`, `comment`, `created_at`.\n- `answer_cache (tenant_id, cache_key)`: UNLOGGED; `answer, citations jsonb, source_document_ids uuid[], created_at, expires_at`; index `(expires_at)` and GIN on `source_document_ids`.\n\nThis revision creates every remaining overview 5.2 table in full (including `answer_cache`, `turn_events`, `escalations`); later epics add only indexes/classes, not these tables.\n\nOut of scope: policies and grants (E1-T10), the maintenance job (E1-T12), writing to these tables from `agent` (E4).",
+      "acceptance_criteria": [
+        "Given `alembic upgrade head`, then `tests/db/test_schema_activity.py` passes: `answer_cache.relpersistence = 'u'`; `messages` is `relkind='p'`, `partstrat='r'`, owned by `fa_maint`, with partitions for the current month and the next 3 months plus a DEFAULT partition.",
+        "Given a conversation insert whose `(tenant_id, advisor_id)` references an advisor of another tenant, then it raises a ForeignKeyViolation (test).",
+        "Given `pg_constraint`, then `turn_events` has a `request_hash` column, `feedback` has no foreign key to `messages`, and every foreign key in the activity tables lists `tenant_id` as its first column (test iterating `pg_constraint`).",
+        "Given `create_messages_partitions(conn, 3)` is called twice, then the second call creates nothing and does not raise (idempotent), and no partition of `messages` has a grant to a runtime role."
+      ],
+      "arch_refs": [
+        "overview.md#5.2",
+        "overview.md#5.5",
+        "overview.md#5.3"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T7",
+      "title": "Migration: ACL, eval, outbox, dedupe and tenant_usage tables",
+      "summary": "acl_change_requests, eval_scores, outbox, processed_events and tenant_usage exist with their keys and indexes.",
+      "description": "Add an Alembic revision (0002 or later; baseline 0001 is immutable) as `fa_owner` creating the five tables per overview 5.2 (the outbox is written in E4 and relayed in E5). All have `tenant_id uuid NOT NULL`, `ENABLE` + `FORCE` RLS at creation.\n\n- `acl_change_requests (tenant_id, id)`: `requested_by` (composite FK `(tenant_id, requested_by)` to advisors), `target_type` CHECK (`document`), `document_id`, `action` CHECK (`update_acl`,`delete`), `new_tier_required`, `new_jurisdiction`, `status` CHECK (`pending`,`applied`,`failed`) default `pending`, `error_code`, `requested_at`, `applied_at`.\n- `eval_scores (tenant_id, id)`: `message_id` (logical), `judge_model`, `metric`, `score real`, `rationale`, `created_at`.\n- `outbox (tenant_id, id)`: `topic`, `key`, `event_type`, `schema_version`, `payload jsonb`, `created_at`, `published_at`, `attempts int default 0`; `id` is the Kafka `event_id`; partial index on `(tenant_id, created_at) WHERE published_at IS NULL`.\n- `processed_events (tenant_id, consumer, event_id)` key, `processed_at`.\n- `tenant_usage (tenant_id, day)` key: `day date` (UTC day), `tokens_in bigint NOT NULL default 0`, `tokens_out bigint NOT NULL default 0`; counters for the per-tenant daily token budget (R47), written by chat-api in E4 instead of Valkey. FK `tenant_id` to `tenants(id)`.\n\nOut of scope: policies and grants (E1-T10), writers (E4, E5).",
+      "acceptance_criteria": [
+        "Given `alembic upgrade head`, then `tests/db/test_schema_pipeline.py` passes: the five tables (including `tenant_usage` with columns `tenant_id, day, tokens_in, tokens_out`) exist, each with `relrowsecurity` and `relforcerowsecurity` true.",
+        "Given `pg_indexes`, then `outbox` has an index whose definition contains `WHERE (published_at IS NULL)` on `(tenant_id, created_at)` (test).",
+        "Given an `acl_change_requests` row with `action = 'purge'`, or with `status = 'done'`, then each raises a CheckViolation; one whose `(tenant_id, requested_by)` names an advisor of another tenant raises a ForeignKeyViolation.",
+        "Given two `processed_events` rows with the same `(tenant_id, consumer, event_id)`, then the second raises a UniqueViolation."
+      ],
+      "arch_refs": [
+        "overview.md#5.2",
+        "overview.md#5.1"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T4"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T8",
+      "title": "RLS v2 policies and grants for content tables",
+      "summary": "documents, chunks, suitability_rules and ingest_rejects have the own-or-PUBLIC read policies, own-tenant-only write policies, column grants and the fa_etl_public-only PUBLIC write.",
+      "description": "Add an Alembic revision implementing overview 5.4 and the 5.3 grants for the content tables. `<PUBLIC>` is the `PUBLIC_TENANT_ID` uuid literal substituted by the migration; `fa_eval` policies use the `EVAL_TENANT_ID` literal. Policies call `current_setting('app.x')` without `missing_ok`, so an unset setting raises (fail closed).\n\nPolicies (policy text for `chunks` is the arch text; `documents` and `suitability_rules` are identical in shape, `suitability_rules` uses `min_tier_required`):\n- `*_select_app TO fa_app FOR SELECT`: `(tenant_id = current_setting('app.tenant_id')::uuid OR tenant_id = '<PUBLIC>'::uuid) AND tier_required <= current_setting('app.tier')::int AND jurisdiction = ANY (string_to_array(current_setting('app.jurisdictions'), ','))`.\n- `*_select_pipe TO fa_worker, fa_etl, fa_etl_public, fa_dbt FOR SELECT`: own tenant only.\n- `*_ins_tenant`, `*_upd_tenant`, `*_del_tenant TO fa_worker`: own tenant and `tenant_id <> '<PUBLIC>'` (USING and WITH CHECK on UPDATE). `fa_etl` gets INSERT and UPDATE on `documents` with the same own non-PUBLIC clause, and SELECT on `chunks`.\n- `*_all_public TO fa_etl_public FOR ALL`: USING and WITH CHECK `tenant_id = '<PUBLIC>'::uuid`.\n- `fa_eval`: the `fa_app` policies with the tenant literal of the `eval` tenant plus PUBLIC reads.\n- `ingest_rejects`: tenant match for the roles holding grants, no PUBLIC clause.\n`fa_app` has no INSERT, UPDATE or DELETE policy or grant on `chunks`, `documents`, `suitability_rules` (\"document ACL changes and deletes are applied by the `acl-applier` worker (ADR-022)\").\n\nGrants per 5.3: `fa_app` SELECT only; `fa_worker` on `chunks` SELECT, INSERT, DELETE and UPDATE (`tier_required`, `jurisdiction`) only, on `documents` SELECT, INSERT, DELETE and UPDATE (`tier_required`, `jurisdiction`, `status`, `parser_version`), on `suitability_rules` SELECT, INSERT, DELETE, on `ingest_rejects` SELECT, INSERT; `fa_etl` SELECT, INSERT, UPDATE (`status`, `parser_version`, `bronze_uri`) on `documents` and SELECT on `chunks`; `fa_etl_public` write on the content tables; `fa_dbt` SELECT; `fa_eval` the `fa_app` grants. Never `GRANT ... ON ALL TABLES` (partitions get no grants).\n\nOut of scope: tenants/advisors (E1-T9), other tables (E1-T10), the full leak matrix (E1-T19, E1-T20).",
+      "acceptance_criteria": [
+        "Given a principal for tenant A (tier 2, jurisdictions US), when `fa_app` selects from `chunks` after `set_config(..., true)`, then it sees tenant A and PUBLIC rows only, never tenant B rows, never rows with `tier_required = 3`, never rows with `jurisdiction = 'EU'` (`tests/db/test_rls_content.py`, parametrised over `chunks`, `documents`, `suitability_rules`).",
+        "Given `fa_app`, when it runs INSERT, UPDATE or DELETE on `chunks`, `documents` or `suitability_rules`, then each fails with permission denied (no grant).",
+        "Given `fa_worker` bound to tenant A, when it inserts a chunk with `tenant_id` = B, or with `tenant_id` = PUBLIC, then each raises a row-level-security violation; and when it updates `documents.title`, then it fails with permission denied (column grant).",
+        "Given `fa_etl_public`, when it inserts a chunk into the PUBLIC tenant, then it succeeds; when it inserts into tenant A, then it raises a row-level-security violation.",
+        "Given `fa_eval` with `app.tenant_id` set to tenant A, when it selects from `documents`, then it sees only `EVAL_TENANT_ID` and PUBLIC rows.",
+        "Given no `app.tenant_id` set in the transaction, when `fa_app` selects from `chunks`, then it raises `unrecognized configuration parameter` (fail closed) and returns no rows."
+      ],
+      "arch_refs": [
+        "overview.md#5.4",
+        "overview.md#5.3",
+        "decisions.md#adr-002",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T3",
+        "E1-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T9",
+      "title": "RLS for tenants and advisors, and fa_tenant_lookup",
+      "summary": "tenants and advisors policies and grants are in place, advisors cannot self-escalate, and the single SECURITY DEFINER function fa_tenant_lookup exists.",
+      "description": "Add an Alembic revision implementing the `tenants` and `advisors` items of overview 5.4 and the 5.3 grants.\n\n`tenants`: `tenants_select_app TO fa_app FOR SELECT USING (id = current_setting('app.tenant_id')::uuid OR id = '<PUBLIC>'::uuid)`; `tenants_lookup TO fa_lookup FOR SELECT USING (true)`; `tenants_owner TO fa_owner` for SELECT, INSERT, UPDATE; `tenants_upd_worker TO fa_worker FOR UPDATE USING / WITH CHECK (id = app.tenant_id AND id <> <PUBLIC>)`; `tenants_upd_public TO fa_etl_public FOR UPDATE USING / WITH CHECK (id = <PUBLIC>)`. Column grants: `fa_app` SELECT on (`id`, `slug`, `corpus_version`, `acl_version`, `budgets`) only; `fa_lookup` SELECT on the columns the function returns plus `slug`; UPDATE limited to `corpus_version` and `acl_version` for `fa_worker` and to `corpus_version` for `fa_etl_public`.\n\n`advisors`: SELECT `TO fa_app` when `tenant_id = app.tenant_id AND (id = app.user_id OR idp_uid = app.idp_uid OR app.role = 'tenant_admin')`; UPDATE `TO fa_app` only when `tenant_id = app.tenant_id AND app.role = 'tenant_admin'`, `WITH CHECK (tenant_id = app.tenant_id)`. Column grants: UPDATE on `tier, jurisdictions, licenses, role, status, entitlement_version` only (`tenant_id` immutable). No self-escalation: \"an advisor cannot raise their own tier or role\".\n\n`fa_tenant_lookup(p_slug text DEFAULT NULL, p_idp_tenant_id text DEFAULT NULL)`: `SECURITY DEFINER`, owned by `fa_lookup` (not `fa_owner`), explicit `SET search_path`, returns `(id, display_name, idp_tenant_id)`, serves both slug discovery and the `idp_tenant_id` to `tenants.id` mapping (D14.4); `REVOKE EXECUTE ... FROM PUBLIC; GRANT EXECUTE ... TO fa_app;`. It is the only `SECURITY DEFINER` function allowed in the database. With both arguments NULL it returns no rows.\n\nOut of scope: the HTTP endpoint (E1-T16), the principal that calls the function (E1-T14).",
+      "acceptance_criteria": [
+        "Given a principal of tenant A, when `fa_app` selects from `tenants`, then it sees exactly the tenant A row and the PUBLIC row; selecting a column outside the grant (e.g. `idp_tenant_id`) fails with permission denied; any UPDATE on `tenants` by `fa_app` fails with permission denied (`tests/db/test_rls_identity.py`).",
+        "Given an advisor with `app.role = 'advisor'`, when it runs `UPDATE advisors SET tier = 4, role = 'tenant_admin' WHERE id = app.user_id`, then rowcount is 0 and the stored tier and role are unchanged.",
+        "Given `app.role = 'tenant_admin'` of tenant A, when it updates the tier of an advisor of tenant A then it succeeds; of an advisor of tenant B then rowcount is 0; `UPDATE advisors SET tenant_id = ...` fails with permission denied.",
+        "Given `fa_tenant_lookup(p_slug => 'acme')` called as `fa_app`, then it returns exactly the columns `id, display_name, idp_tenant_id`; called as `fa_worker` it fails with permission denied; `has_function_privilege('public', ...)` is false.",
+        "Given `pg_proc`, then exactly one function with `prosecdef = true` exists in the app schemas, it is `fa_tenant_lookup`, and its owner is `fa_lookup` (test).",
+        "Given `fa_tenant_lookup(NULL, NULL)` called as `fa_app`, then it returns zero rows (test)."
+      ],
+      "arch_refs": [
+        "overview.md#5.4",
+        "overview.md#5.3",
+        "decisions.md#adr-010",
+        "decisions.md#adr-002"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T3",
+        "E1-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T10",
+      "title": "RLS and grants for activity, pipeline and usage tables",
+      "summary": "conversations, messages, turn_events, feedback, escalations, acl_change_requests, eval_scores, outbox, processed_events and answer_cache have their owner-clause policies and grants.",
+      "description": "Add an Alembic revision implementing the \"Other tables\" part of overview 5.4 and the matching 5.3 grants.\n\nPolicies:\n- `conversations`, `messages`, `turn_events`, `feedback`: tenant match AND `advisor_id = current_setting('app.user_id')::uuid` (an advisor sees only their own rows) for `fa_app` (SELECT / INSERT / UPDATE as granted).\n- `escalations`: tenant match AND (`advisor_id = app.user_id` OR `app.role = 'compliance_officer'`).\n- `acl_change_requests`: SELECT and INSERT `TO fa_app` when the tenant matches and `app.role = 'tenant_admin'`; UPDATE of (`status`, `applied_at`, `error_code`) `TO fa_worker` on the own non-PUBLIC tenant.\n- `eval_scores`, `outbox`, `processed_events`: tenant match for the roles that hold grants, no PUBLIC clause; `eval_scores` has no grant to `fa_app`.\n- `tenant_usage`: tenant match for `fa_app` (SELECT, INSERT, UPDATE; chat-api writes it) and `fa_eval` pinned to the eval tenant; no PUBLIC clause.\n- `answer_cache`: tenant match for `fa_app` and `fa_worker` (worker: DELETE only); `fa_maint` may DELETE expired rows only (`expires_at < now()`); same limit for `fa_maint` on `turn_events`.\n- `outbox`: `fa_app` SELECT / INSERT / UPDATE, `fa_worker` SELECT / INSERT / UPDATE, `fa_maint` SELECT (`id`, `published_at`) limited to unpublished rows.\n- `messages` owned by `fa_maint`: `fa_maint` has no policy and so no row access.\n- `fa_eval`: the `fa_app` policies pinned to the `EVAL_TENANT_ID` literal plus PUBLIC reads where `fa_app` has them.\n\nGrants exactly per overview 5.3 (fa_app: SELECT / INSERT / UPDATE on `conversations, messages, turn_events, escalations, feedback, answer_cache, outbox`; SELECT / INSERT / UPDATE on `tenant_usage`; SELECT / INSERT on `acl_change_requests`; fa_worker lines for `acl_change_requests`, `eval_scores`, `answer_cache`, `outbox`, `processed_events`). No `GRANT ... ON ALL TABLES`; partitions of `messages` get no grants.\n\nOut of scope: writers of these tables (E4, E5, E6).",
+      "acceptance_criteria": [
+        "Given advisors X and Y of tenant A with conversations, when `fa_app` bound to X selects from `conversations`, `messages`, `turn_events` and `feedback`, then it sees only X's rows (`tests/db/test_rls_activity.py`).",
+        "Given an `escalations` row of advisor Y, when a principal with `app.role = 'compliance_officer'` in tenant A selects, then it sees it; with `app.role = 'advisor'` and another `user_id` it does not; a compliance officer of tenant B does not.",
+        "Given `app.role = 'advisor'`, when it inserts into `acl_change_requests`, then it raises a row-level-security violation; with `tenant_admin` it succeeds; `fa_worker` updating `acl_change_requests.document_id` fails with permission denied (column grant).",
+        "Given an expired and a live row in `answer_cache`, when `fa_maint` runs `DELETE FROM answer_cache`, then only the expired row is deleted; `fa_maint` selecting from `messages` returns no rows (no policy).",
+        "Given `fa_app`, when it selects from `eval_scores`, then it fails with permission denied; `fa_worker` inserting an `outbox` row with another tenant's `tenant_id` raises a row-level-security violation.",
+        "Given `tenant_usage` rows for tenants A and B, when `fa_app` bound to A selects, inserts or updates, then it sees and changes only A's rows, and inserting a row with B's `tenant_id` raises a row-level-security violation (`tests/db/test_rls_activity.py`)."
+      ],
+      "arch_refs": [
+        "overview.md#5.4",
+        "overview.md#5.3",
+        "decisions.md#adr-002"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T3",
+        "E1-T6",
+        "E1-T7",
+        "E1-T9"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T11",
+      "title": "Tenant onboarding and advisor seeding in the migrate job",
+      "summary": "`migrate --onboard-tenant` creates a tenant's chunks LIST partition with indexes, its tenants row and the IdP mapping, idempotently and without partition grants.",
+      "description": "Implement the onboarding step in the `migrate` entrypoint (E0 created the entrypoint; Cloud Run job, role `fa_owner`): overview 4.8 \"`migrate` ... tenant onboarding (`--onboard-tenant <slug>`: LIST partition + indexes, `tenants` row, IdP mapping; the IdP tenant itself is provisioned by an onboarding script in E1 ...)\". ADR-003: \"Tenant onboarding creates its partition and indexes in the `migrate` job.\"\n\nCLI: `migrate --onboard-tenant <slug> --display-name <name> --idp-tenant-id <id> [--tenant-id <uuid>] [--kind firm|public]`. In one transaction as `fa_owner`: insert the `tenants` row (`status='active'`, new uuid unless `--tenant-id`), call `create_chunks_partition` (E1-T5; partition plus the parent-declared indexes), commit. Rerunning with the same slug is a no-op that exits 0. If rows for that tenant already sit in the DEFAULT partition, exit non-zero with a clear message (do not move rows). The dedicated `eval` tenant is onboarded with `--tenant-id $EVAL_TENANT_ID`. The PUBLIC tenant already exists (E1-T4, E1-T5). Partitions get no grants. Print the new `tenants.id`.\n\nSeed command (R18): `migrate --seed-advisors <file>` reads a JSON file of advisors (`tenant_slug, idp_uid, display_name, role, tier, jurisdictions, licenses`), resolves the tenant by slug, and inserts the `advisors` rows as `fa_owner` (upsert on `(tenant_id, idp_uid)`, idempotent). It is the only way the first advisors are created (demo setup uses it); there is no auto-provision on first login. Unknown tenant slug, invalid tier/role/jurisdiction, or malformed file exits non-zero and inserts nothing.\n\nOut of scope: creating the IdP tenant (E1-T21), Terraform (E10), a tenant-creation HTTP endpoint (\"Tenant onboarding (partition creation) is a job, not an endpoint\").",
+      "acceptance_criteria": [
+        "Given an empty database after migrations, when `migrate --onboard-tenant acme --display-name Acme --idp-tenant-id idp-acme` runs, then `tests/db/test_onboarding.py` passes: one `tenants` row with slug `acme` exists, `chunks` has a partition bound to its id, and `fa_tenant_lookup(p_idp_tenant_id => 'idp-acme')` returns that id.",
+        "Given the same command is run a second time, then it exits 0 and `SELECT count(*) FROM tenants WHERE slug = 'acme'` is 1 and `chunks` still has exactly one partition for it.",
+        "Given a chunk inserted for the onboarded tenant by `fa_owner`, then `tableoid::regclass` is the tenant's partition and `chunks_default` is empty (test).",
+        "Given the new partition, then none of `fa_app, fa_worker, fa_etl, fa_etl_public, fa_dbt, fa_eval` has any privilege on it (`has_table_privilege`), and the same indexes as `chunks_public` exist on it (compared by definition).",
+        "Given rows of the tenant already in `chunks_default`, when onboarding that tenant runs, then the command exits non-zero and creates no partition.",
+        "Given a seed file with one valid advisor and one with an unknown `tenant_slug`, when `migrate --seed-advisors` runs, then it exits non-zero and the `advisors` table has no new rows; given only valid entries it inserts them, and a second run leaves the row count unchanged (`tests/db/test_seed_advisors.py`)."
+      ],
+      "arch_refs": [
+        "overview.md#4.8",
+        "overview.md#5.5",
+        "decisions.md#adr-003"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T5",
+        "E1-T9"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T12",
+      "title": "Maintenance job: messages partitions and expired-row purge",
+      "summary": "The maintenance job, running as fa_maint, creates messages partitions 3 months ahead, drops partitions past retention, and purges expired answer_cache and turn_events rows.",
+      "description": "Add the `maintenance` entrypoint to the `jobs` image (overview 4.8): role `fa_maint`; \"Purges expired `answer_cache` and `turn_events` rows; creates `messages` partitions 3 months ahead and drops those past retention\". Scheduling is E10; `demo-up` triggering is E10; this ticket makes the job runnable (`python -m src.cli maintenance`) and tested.\n\nBehaviour:\n1. `create_messages_partitions(conn, 3)` (E1-T6), idempotent.\n2. Drop `messages` partitions whose whole range is older than the retention window. Retention is the config key `MESSAGES_RETENTION_MONTHS` (default 6), added to Settings. Never drop the DEFAULT partition.\n3. `DELETE FROM answer_cache WHERE expires_at < now()` and `DELETE FROM turn_events WHERE expires_at < now()` (policy limits `fa_maint` to expired rows).\n4. Log counts (structured, no row content). Exit non-zero if the DEFAULT partition of `messages` is non-empty after the run (\"alert if non-empty\").\nConnects with `DB_USER=fa_maint` via Settings.\n\nOut of scope: Cloud Scheduler, `demo-ttl` (E10), alert wiring (E9).",
+      "acceptance_criteria": [
+        "Given the current month plus 3 months of partitions already exist, when `maintenance` runs, then no partition is created and exit code is 0; given the newest partition is only 1 month ahead, when it runs, then partitions up to current month + 3 exist afterwards (`tests/jobs/test_maintenance.py`).",
+        "Given `MESSAGES_RETENTION_MONTHS=6` (the default) and a partition whose range ends more than 6 months ago, when `maintenance` runs, then that partition is dropped, a partition within 6 months is kept, and the DEFAULT partition is untouched.",
+        "Given one expired and one live `turn_events` row and one expired and one live `answer_cache` row, when `maintenance` runs, then only the expired rows are removed.",
+        "Given a row in the `messages` DEFAULT partition, when `maintenance` runs, then it exits non-zero.",
+        "Given the job's DB connection, then `current_user = 'fa_maint'` and an attempt to `SELECT` from `chunks` fails with permission denied."
+      ],
+      "arch_refs": [
+        "overview.md#4.8",
+        "overview.md#5.2",
+        "overview.md#5.3",
+        "overview.md#5.5"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T6",
+        "E1-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T13",
+      "title": "auth module: tenant-aware ID token verification",
+      "summary": "A FastAPI dependency verifies the Identity Platform ID token tenant-aware with firebase-admin and returns (sub, idp_tenant_id), replacing the X-User-Id header.",
+      "description": "Implement the `auth` module (overview 4.5): \"verifies the `Authorization: Bearer <Identity Platform ID token>` with firebase-admin tenant-aware verification: the `firebase.tenant` claim names the IdP tenant, and `tenant_mgt.auth_for_tenant(tenant_id).verify_id_token(...)` checks signature, `aud`, `iss`, `exp` and raises `TenantIdMismatchError` on a tenant mismatch. Output: `(sub, idp_tenant_id)`. Never reads identity from headers.\" Fixes G-01. Follow the claim name and exception classes recorded by the E1-T1 ADR. Tests use the Firebase Auth emulator in CI if the E1-T1 ADR says it supports multi-tenancy; otherwise locally signed test JWTs with a test JWKS (as the ADR records).\n\nBuild `src/auth/verifier.py`: `async verify_bearer(authorization: str | None) -> VerifiedIdentity(sub, idp_tenant_id)`. Steps: parse the Bearer header; decode the unverified payload to read the tenant claim; get `tenant_mgt.auth_for_tenant(tenant)`; verify; the firebase-admin app is initialised from `IDP_PROJECT_ID`. Blocking firebase-admin calls run in a threadpool. Any failure (missing header, malformed token, bad signature, expired, wrong audience or issuer, `TenantIdMismatchError`, missing tenant claim) raises the app's `UNAUTHENTICATED` error mapped to HTTP 401 with a body that does not reveal the cause. Remove `src/auth/mock_users.py`, the `X-User-Id` reading and `python-jose` use (`src/auth/jwt.py`); the identity of a request is never read from any header other than `Authorization`.\n\nOut of scope: mapping to `tenants.id` and loading entitlements (E1-T14), route wiring (E1-T15), Kong header stripping (E2).",
+      "acceptance_criteria": [
+        "Given a validly signed token of tenant A with the right audience, when `verify_bearer` runs, then it returns `(sub, A's idp tenant id)` (`tests/auth/test_verifier.py`).",
+        "Given each of: no header, `Authorization: Basic ...`, a token with a forged signature, an expired token, a token with a wrong audience, a token without the tenant claim, then `verify_bearer` raises `UNAUTHENTICATED` (6 parametrised cases) and the HTTP response is 401 with the same body for every case.",
+        "Given a token whose tenant claim names tenant B but which is verified against tenant A's `auth_for_tenant`, then `TenantIdMismatchError` is raised inside the module and surfaces as 401 (test).",
+        "Given a request carrying `X-User-Id: <uuid>` and no `Authorization`, when it hits a dependency using `verify_bearer`, then the response is 401; `grep -R 'X-User-Id\\|mock_users' backend/src` returns nothing.",
+        "Given `mypy` and `import-linter` run in CI, then `src/auth` imports nothing from `src/retrieval` or `src/db` content access (contract passes)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#8.2",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T1"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T14",
+      "title": "principal: entitlement cache and tenant-scoped transactions",
+      "summary": "A Principal is built from the verified identity with a 60 s cache, and the only code that sets app.* settings provides the tenant-scoped transaction context manager.",
+      "description": "Implement the `principal` module (overview 4.5): \"maps `idp_tenant_id` to `tenants.id` (via `fa_tenant_lookup`, 5.4), loads `advisors` (tier, jurisdictions, licenses, role, `entitlement_version`) into a `Principal` object, cached <= 60 s per process; the TTL is the revocation bound (no Kafka invalidation). Owns the only function that sets the per-transaction settings `app.tenant_id`, `app.idp_uid`, `app.user_id`, `app.role`, `app.tier`, `app.jurisdictions` via `set_config(name, $n, true)` with bind parameters (the principal-load transaction sets `app.tenant_id` and `app.idp_uid` plus neutral values for the rest). Neutral values (R17): `app.user_id` = nil uuid (`00000000-0000-0000-0000-000000000000`), `app.role` = empty string, `app.tier` = `0`, `app.jurisdictions` = empty string; with these values RLS returns no content rows.\"\n\nBuild `src/principal/`:\n- `Principal` (frozen dataclass): `tenant_id, advisor_id, idp_uid, role, tier, jurisdictions, licenses, entitlement_version`.\n- `async load_principal(identity: VerifiedIdentity) -> Principal`: calls `fa_tenant_lookup(p_idp_tenant_id => ...)`; unknown tenant -> `UNAUTHENTICATED`; then, in a short transaction with `app.tenant_id` and `app.idp_uid` set and neutral values for the rest, selects the advisor by `(tenant_id, idp_uid)`; unknown or non-active advisor -> `UNAUTHENTICATED`. Result cached per process keyed by `(idp_tenant_id, sub)` for `ENTITLEMENT_CACHE_TTL_S` (default 60).\n- `async scoped_tx(principal)`: async context manager yielding a connection in a transaction where `SELECT set_config('app.tenant_id', $1, true), set_config('app.idp_uid', $2, true), set_config('app.user_id', $3, true), set_config('app.role', $4, true), set_config('app.tier', $5, true), set_config('app.jurisdictions', $6, true)` ran with bind parameters (`jurisdictions` comma-joined). It is the only place that calls `set_config`; there are no `SET`, `SET ROLE` or `SET LOCAL app.*` statements anywhere in `src`. Transactions are short; the context manager refuses to be held open (a configurable max duration is not required).\n- Remove the MVP session-level `SET` in `src/db/rls.py` (G-19) and make the DB engine connect with `DB_USER`, `DB_POOL_SIZE`, `DB_STATEMENT_TIMEOUT_MS` from Settings.\n\nOut of scope: wiring into routes (E1-T15), the retrieval module (E3), cache invalidation by events: the entitlement cache is TTL-only, 60 s, with no Kafka or event invalidation (ADR-002, ADR-004; R19).",
+      "acceptance_criteria": [
+        "Given an advisor row (tier 2, jurisdictions US,EU, role advisor), when `load_principal` runs for its verified identity, then the returned `Principal` has those values and `tenant_id` equals the `tenants.id` mapped from the IdP tenant id (`tests/principal/test_principal.py`, real Postgres as `fa_app`).",
+        "Given the advisor's tier is changed in the DB, when `load_principal` is called again within `ENTITLEMENT_CACHE_TTL_S`, then the old tier is returned; after the clock passes the TTL (fake clock), the new tier is returned.",
+        "Given an unknown IdP tenant id, or a known tenant with an unknown `sub`, or an advisor with `status != 'active'`, then `load_principal` raises `UNAUTHENTICATED` (3 cases).",
+        "Given `scoped_tx(principal)`, when `SELECT current_setting('app.tenant_id'), current_setting('app.role'), current_setting('app.tier')` runs inside it, then the values equal the principal's; after the block exits, a new transaction on the same pooled connection reads `current_setting('app.tenant_id', true)` as empty/NULL.",
+        "Given a static test (`tests/test_no_session_set.py`), then `grep` over `backend/src` finds no `SET ROLE`, no `SET app.`, no `set_config(` outside `src/principal`, and no `is_local = false` argument.",
+        "Given the principal-load transaction with the neutral values, when `fa_app` selects from `chunks`, `documents` and `suitability_rules`, then zero rows are returned and no error is raised (test)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#5.4",
+        "decisions.md#adr-002",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T9",
+        "E1-T10",
+        "E1-T13"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T15",
+      "title": "Wire identity into the API: 401 and cross-tenant isolation",
+      "summary": "API routes obtain their Principal from the bearer token and use scoped transactions; a token for tenant A cannot read tenant B rows.",
+      "description": "Replace the MVP identity wiring with `Depends(get_principal)` = `verify_bearer` (E1-T13) + `load_principal` (E1-T14) in `src/dependencies.py` and use `scoped_tx(principal)` for every DB access made by the existing routes (`src/api`). Errors follow overview 6 error codes: `UNAUTHENTICATED` (401). The `chat-api` process connects as `fa_app` (compose and settings: `DB_USER=fa_app`).\n\nExisting MVP content-table access in `src/retrieval` and `src/agent` keeps working only through the scoped transaction (reads); any code path that INSERTs, UPDATEs or DELETEs a content table is removed or stubbed with a clear `NotImplementedError` referencing E3 / E6 (the MVP ingest is replaced there). Do not restructure the retrieval module (E3).\n\nTests use the same token approach as E1-T13 (Auth emulator or locally signed JWTs with a test JWKS, per the E1-T1 ADR).\n\nOut of scope: `RetrievalService` and import-linter retrieval contract (E3), Kong header stripping and the \"reaches the app unchanged\" smoke test (E2), SPA sign-in (E8).",
+      "acceptance_criteria": [
+        "Given a request with a forged, expired, wrong-audience or wrong-tenant token, when it calls any `/v1` route except the discovery route, then the response is 401 `UNAUTHENTICATED` (`tests/api/test_auth_http.py`, 4 cases against the real app with a test IdP).",
+        "Given a valid token for tenant A advisor and data for tenants A and B in `documents`, when the advisor calls a route that lists or reads documents or chunks, then no tenant B row appears in the response (integration test with two tenants seeded through `fa_owner`).",
+        "Given a valid token for an IdP user who has no `advisors` row, then the response is 401.",
+        "Given the app is started, then `SELECT current_user` in a request transaction returns `fa_app`, and no route handler calls `set_config` or opens a connection other than via `scoped_tx` (static test over `src/api`).",
+        "Given the full existing unit test suite, then `pytest` passes with tests of the removed `X-User-Id` and mock-user behaviour deleted or rewritten to bearer tokens."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#8.2",
+        "decisions.md#adr-010",
+        "decisions.md#adr-002"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T13",
+        "E1-T14"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T16",
+      "title": "Tenant discovery endpoint GET /v1/tenants/{slug}",
+      "summary": "A public endpoint returns only display_name and idp_tenant_id for a slug via fa_tenant_lookup.",
+      "description": "Implement overview 8.2 step 1: \"The SPA ... calls the public `GET /v1/tenants/{slug}` (Kong IP rate limit) and receives only `{display_name, idp_tenant_id}` from `fa_tenant_lookup` (D13m). Slugs can be enumerated at the Kong IP rate; the response carries nothing else.\"\n\n`GET /v1/tenants/{slug}` has no authentication dependency (it is the one public route). It calls `SELECT * FROM fa_tenant_lookup(p_slug => $1)` as `fa_app` in a transaction with no `app.*` settings. Response 200 `{\"display_name\": str, \"idp_tenant_id\": str}` and nothing else (no id, no kind, no status); unknown slug -> 404 with a generic body. The PUBLIC tenant is never resolved: if the function returns the row whose id is `PUBLIC_TENANT_ID` (slug `public`), the endpoint returns 404 as for an unknown slug. Slug is validated (lowercase letters, digits, hyphen, length bound) before the query. The Kong rate limit is E2.\n\nOut of scope: Kong route and rate limits (E2), SPA (E8), the principal path's use of `p_idp_tenant_id` (E1-T14).",
+      "acceptance_criteria": [
+        "Given tenant `acme` onboarded, when `GET /v1/tenants/acme` is called without any header, then the response is 200 with a JSON body whose keys are exactly `display_name` and `idp_tenant_id` (`tests/api/test_tenant_discovery.py`).",
+        "Given an unknown slug, then the response is 404; given a slug `a'; drop table tenants;--` or one longer than the bound, then the response is 422/404 and the `tenants` table is intact.",
+        "Given the request is served, then the SQL executed is only the `fa_tenant_lookup` call (asserted by capturing statements) and `fa_app` still has no direct SELECT on the `idp_tenant_id` column (covered by E1-T9 test remains green).",
+        "Given the OpenAPI schema of the app, then this route is the only one without a security requirement (test).",
+        "Given slug `public`, when `GET /v1/tenants/public` is called, then the response is 404 identical to an unknown slug (test)."
+      ],
+      "arch_refs": [
+        "overview.md#8.2",
+        "overview.md#5.4",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T9",
+        "E1-T11"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T17",
+      "title": "CI schema assertions: SECURITY DEFINER, raw_content, tenant_id",
+      "summary": "A pytest suite run in CI fails on any extra SECURITY DEFINER function, any raw_content column, or any table missing tenant_id and FORCE RLS.",
+      "description": "Add `tests/db/test_schema_invariants.py`, run by the existing CI Postgres job (E0) after `alembic upgrade head`. Invariants from the arch: \"`fa_tenant_lookup` ... is the only `SECURITY DEFINER` function allowed in the database (D13m, D13n); CI fails on any other\"; \"No `raw_content` column (G-03)\"; \"Every table carries `tenant_id uuid NOT NULL`\"; \"All tenant tables: `ENABLE` and `FORCE ROW LEVEL SECURITY`\"; \"All composite foreign keys start with `tenant_id`\".\n\nChecks over `pg_catalog` for the app schemas (excluding `gold` views and `alembic_version`): (1) the set of functions with `prosecdef` equals `{fa_tenant_lookup}`; (2) no column named `raw_content` in any table; (3) every table has a `tenant_id` column (or `id` for `tenants`) of type uuid NOT NULL; (4) `relrowsecurity` and `relforcerowsecurity` true for every table including partitioned parents; (5) every foreign key's first column is `tenant_id`, except the FK from `advisors.tenant_id` and similar single-column FKs to `tenants(id)`; (6) no runtime role holds privileges on any partition of `chunks` or `messages`. The suite must also run against a deliberately broken fixture (a temp table without FORCE, a second SECURITY DEFINER function) in a negative test proving it fails.\n\nOut of scope: the runtime startup check (E1-T18).",
+      "acceptance_criteria": [
+        "Given the migrated schema, when the suite runs, then all six invariants pass.",
+        "Given a temporary `SECURITY DEFINER` function `evil()` created in the test database, then invariant (1) fails (negative test asserts the failure).",
+        "Given a temporary table with `tenant_id` but without FORCE RLS, then invariant (4) fails; given a temporary column `raw_content` on `documents`, then invariant (2) fails (negative tests).",
+        "Given the CI workflow, then this suite runs in the same job as the other DB tests and a failure fails the PR (workflow file contains the job step; a CI run with the negative fixture enabled via env var turns red)."
+      ],
+      "arch_refs": [
+        "overview.md#5.2",
+        "overview.md#5.4",
+        "decisions.md#adr-002",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T8",
+        "E1-T9",
+        "E1-T10"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T18",
+      "title": "Startup and readiness role and RLS assertions",
+      "summary": "chat-api, migrate and /readyz refuse to run when the DB role or schema posture violates the arch.",
+      "description": "Implement overview 5.3: \"Startup and `/readyz` assert, for the connected role: not superuser, not BYPASSRLS, not owner of any table (except the two exemptions above), FORCE ROW LEVEL SECURITY on every table in the tenant schemas including partitioned parents, pgvector version >= 0.8, the expected policies exist, and that the partitions of `chunks` and `messages` carry no grants to runtime roles (D16.3). A failure refuses to start (fail to boot).\" The `migrate` job also \"asserts role flags, FORCE RLS and that partitions carry no runtime grants\" (4.8).\n\nBuild `src/db/posture.py`: `async assert_db_posture(conn, *, role_exemptions)` returning a list of violations and raising `PostureError` if any. Checks: `rolsuper`, `rolbypassrls` false for `current_user`; no table owned by `current_user` except `gold` objects for `fa_dbt` and `messages` (and its partitions) for `fa_maint`; `relforcerowsecurity` true on every table in the app schemas including partitioned parents; `extversion` of `vector` >= 0.8; every policy in a manifest `EXPECTED_POLICIES` (generated from the E1-T8 to E1-T10 migrations, listing `(table, policyname, roles)`) exists, and a test proves the manifest equals `pg_policies` so drift fails; no runtime role (`fa_app, fa_worker, fa_etl, fa_etl_public, fa_dbt, fa_eval, fa_maint`) holds any privilege on a partition of `chunks` or `messages`.\nWiring: call it in the FastAPI lifespan (exit non-zero on failure), expose it in `/readyz` (503 with violation names, no details of data), and call it at the end of `migrate` (as `fa_owner`, with owner exemption for the migrate role).\n\nOut of scope: worker pool and jobs entrypoint wiring beyond `migrate` and `chat-api` (each later epic calls the same function).",
+      "acceptance_criteria": [
+        "Given a Postgres connected as a superuser, or as a role with BYPASSRLS, or as `fa_owner` (the table owner), when the app starts, then it exits non-zero and logs the violated check (3 cases in `tests/db/test_posture.py` using throwaway roles).",
+        "Given `ALTER TABLE chunks NO FORCE ROW LEVEL SECURITY` (the partitioned parent) or the same on `documents`, then `assert_db_posture` reports the table and `/readyz` returns 503.",
+        "Given `GRANT SELECT ON <a chunks partition> TO fa_app`, or a grant on a `messages` partition, then the check fails; with grants absent it passes.",
+        "Given the connected role is `fa_dbt` with only the `gold` schema owned, or `fa_maint` owning only `messages`, then the check passes (exemption tests); `fa_maint` owning any other table fails.",
+        "Given a policy is dropped, then the check fails because the manifest lists it; and a test asserts `EXPECTED_POLICIES` equals the set in `pg_policies` after `alembic upgrade head`.",
+        "Given pgvector 0.7 (simulated by patching the version query), then the check fails."
+      ],
+      "arch_refs": [
+        "overview.md#5.3",
+        "overview.md#4.8",
+        "decisions.md#adr-002"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T8",
+        "E1-T9",
+        "E1-T10",
+        "E1-T11"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T19",
+      "title": "L0 leak matrix part 1: cross-tenant reads, writes, FK probes",
+      "summary": "A pytest leak-matrix harness proves cross-tenant read, insert, update, delete into PUBLIC, FK existence probes and fail-closed on every table, and reports leaks = 0.",
+      "description": "Build the L0 leak matrix (overview 5.4: \"The write split and the PUBLIC rule are tested by the L0 leak matrix\"; 8.5 leak-path controls). `tests/leak/` with a harness: seed tenants A, B and PUBLIC (plus advisors with different tiers and roles) through `fa_owner`; helper `as_role(role, principal_settings)` opening a connection as that role's login and running statements inside a transaction with `set_config(..., true)`. A result collector counts a *leak* whenever a forbidden statement succeeds or returns a foreign row; the suite fails if `leaks != 0` and prints `LEAKS=<n>` in the output.\n\nMatrix cases in this ticket, over every tenant table (parametrised from `pg_class` so a new table without a case fails):\n1. Cross-tenant read: for each role holding SELECT (`fa_app`, `fa_worker`, `fa_etl`, `fa_dbt`, `fa_eval`) bound to tenant A, selecting from each table returns no tenant B row.\n2. Cross-tenant insert: for each role holding INSERT, inserting a row with tenant B's `tenant_id` while bound to A raises a row-level-security violation or permission denied.\n3. Update and delete into PUBLIC: `fa_worker`, `fa_etl`, `fa_app` (where granted) cannot INSERT, UPDATE or DELETE rows with the PUBLIC `tenant_id`; only `fa_etl_public` can, and only for PUBLIC.\n4. FK existence probes: as tenant A, inserting `chunks`, `conversations`, `escalations`, `acl_change_requests` rows referencing ids of tenant B's `documents` / `advisors` fails with a foreign-key violation whose message is the same as for a nonexistent id (no oracle) or a permission error; cross-tenant composite pairs `(A, id_of_B)` fail.\n5. Fail-closed: with `app.tenant_id` unset (new transaction on a fresh connection), every SELECT on a tenant table by a policy-bound role raises an error and returns zero rows.\n\nOut of scope: direct partition access, self-escalation, pooled reuse, EXPLAIN pruning and CI gate wiring (E1-T20).",
+      "acceptance_criteria": [
+        "Given the matrix runs against the migrated schema, then `pytest tests/leak -k 'read or insert or public or fk or failclosed'` passes and its output contains `LEAKS=0`.",
+        "Given a deliberately weakened policy in a negative test (e.g. `chunks_select_pipe` USING (true) in a scratch database), then the matrix reports `LEAKS` greater than 0 and the test asserting detection passes.",
+        "Given a new table is added to the schema without a matrix case, then `tests/leak/test_coverage.py` fails (table list from `pg_class` must equal the set of tables covered).",
+        "Given case 4 for a nonexistent id and for an id of tenant B, then the error class and SQLSTATE are identical for both (no existence oracle) or both permission denied.",
+        "Given case 3, then `fa_etl_public` inserting into tenant A raises a row-level-security violation (the only PUBLIC writer cannot write tenants)."
+      ],
+      "arch_refs": [
+        "overview.md#5.4",
+        "overview.md#8.2",
+        "decisions.md#adr-002",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T8",
+        "E1-T9",
+        "E1-T10",
+        "E1-T11"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T20",
+      "title": "L0 leak matrix part 2: partitions, pooling, pruning, CI gate",
+      "summary": "The leak matrix also covers direct partition access, advisor self-escalation, pooled-connection reuse and EXPLAIN pruning, and gates every PR.",
+      "description": "Extend `tests/leak/` (E1-T19) with the remaining cases from overview 5.3 and 5.4: \"direct SELECT / INSERT on a partition as `fa_app` / `fa_worker` gives permission denied\", \"advisor raises own tier / role gives denied\", pooled-connection reuse, and \"`EXPLAIN` shows partition pruning for LIST partitions under RLS\" (plan.md E1 done-when; overview 5.5: \"the same check is repeated for LIST partitions in the E1 leak-matrix test\").\n\nCases:\n6. Direct partition access: as `fa_app` and `fa_worker`, `SELECT` and `INSERT` on the tenant's own `chunks` partition, on `chunks_public`, on `chunks_default` and on a `messages` monthly partition fail with permission denied (SQLSTATE 42501); the same statements through the parent succeed or are filtered by RLS.\n7. Advisor self-escalation: an advisor binding raises its own `tier`, `role`, `jurisdictions` and `licenses`: rowcount 0 and values unchanged; `tenant_admin` of tenant A cannot change an advisor of B.\n8. Pooled-connection reuse: using the real engine with `DB_POOL_SIZE=1`, request 1 is a tier-4 EU principal of tenant A, request 2 is a tier-1 US principal of tenant B on the same physical connection (assert same `pg_backend_pid()`): request 2 sees none of request 1's rows and `current_setting('app.tier', true)` is empty at the start of request 2's transaction before `scoped_tx` sets it. A third case runs a request that is cancelled mid-transaction, then reuses the connection.\n9. Pruning: with partitions for at least 8 tenants plus PUBLIC and DEFAULT, `EXPLAIN (ANALYZE)` of the dense leg of the 5.6 hybrid statement as `fa_app` shows that only the caller's tenant, PUBLIC and DEFAULT partitions are executed (others \"never executed\" or removed by \"Subplans Removed\").\nCI: add a required workflow job `leak-matrix` running `pytest tests/leak` on every PR (E0 CI), which fails when the output contains `LEAKS=` greater than 0 or when the job reports fewer collected tests than a pinned minimum.\n\nOut of scope: L1-L3 evals, Kong-level tests (E2).",
+      "acceptance_criteria": [
+        "Given `fa_app` and `fa_worker`, when each runs SELECT and INSERT on the tenant partition, `chunks_public`, `chunks_default` and a `messages` partition, then every attempt fails with SQLSTATE 42501 (`pytest tests/leak -k partition`).",
+        "Given advisor self-escalation attempts on tier, role, jurisdictions and licenses, then rowcount is 0 and a re-read shows unchanged values (`-k escalation`).",
+        "Given a pool of size 1 serving a tier-4 principal of tenant A then a tier-1 principal of tenant B on the same `pg_backend_pid()`, then B's queries return no A rows and no higher-tier rows, and the same holds after a cancelled transaction (`-k pooled`).",
+        "Given 8 tenant partitions plus PUBLIC and DEFAULT, then the `EXPLAIN (ANALYZE)` text for the dense leg contains no executed scan of any other tenant's partition (`-k pruning`).",
+        "Given the CI workflow, then a required job `leak-matrix` runs on `pull_request`, and a PR containing a weakened policy (a deliberately failing branch fixture) makes the job red with `LEAKS=` greater than 0."
+      ],
+      "arch_refs": [
+        "overview.md#5.3",
+        "overview.md#5.4",
+        "overview.md#5.5",
+        "decisions.md#adr-002",
+        "decisions.md#adr-003"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T19",
+        "E1-T14"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E1-T21",
+      "title": "IdP tenant provisioning script",
+      "summary": "A script creates the Identity Platform tenant for a firm (email/password) and prints its id for the onboarding command.",
+      "description": "Implement the IdP onboarding script named in the scope (\"IdP tenant provisioning script (Terraform comes in E10)\") and overview 8.2 step 7 (\"IdP tenants are provisioned by an onboarding script (E1) and Terraform (E10)\"). `backend/scripts/provision_idp_tenant.py --display-name <name> [--project $IDP_PROJECT_ID]`: using firebase-admin `tenant_mgt` (version pinned by E1-T1), it finds an existing IdP tenant by display name or creates one with email/password sign-in enabled, and prints the IdP tenant id (`idp_tenant_id`) on stdout (nothing else on stdout) so it can be passed to `migrate --onboard-tenant ... --idp-tenant-id`. Idempotent on display name. Does not create users and does not touch the database. Follow billing and display-name rules recorded in the E1-T1 ADR. Add a short runbook section to `docs/` showing the two-step onboarding (script, then migrate).\n\nOut of scope: Terraform (E10), SSO/SAML, creating advisors.",
+      "acceptance_criteria": [
+        "Given a fake `tenant_mgt` client (unit test `tests/scripts/test_provision_idp_tenant.py`), when the script runs twice with the same display name, then `create_tenant` is called once and both runs print the same id.",
+        "Given a display name that does not exist, then `create_tenant` is called with `allow_password_sign_up=True` and the printed id equals the id the client returned; stdout contains exactly one line.",
+        "Given the client raises an authorisation or billing error, then the script exits non-zero with a message on stderr and prints nothing on stdout.",
+        "Given a real project (manual check recorded in the PR description with the output id redacted), then `migrate --onboard-tenant` accepts the printed id and `fa_tenant_lookup(p_idp_tenant_id => <id>)` resolves it."
+      ],
+      "arch_refs": [
+        "overview.md#8.2",
+        "overview.md#4.8",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T1",
+        "E1-T11"
+      ],
+      "size": "S",
+      "status": "todo"
+    }
+  ],
+  "questions": []
+}

@@ -12,7 +12,7 @@ you see its evidence.
 
 ## Read
 The context pack, `review.md`, `security.md`, `tests.md`, `arch-check.md` in
-`context/.runtime/builder/<p>/<ticket>/`, the editor's reply, and the diff.
+`projects/.runtime/builder/<p>/<ticket>/`, the editor's reply, and the diff.
 
 ## Check
 1. **Each acceptance criterion**: find the evidence (a named test that passed in `tests.md`, a
@@ -32,7 +32,7 @@ Your report file starts with these two lines (the brain mod reads them):
 sha: <git -C <worktree> rev-parse HEAD>
 status: <your status keyword>
 ```
-`context/.runtime/builder/<p>/<ticket>/verdict.md`, with `status: GREEN` or `status: RED`.
+`projects/.runtime/builder/<p>/<ticket>/verdict.md`, with `status: GREEN` or `status: RED`.
 
 ## Reply
 Start with `VERDICT`, then `GREEN` or `RED`. Then at most 10 lines:

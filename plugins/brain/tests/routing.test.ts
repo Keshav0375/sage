@@ -22,12 +22,15 @@ test('the main loop may spawn anything; a subagent may spawn only leaves, forced
   expect(leafDecision('researcher:skeptic', 'agent-1', CFG).deny).toContain('only spawn leaf agents')
 })
 
-test('report-only agents write only under .runtime; others are not limited here', () => {
-  expect(writeAllowed('researcher:skeptic', '/c/.runtime/research/p/s.md', '/c/.runtime', CFG)).toBe(true)
-  expect(writeAllowed('researcher:skeptic', '/c/projects/p/arch/overview.md', '/c/.runtime', CFG)).toBe(false)
-  expect(writeAllowed('researcher:skeptic', '/c/.runtime-evil/x', '/c/.runtime', CFG)).toBe(false)
-  expect(writeAllowed('researcher:arch-writer', '/c/projects/p/arch/overview.md', '/c/.runtime', CFG)).toBe(true)
-  expect(writeAllowed(undefined, '/anything', '/c/.runtime', CFG)).toBe(true)
+test('report-only agents write only under .runtime or a project library', () => {
+  expect(writeAllowed('researcher:skeptic', '/c/.runtime/research/p/s.md', '/c', CFG)).toBe(true)
+  expect(writeAllowed('researcher:skeptic', '/c/finadvisor/library/research/r4/s.md', '/c', CFG)).toBe(true)
+  expect(writeAllowed('researcher:skeptic', '/c/finadvisor/arch/architecture.md', '/c', CFG)).toBe(false)
+  expect(writeAllowed('researcher:skeptic', '/c/finadvisor/library/../arch/x.md', '/c', CFG)).toBe(false)
+  expect(writeAllowed('researcher:skeptic', '/c/.runtime-evil/x', '/c', CFG)).toBe(false)
+  expect(writeAllowed('researcher:skeptic', '/elsewhere/x', '/c', CFG)).toBe(false)
+  expect(writeAllowed('researcher:arch-writer', '/c/finadvisor/arch/architecture.md', '/c', CFG)).toBe(true)
+  expect(writeAllowed(undefined, '/anything', '/c', CFG)).toBe(true)
 })
 
 const TIERED = parseRoutingConfig(JSON.stringify({

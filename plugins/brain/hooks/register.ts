@@ -3,8 +3,9 @@ import { checkBash } from './guard.ts'
 import { parseRoutingConfig, spawnTier, leafDecision, writeAllowed, budgetGuard } from './routing.ts'
 import {
   parseHeader, isTicketKey, parseReport, staleChecks, ticketPaths, ticketOfPath, shipTarget, shipBlock,
-  parseClaim, claimedByOther, fixAttempts, deriveStep, renderRuns, updateTicket, activeTickets, CHECKS, CLAIM_MS,
+  parseClaim, claimedByOther, fixAttempts, deriveStep, renderRuns, CHECKS, CLAIM_MS,
 } from './ledger.ts'
+import { planOf, activeTickets, setTicketFields, ticketFileFor } from './tickets.ts'
 
 // Reads context/registry.json. Returns undefined when context_dir is unset or the file is missing.
 async function loadRegistry($, contextDir) {
@@ -14,17 +15,47 @@ async function loadRegistry($, contextDir) {
   return parseRegistry(await $.fs.read(path))
 }
 
-// The project card for one project, with repo existence and STATE.md highlights.
+// The project card for one project, with repo existence and state.md highlights.
 async function projectCard($, contextDir, reg, home, name, match) {
   const exists = {}
   for (const [repo, raw] of Object.entries(reg.projects[name]?.repos ?? {})) {
     exists[repo] = await $.fs.exists(expandHome(raw, home))
   }
-  const statePath = `${contextDir}/projects/${name}/STATE.md`
-  const state = (await $.fs.exists(statePath)) ? await $.fs.read(statePath) : undefined
-  const trackerPath = `${contextDir}/projects/${name}/tracker.json`
-  const tracker = (await $.fs.exists(trackerPath)) ? await $.fs.read(trackerPath) : undefined
-  return renderCard(reg, name, home, exists, state, match, tracker)
+  const state = await readOr($, `${contextDir}/${name}/state.md`)
+  const plan = await loadPlan($, contextDir, name)
+  return renderCard(reg, name, home, exists, state, match, plan.epics.length ? JSON.stringify(plan) : undefined)
+}
+
+// The project's epics and tickets, read from projects/<p>/epic/ (see the brain:layout skill).
+async function loadPlan($, contextDir, project) {
+  const root = `${contextDir}/${project}/epic`
+  const files = { readme: await readOr($, `${root}/README.md`), epics: [] }
+  if (!(await $.fs.exists(root))) return planOf(files)
+  for (const d of await $.fs.list(root)) {
+    if (d.kind !== 'dir') continue
+    const tdir = `${root}/${d.name}/tickets`
+    const tickets = []
+    if (await $.fs.exists(tdir)) {
+      for (const f of await $.fs.list(tdir)) if (f.kind === 'file' && f.name.endsWith('.md')) tickets.push(await $.fs.read(`${tdir}/${f.name}`))
+    }
+    files.epics.push({ epic: await readOr($, `${root}/${d.name}/epic.md`), tickets })
+  }
+  return planOf(files)
+}
+
+// The path of one ticket file by key, or undefined.
+async function ticketPath($, contextDir, project, key) {
+  const epicKey = String(key).split('-T')[0]
+  const root = `${contextDir}/${project}/epic`
+  if (!(await $.fs.exists(root))) return undefined
+  for (const d of await $.fs.list(root)) {
+    if (d.kind !== 'dir' || !(d.name === epicKey || d.name.startsWith(`${epicKey}-`))) continue
+    const tdir = `${root}/${d.name}/tickets`
+    if (!(await $.fs.exists(tdir))) continue
+    const name = ticketFileFor((await $.fs.list(tdir)).map((f) => f.name), String(key))
+    if (name) return `${tdir}/${name}`
+  }
+  return undefined
 }
 
 // The context text for the session's working directory.
@@ -35,7 +66,7 @@ async function contextFor($, contextDir, cwd) {
   if (!reg) return `brain: no registry at ${contextDir}/registry.json. Run /brain:setup.`
   const match = resolveCwd(reg, cwd, home)
   if (match) return await projectCard($, contextDir, reg, home, match.project, match)
-  const brainRoot = contextDir.replace(/\/context\/?$/, '')
+  const brainRoot = contextDir.replace(/\/projects\/?$/, '')
   if (cwd === brainRoot || cwd.startsWith(brainRoot + '/')) {
     return `You are in the harness repo (context at ${contextDir}). Architecture planning happens here.\n${renderBoard(reg, home)}`
   }
@@ -52,14 +83,13 @@ async function headOf($, worktree) {
   return r.exitCode === 0 ? r.stdout.trim() : undefined
 }
 
-// The ledger rows for every in-progress or blocked ticket, from the trackers and the files on disk.
+// The ledger rows for every in-progress or blocked ticket, from the ticket files and the files on disk.
 async function collectRuns($, contextDir, reg, only) {
   const rows = []
   for (const project of Object.keys(reg.projects)) {
     if (only && project !== only) continue
-    const tracker = await readOr($, `${contextDir}/projects/${project}/tracker.json`)
-    if (!tracker) continue
-    for (const t of activeTickets(tracker)) {
+    const plan = await loadPlan($, contextDir, project)
+    for (const t of activeTickets(plan)) {
       const p = ticketPaths(contextDir, project, t.ticket)
       const reports = {}
       for (const name of CHECKS) reports[name] = await readOr($, p.report(name))
@@ -138,10 +168,36 @@ const agentTypes = new Map()
 // Subagent id → { model, effort } decided at spawn, enforced on every model request of that agent.
 const agentTiers = new Map()
 
+// The default routing (projects/routing.json) with the tiers of the session's project
+// (projects/<p>/routing.json) merged over it.
 async function loadRoutingConfig($, contextDir) {
   const path = `${contextDir}/routing.json`
   if (!contextDir || !(await $.fs.exists(path))) return { agents: {}, leaves: [], leafModel: 'haiku', reportOnly: [], tiers: {} }
-  return parseRoutingConfig(await $.fs.read(path))
+  const cfg = parseRoutingConfig(await $.fs.read(path))
+  const project = await sessionProject($, contextDir)
+  const own = project ? await readOr($, `${contextDir}/${project}/routing.json`) : undefined
+  if (own) {
+    try {
+      const p = parseRoutingConfig(own)
+      cfg.tiers = { ...cfg.tiers, ...p.tiers }
+    } catch {
+      // a broken project file leaves the defaults in force
+    }
+  }
+  return cfg
+}
+
+// The project the session works on: from the working directory inside projects/<p>/ or a repo.
+async function sessionProject($, contextDir) {
+  const cwd = await $.session.cwd()
+  const root = contextDir + '/'
+  if (cwd.startsWith(root)) {
+    const name = cwd.slice(root.length).split('/')[0]
+    if (name && !name.startsWith('.')) return name
+  }
+  const reg = await loadRegistry($, contextDir)
+  if (!reg) return undefined
+  return resolveCwd(reg, cwd, (await $.env.get('HOME')) ?? '')?.project
 }
 
 export function register(on, options) {
@@ -169,7 +225,7 @@ export function register(on, options) {
     })
     await $.tool.register({
       name: 'ticket_update',
-      description: 'Change one ticket in tracker.json (status, branch, pr) with one locked write. Use it instead of editing tracker.json during a build.',
+      description: 'Change one ticket file (status, branch, pr, issue) in projects/<p>/epic/<E>/tickets/ with one locked write. Use it instead of editing ticket frontmatter during a build.',
       inputSchema: {
         type: 'object',
         required: ['project', 'ticket', 'fields'],
@@ -214,10 +270,11 @@ export function register(on, options) {
 
   on('tool.call', { tool: 'mcp__brain__ticket_update' }, async ($, e) => {
     if (!contextDir) return { result: 'No registry. Run /brain:setup.' }
-    const path = `${contextDir}/projects/${e.project}/tracker.json`
     const write = trackerWrites.then(async () => {
+      const path = await ticketPath($, contextDir, e.project, e.ticket)
+      if (!path) throw new Error(`ticket ${e.ticket} has no file under projects/${e.project}/epic/`)
       const text = await $.fs.read(path)
-      await $.fs.write(path, updateTicket(text, String(e.ticket), e.fields ?? {}, new Date().toISOString().slice(0, 10)))
+      await $.fs.write(path, setTicketFields(text, e.fields ?? {}, new Date().toISOString().slice(0, 10)))
       if (['review', 'done', 'blocked'].includes(String(e.fields?.status))) {
         const p = ticketPaths(contextDir, e.project, String(e.ticket))
         if (await $.fs.exists(p.dir)) await $.fs.write(p.claim, JSON.stringify({ session: await $.session.id(), expires: 0 }) + '\n')
@@ -259,7 +316,7 @@ export function register(on, options) {
     return next(e)
   })
 
-  // Model routing for subagents: the orchestrator's explicit choice, then context/routing.json,
+  // Model routing for subagents: the orchestrator's explicit choice, then projects/routing.json,
   // then the subagent_model option.
   on('agent.spawn', async ($, e, next) => {
     const cfg = await loadRoutingConfig($, contextDir)
@@ -292,8 +349,8 @@ export function register(on, options) {
       if (!e.agentId || !contextDir) return next(e)
       const cfg = await loadRoutingConfig($, contextDir)
       const path = String(e.file_path ?? '')
-      if (!writeAllowed(agentTypes.get(e.agentId), path, `${contextDir}/.runtime`, cfg)) {
-        return { deny: `This agent writes reports only, under ${contextDir}/.runtime/. Return the content instead.` }
+      if (!writeAllowed(agentTypes.get(e.agentId), path, contextDir, cfg)) {
+        return { deny: `This agent writes reports only: under ${contextDir}/<project>/library/ or ${contextDir}/.runtime/. Return the content instead.` }
       }
       return next(e)
     })

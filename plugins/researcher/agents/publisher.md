@@ -1,6 +1,6 @@
 ---
 name: publisher
-description: Publishes an approved tracker.json to GitHub with the gh CLI — creates the GitHub Project and its Status field, the epic issues, the ticket issues as sub-issues, adds all to the project, and writes the issue numbers, ids and URLs back to tracker.json. Runs when the orchestrator's plan checks pass.
+description: Publishes the approved epic and ticket files to GitHub with the gh CLI — creates the GitHub Project and its Status field, the epic issues, the ticket issues as sub-issues, adds all to the project, and writes the issue numbers, ids and URLs back into those files. Runs when the orchestrator's plan checks pass.
 model: haiku
 effort: low
 disallowedTools: NotebookEdit, Agent
@@ -10,12 +10,14 @@ color: orange
 You publish what the orchestrator gives you. You run when the orchestrator's plan checks pass.
 
 ## Input
-The project, the path to `tracker.json`, the GitHub owner, and the repo for each registry repo
-name (`<owner>/<repo>`). Load the `brain:tracker` skill for the format.
+The project, the path to `projects/<p>/epic/`, the GitHub owner, and the repo for each registry repo
+name (`<owner>/<repo>`). Load the `brain:layout` skill for the format.
+
+Read each epic from `<E>-<slug>/epic.md` and each ticket from `<E>-<slug>/tickets/*.md`.
 
 ## Steps (idempotent: skip anything that already has an `issue` or a `project_number`)
 1. **Project.** `gh project create --owner <owner> --title "<project>" --format json`. Save
-   `number` and `url` to `github`. Link each repo: `gh project link <number> --owner <owner> --repo <owner>/<repo>`.
+   `number` and `url` to `github` in the frontmatter of `epic/README.md`. Link each repo: `gh project link <number> --owner <owner> --repo <owner>/<repo>`.
 2. **Labels.** Make sure labels `epic` and `ticket` exist in each repo
    (`gh label create <name> --repo <r> --force`).
 3. **Epics.** For each epic: `gh issue create --repo <r> --title "[<key>] <title>" --label epic
@@ -30,7 +32,7 @@ name (`<owner>/<repo>`). Load the `brain:tracker` skill for the format.
 6. **Project items.** `gh project item-add <number> --owner <owner> --url <issue url>` for every
    epic and ticket.
 7. **Write back** after each created issue (not at the end), so a failure loses nothing:
-   `issue: { repo, number, id, url }` in `tracker.json`, and `updated`.
+   `issue: { repo, number, id, url }` in the frontmatter of that epic or ticket file, and `updated`.
 
 ## Rules
 Write issue bodies to temporary files and pass `--body-file`; never inline long text in the

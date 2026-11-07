@@ -1,0 +1,421 @@
+{
+  "epic": "E3",
+  "tickets": [
+    {
+      "key": "E3-T1",
+      "title": "Spike: Voyage rerank latency, TPM and tier",
+      "summary": "Measure rerank-2.5-lite and rerank-2.5 latency and rate limits on the Voyage tier in use and record the result as an ADR.",
+      "description": "Build a throwaway-but-committed script `backend/scripts/spike_rerank.py` (not imported by the app) that calls Voyage rerank with realistic payloads and records the result as an ADR in `docs/adr/ADR-E3-01-rerank-latency-tpm.md` in the FinAdvisor repo (the orchestrator copies it to arch/decisions.md).\n\nArch being tested (ADR-008): \"Voyage `rerank-2.5-lite` (or `rerank-2.5`) with timeout ... rerank p95 < 700 ms ... rerank is single-vendor (Voyage) and rate limited (about 5 QPS on Tier 1)\"; overview \u00a72.1: \"Rerank | p95 < 700 ms | Voyage rerank ~0.68 s per call measured by a third party on short facts\". Config \u00a76.6: \"`RERANK_TIMEOUT_MS`, `RERANK_CANDIDATES`, `RERANK_TOP_N` | timeout: set in E3; candidates: default 15, range 10-30; top-n 6\".\n\nMeasure, for both models: (a) latency p50/p95/p99 over >= 200 calls for candidate counts 10, 15, 20, 30 with 256-512-token child chunks (use synthetic finance-style text) and a short query; (b) sustained load at 1, 3 and 5 QPS for 60 s each and the number of HTTP 429 responses and their Retry-After / error body shape; (c) the account's tier and TPM/RPM limits as read from the Voyage dashboard or response headers, with the date. Output a table in the ADR: model x candidates x p50/p95/p99, and QPS x 429 count.\n\nThe ADR must state: the chosen `RERANK_MODEL`, the chosen `RERANK_TIMEOUT_MS` (this is the value E3 sets), whether p95 < 700 ms holds at `RERANK_CANDIDATES` 15, the highest QPS without 429, and the exact exception/status Voyage raises on 429 and on timeout (needed by the rerank ticket E3-T6). If p95 >= 700 ms at 15 candidates the ADR must say so and name the fallback (smaller candidate count or dropping rerank).\n\nOut of scope: the app integration (E3-T6), the recall ablation (E7 and E3-T16), any change to production code. Needs `VOYAGE_API_KEY` in the environment; the script must exit 2 with a clear message when it is missing and must never print the key.",
+      "acceptance_criteria": [
+        "Given VOYAGE_API_KEY is unset when `python backend/scripts/spike_rerank.py` runs then it exits with code 2 and prints no key material (checked by `backend/tests/test_spike_scripts.py::test_spike_rerank_requires_key`).",
+        "Given a valid key when the script runs with `--calls 200` then it writes `docs/adr/ADR-E3-01-rerank-latency-tpm.md` containing a measured p50, p95 and p99 in ms for each of rerank-2.5-lite and rerank-2.5 at candidate counts 10, 15, 20 and 30 (file exists and the table has 8 rows).",
+        "The ADR records 429 counts at 1, 3 and 5 QPS (60 s each), the Voyage tier and TPM/RPM limits with the measurement date, and the exception type or HTTP status seen on 429 and on client timeout.",
+        "The ADR states a numeric `RERANK_TIMEOUT_MS`, the chosen `RERANK_MODEL`, and an explicit yes/no for 'p95 < 700 ms at 15 candidates' that matches the measured table."
+      ],
+      "arch_refs": [
+        "overview.md#2.1",
+        "overview.md#6.6",
+        "decisions.md#adr-008"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T2",
+      "title": "Spike: pgvector iterative scan with RLS and partitions",
+      "summary": "Prove that HNSW with iterative scan returns the requested row count under RLS on LIST partitions, and measure first-stage SQL latency on 10k chunks.",
+      "description": "Build the reusable synthetic corpus generator `backend/scripts/synth_corpus.py` and the spike script `backend/scripts/spike_pgvector.py`, and record the result as an ADR `docs/adr/ADR-E3-02-pgvector-iterative-scan-rls.md` (confirms D13b / ADR-003: LIST partitions by `tenant_id`).\n\nArch being tested (overview \u00a75.5): \"`chunks`: `PARTITION BY LIST (tenant_id)` ... HNSW on `embedding halfvec_cosine_ops` with `m = 16`, `ef_construction = 64`, partial `WHERE kind = 'child'` ... Query-time settings, per transaction (`SET LOCAL`): `hnsw.iterative_scan = relaxed_order`, `hnsw.max_scan_tuples = 20000`, `hnsw.ef_search` ~80-100 ... Filtering is applied after the ANN scan in pgvector, so iterative scan is mandatory\". ADR-008 evidence: \"practitioner 52/400 queries returned 0 rows with default HNSW\".\n\nSynthetic corpus (deterministic, seed in the file): 10,000 child chunks plus their parents across 3 firm tenants and the PUBLIC tenant (partitions created through the E1 onboarding path), with `tier_required` 1..4 and `jurisdiction` in US/EU/UK distributed so that a restrictive caller (tier 1, jurisdiction US only) can see only about 5-10% of rows. Embeddings are seeded clustered 1024-dim vectors (no Voyage calls for corpus generation); the DB uses the E1 schema and roles, and queries run as `fa_app` with `set_config(..., true)` settings set exactly as the `principal` module does.\n\nExperiments, all as `fa_app` through RLS: (1) default HNSW (no iterative scan) vs `relaxed_order` with `max_scan_tuples` 20000 and `ef_search` 40, 80, 100: fraction of 400 queries returning fewer than `LIMIT` rows, for LIMIT 15 and 30; (2) the hybrid statement of overview \u00a75.6 (copy it verbatim) p50/p95/p99 SQL latency over 400 queries per caller profile; (3) `EXPLAIN (ANALYZE)` on a dense query showing partitions removed (\"Subplans Removed\") under the RLS `current_setting` policy; (4) the same with a `strict_order` comparison for the record.\n\nThe ADR states: the chosen `HNSW_EF_SEARCH`, whether `HNSW_MAX_SCAN_TUPLES` 20000 suffices for the restrictive profile, the per-leg `LIMIT` ($2 in \u00a75.6) to use, the measured SQL p95, and a verdict on D13b (LIST partitions keep pruning at this scale).\n\nOut of scope: the app's `RetrievalService` (E3-T5), index DDL in migrations (E3-T4), embeddings from Voyage.",
+      "acceptance_criteria": [
+        "Given the 10k-chunk corpus and a tier-1 US-only caller when 400 queries run with default HNSW settings then the script reports the count with fewer than 15 rows, and with `relaxed_order` + `max_scan_tuples` 20000 + `ef_search` 80 reports 0 queries with fewer than 15 rows (asserted in `backend/tests/test_spike_pgvector.py::test_iterative_scan_fills_limit`, marked `integration`).",
+        "`EXPLAIN (ANALYZE)` output stored in the ADR shows 'Subplans Removed' > 0 for the dense leg under RLS, and the test `test_partition_pruning_under_rls` asserts the plan text contains it.",
+        "The ADR contains a table of hybrid-statement SQL latency p50/p95/p99 in ms per caller profile, a chosen `HNSW_EF_SEARCH` (80-100 range or a justified other value), the per-leg LIMIT, and an explicit confirm/reject of D13b.",
+        "Running `python backend/scripts/synth_corpus.py --chunks 10000 --seed 1` twice produces identical `chunk_hash` sets (test `test_synth_corpus_deterministic`)."
+      ],
+      "arch_refs": [
+        "overview.md#5.5",
+        "overview.md#5.6",
+        "decisions.md#adr-008",
+        "decisions.md#adr-003"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T3",
+      "title": "Voyage embeddings: voyage-4 with query/document input_type",
+      "summary": "Replace the voyage-3 document-typed query embedding with an async voyage-4 client that uses the correct input_type.",
+      "description": "Rewrite `backend/src/retrieval/embeddings.py` (as built: voyage-3, queries embedded with `input_type=\"document\"`, sync SDK via threads; G-33, G-36).\n\nArch (ADR-008): \"Voyage `voyage-4` with `input_type` query / document; `halfvec(1024)`\". Config \u00a76.6: `EMBED_MODEL` = `voyage-4`, `EMBED_DIM` = 1024, `VOYAGE_API_KEY` required. Stack: \"Voyage `voyage-4` (1024 dims, `input_type` query / document) | model id from config; voyageai SDK pin at implementation\" - pin the voyageai SDK in the lockfile in this ticket and update stack.md's version cell. G-36 is accepted as a single provider: no second embedding provider, no fallback.\n\nInterfaces (module `retrieval.embeddings`, async, using the voyageai async client; model id and dim only from `Settings`):\n- `embed_query(text: str) -> list[float]` calls Voyage with `input_type=\"query\"`.\n- `embed_documents(texts: list[str]) -> list[list[float]]` calls with `input_type=\"document\"` (used by the indexer in E6; batch size limited by the Voyage per-request cap).\n- Both raise a typed `EmbeddingError` (no provider text in the message) on timeout or API error, with an explicit client timeout from config; assert returned dimension == `EMBED_DIM`.\nTexts passed in are assumed already PII-redacted by the caller (guardrails, E4); this module does not redact.\n\nOut of scope: retries/circuit breaker beyond a single explicit timeout (arch is silent; see questions), batching policy for the indexer (E6), a fallback provider.",
+      "acceptance_criteria": [
+        "Given a stubbed Voyage client when `embed_query('x')` is called then the client received `input_type='query'` and model `voyage-4`; when `embed_documents(['x'])` is called then it received `input_type='document'` (test `backend/tests/test_embeddings.py::test_input_types`).",
+        "Given the stub returns a 512-dim vector when `embed_query` runs then `EmbeddingError` is raised (test `test_dimension_mismatch`).",
+        "Given the stub raises a timeout when `embed_query` runs then `EmbeddingError` is raised and its message contains no API key or provider response text (test `test_error_is_redacted`).",
+        "`grep -rn 'voyage-3' backend/src` returns no match, and the model id appears only in `Settings` defaults (CI step `test_no_hardcoded_embed_model`)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#6.6",
+        "decisions.md#adr-008"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T4",
+      "title": "Migration: halfvec, FTS and HNSW indexes on chunks",
+      "summary": "Make the chunks table carry halfvec(1024), a generated tsvector, HNSW and GIN indexes per partition, replacing IVFFlat.",
+      "description": "Alembic migration (run by the `migrate` job as `fa_owner`) that brings `chunks` to the retrieval shape. First check what the E1 baseline already created and add only what is missing; the migration must be idempotent against it and the onboarding path (`migrate --onboard-tenant`) must create the same indexes for a new tenant partition.\n\nArch (overview \u00a75.2): \"`embedding halfvec(1024)` (children only, NULL for parents), `tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', coalesce(context_header,'') || ' ' || content)) STORED`\". Overview \u00a75.5: \"Per partition, on `chunks`: HNSW on `embedding halfvec_cosine_ops` with `m = 16`, `ef_construction = 64`, partial `WHERE kind = 'child'`; GIN on `tsv`; btree `(tenant_id, document_id)`, `(tenant_id, parent_id)`, `(tenant_id, tier_required, jurisdiction)`; unique `(tenant_id, chunk_hash, embed_model)`\" and \"indexes are declared on the parent so each partition gets its own\". The MVP IVFFlat index (`lists=10`, built on an empty table; G-34) is dropped. Use the `HNSW_EF_SEARCH` and per-leg values from the E3-T2 ADR only for documentation; index build parameters are fixed (m 16, ef_construction 64).\n\nConstraints: no GRANT on partitions (overview \u00a75.3); `fa_app` still has SELECT only. pgvector >= 0.8 (image `pgvector/pgvector:0.8.5-pg16`). Existing `vector(1024)` data is converted with a cast to `halfvec(1024)` (the MVP table is empty or re-ingested; no data migration script beyond the cast).\n\nOut of scope: the answer_cache table (E3-T13), partition creation logic itself (E1), re-embedding existing rows with voyage-4 (E6 indexer).",
+      "acceptance_criteria": [
+        "Given an empty database when `alembic upgrade head` runs then `\\d+ chunks` shows `embedding halfvec(1024)` and generated `tsv`, and `pg_indexes` for each tenant partition lists one hnsw index with `m='16', ef_construction='64'` and `WHERE kind = 'child'`, one gin index on `tsv` and the three btree indexes (test `backend/tests/test_migration_chunks_indexes.py::test_indexes_on_every_partition`).",
+        "Given the migration is run twice then the second run changes nothing (test `test_migration_idempotent`).",
+        "Given `migrate --onboard-tenant` creates a new tenant partition then that partition has the HNSW and GIN indexes without an extra call (test `test_onboarded_partition_has_indexes`).",
+        "`pg_indexes` contains no `ivfflat` index on `chunks`, and the partitions carry no grants to `fa_app` or `fa_worker` (test `test_no_ivfflat_no_partition_grants`)."
+      ],
+      "arch_refs": [
+        "overview.md#5.2",
+        "overview.md#5.5",
+        "overview.md#5.3",
+        "decisions.md#adr-008"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1",
+        "E3-T2"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T5",
+      "title": "RetrievalService.search: hybrid dense + FTS with RRF",
+      "summary": "Implement RetrievalService(principal).search as one SQL statement with RLS on both legs and iterative HNSW scan.",
+      "description": "Create `RetrievalService(principal)` in `backend/src/retrieval/service.py` and its `search(query_text, query_vec, limit)` method. This is the first method of the only module allowed to touch content tables (ADR-004: \"`RetrievalService(principal)` is the only code that touches content tables; tools never take tenant, tier or jurisdiction arguments\"). It opens a short tenant-scoped transaction through the `principal` module's context manager (E1; `set_config(..., true)` settings), never holds it across an LLM call, and returns a list of `Candidate(chunk_id, parent_id, rrf_score)` ordered by RRF.\n\nQuoted arch (overview \u00a75.6): \"One statement, RLS applied to both legs, RRF with `k = 60` (`RRF_K`)\" followed by the statement with CTEs `dense` (`embedding <=> $1::halfvec`, `kind = 'child' AND embedding IS NOT NULL`, `LIMIT $2`), `fts` (`websearch_to_tsquery('simple', $3)`, `tsv @@ q`, `ORDER BY ts_rank(tsv, q) DESC LIMIT $2`) and the `sum(1.0 / (60 + r))` fusion with `LIMIT $4`. \"The RLS policy supplies the tenant / PUBLIC / tier / jurisdiction filter to both legs; partition pruning limits the scan to the caller's tenant and PUBLIC partitions.\" Per transaction: `SET LOCAL hnsw.iterative_scan = relaxed_order`, `hnsw.max_scan_tuples = HNSW_MAX_SCAN_TUPLES` (20000), `hnsw.ef_search = HNSW_EF_SEARCH`. Because `SET LOCAL` takes no bind parameters, set them with `set_config('hnsw.ef_search', $n, true)`.\n\nRules: use the SQL from \u00a75.6 with `$1` the embedding as a `halfvec`, `$3` the (already PII-redacted) query text, `$4` the final limit (callers pass `RERANK_CANDIDATES`), `RRF_K` from `Settings` (do not hard-code 60 in the SQL string; bind it), `$2` the per-leg limit from the constant fixed by the E3-T2 ADR. No tier / jurisdiction / tenant WHERE clauses in the application SQL: RLS does it. No `raw_content`. Query text and vectors never appear in logs or exception messages. Statement runs under `DB_STATEMENT_TIMEOUT_MS`.\n\nOut of scope: embedding (E3-T3 is called by the pipeline in E3-T9), rerank (E3-T6), gate, parent expansion, answer cache.",
+      "acceptance_criteria": [
+        "Given the 10k-chunk synthetic corpus from E3-T2 and a tier-1 US-only principal when `search(..., limit=15)` runs for 100 queries then every call returns exactly 15 rows (test `backend/tests/test_retrieval_search.py::test_no_short_results_under_restrictive_rls`, marked `integration`).",
+        "Given tenant A and tenant B each have chunks when a tenant-A principal searches with a vector that is nearest to a tenant-B chunk then no tenant-B chunk id is returned from either leg (test `test_no_cross_tenant_rows_both_legs`); a PUBLIC chunk is returned when it matches.",
+        "Given a chunk whose content contains the token `FINRA-2111` and whose embedding is far from the query vector when the query text is `FINRA-2111` then that chunk is in the top 5 (FTS leg works; test `test_fts_leg_finds_rule_id`).",
+        "Given the principal's tier is below a chunk's `tier_required` when the chunk is the exact vector and text match then it is absent from the result (test `test_acl_filtered_by_rls`).",
+        "`EXPLAIN` of the statement shows a single statement with both CTEs and the `hnsw` index used for the dense leg on a tenant partition, and the SQL text contains no literal `60` (test `test_single_statement_and_rrf_k_bound`)."
+      ],
+      "arch_refs": [
+        "overview.md#5.5",
+        "overview.md#5.6",
+        "overview.md#4.5",
+        "decisions.md#adr-004",
+        "decisions.md#adr-008"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T2",
+        "E3-T3",
+        "E3-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T6",
+      "title": "Rerank with timeout and RRF fallback",
+      "summary": "Add RetrievalService.rerank using Voyage rerank-2.5-lite that falls back to RRF order and flags the turn degraded on timeout or 429.",
+      "description": "Add `RetrievalService.rerank(query_text, candidates) -> RerankResult` in `backend/src/retrieval/rerank.py`, wired into the service. Inputs: the candidate chunk texts (the child chunk `content` fetched under RLS for the top `RERANK_CANDIDATES` ids; fetch via `fetch_chunks`, E3-T8, or a private helper if T8 is not merged). Output: `RerankResult(items: list[(chunk_id, score)] , degraded: bool, reason: \"rerank_timeout\" | \"rerank_429\" | None)`.\n\nArch (ADR-008): \"Voyage `rerank-2.5-lite` (or `rerank-2.5`) with timeout; a rerank timeout or 429 falls back to RRF order and marks the turn degraded (SSE `meta {retrieval_degraded: true}` and `messages.retrieval_degraded`), increments `rerank_fallback_total{reason}`, and alerts when > 5% of turns in 15 min are degraded\". SSE contract \u00a76.2: `meta {retrieval_degraded: bool, reason?: \"rerank_timeout\" or \"rerank_429\"}`. Config \u00a76.6: `RERANK_MODEL`, `RERANK_ENABLED`, `RERANK_TIMEOUT_MS` (value from the E3-T1 ADR), `RERANK_CANDIDATES` (default 15; clamp to range 10-30 at settings validation: a value outside fails boot), `RERANK_TOP_N` (6).\n\nBehaviour: if `RERANK_ENABLED` is false, return the RRF order truncated to `RERANK_TOP_N` with `degraded=False` (a disabled rerank is configuration, not degradation). On timeout (client timeout = `RERANK_TIMEOUT_MS`) or HTTP 429 (exception shapes recorded in the E3-T1 ADR): return the RRF order truncated to `RERANK_TOP_N`, `degraded=True`, and increment `rerank_fallback_total{reason}` (OpenTelemetry counter; `rerank_429_total` additionally on 429). Record `rerank_ms` (histogram) for every call and a span `retrieval.rerank`. Counters carry no tenant text or query content. The module only produces the flag; persisting `messages.retrieval_degraded` and emitting the SSE `meta` event is the orchestrator's job (E4).\n\nOut of scope: the alert policy (E8 observability), other Voyage errors (see questions), the gate (E3-T7).",
+      "acceptance_criteria": [
+        "Given a stubbed Voyage rerank that sleeps longer than `RERANK_TIMEOUT_MS` when `rerank` runs then the result has the RRF order, `degraded=True`, `reason='rerank_timeout'`, and the counter `rerank_fallback_total{reason='rerank_timeout'}` increased by 1 (test `backend/tests/test_rerank.py::test_timeout_falls_back`).",
+        "Given the stub raises the 429 error type recorded in the E3-T1 ADR when `rerank` runs then `degraded=True`, `reason='rerank_429'`, `rerank_fallback_total{reason='rerank_429'}` and `rerank_429_total` each increased by 1 (test `test_429_falls_back`).",
+        "Given the stub returns scores for 15 candidates when `rerank` runs then the result is ordered by descending rerank score and has `RERANK_TOP_N` (6) items and `degraded=False` (test `test_reorders_and_truncates`).",
+        "Given `RERANK_CANDIDATES=40` or `5` when Settings loads then boot fails with a validation error naming the 10-30 range (test `test_candidates_range_validated`).",
+        "Given `RERANK_ENABLED=false` when `rerank` runs then Voyage is not called and `degraded=False` (test `test_disabled_is_not_degraded`)."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-008",
+        "overview.md#4.5",
+        "overview.md#6.2",
+        "overview.md#6.6"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T1",
+        "E3-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T7",
+      "title": "CRAG-style confidence gate",
+      "summary": "Add RetrievalService.gate that decides from rerank scores whether firm documentation is firm enough to answer, with no LLM call.",
+      "description": "Add `RetrievalService.gate(rerank_result) -> GateResult(passed: bool, top_score: float | None, reason: str)` in `backend/src/retrieval/gate.py`.\n\nArch (ADR-008): \"CRAG-style gate yields 'no firm documentation' + escalate offer without an LLM call\" (CRAG, arXiv 2401.15884; \"no web fallback\"). SSE \u00a76.2: `refusal {code: \"NO_FIRM_DOCUMENTATION\", escalate_offer: bool}` when \"confidence gate failed; no LLM call was made\"; `done.finish_reason` includes `gate`. Config \u00a76.6: `GATE_MIN_SCORE` \"required; set in E3 by eval\". Observability: `gate_refusals_total` counter and span `retrieval.gate`.\n\nBehaviour: the gate passes when the best rerank score >= `GATE_MIN_SCORE`; it fails when there are no candidates or the best score is below the threshold. `GATE_MIN_SCORE` has no code default (missing key fails boot, like every required key). The value used in the repo's `.env.example` / test config comes from the E3-T16 benchmark and is re-tuned by the E7 eval; record the chosen value and the score distribution on answerable vs unanswerable queries from the synthetic set in the E3-T16 ADR. When the rerank result is `degraded` (RRF order, no rerank scores) the behaviour is not defined by the arch (see questions): implement it as a single explicit function `gate_degraded_policy` selected by a constant, defaulting to pass-through only when candidates exist, and flag in the PR description.\n\nOutput is data for the orchestrator (E4 emits the SSE `refusal` and skips the LLM call); this ticket does not emit SSE. Out of scope: threshold tuning against the full eval set (E7), web fallback (rejected).",
+      "acceptance_criteria": [
+        "Given `GATE_MIN_SCORE=0.5` and a rerank result whose best score is 0.49 when `gate` runs then `passed=False` and `gate_refusals_total` increased by 1; with best score 0.5 then `passed=True` (test `backend/tests/test_gate.py::test_threshold_boundary`).",
+        "Given an empty candidate list when `gate` runs then `passed=False` and no exception (test `test_empty_candidates_fail`).",
+        "Given `GATE_MIN_SCORE` is unset when Settings loads then the app exits non-zero (test `test_gate_threshold_required`).",
+        "Given a degraded rerank result (RRF order, no scores) with candidates present when `gate` runs then the outcome equals `gate_degraded_policy` and the result carries `reason='degraded_no_scores'` (test `test_degraded_policy_explicit`)."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-008",
+        "overview.md#6.2",
+        "overview.md#4.5",
+        "overview.md#6.6"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T6"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T8",
+      "title": "Parent expansion, fetch_chunks and server-side staleness",
+      "summary": "Add parent-chunk expansion, fetch_chunks(ids) for the citation verifier, and staleness computed from today's date.",
+      "description": "Add to `RetrievalService`: `expand_parents(ranked_chunks) -> list[ExpandedChunk]` and `fetch_chunks(ids) -> list[Chunk]`, plus a pure function `is_stale(last_reviewed_at, today) -> bool` in `backend/src/retrieval/staleness.py`.\n\nArch: \u00a74.5 `retrieval`: \"Methods: ... `expand_parents`, ... `fetch_chunks(ids)` (used by the citation verifier and the cache-hit path)\". ADR-008: \"parent expansion; staleness computed server-side from today's date. Chunking: structure-aware 256-512-token children, ~1k-token parents\". \u00a76.3 `search_firm_kb` output: `{results:[{n, chunk_id, source_title, regulatory_ref, last_reviewed_at, stale, text}], total_found, today}`: \"`stale` computed server-side from today's date; `today` placed after the cache breakpoint\". G-52: the MVP only had a prompt instruction for staleness.\n\nBehaviour: `expand_parents` replaces each child hit with its parent chunk text (via `(tenant_id, parent_id)` under RLS), de-duplicates parents that several children share (keep the best-ranked child's `n` and chunk id for citation), and keeps the child `chunk_id` as the citation id while returning the parent `text` (content is the redacted stored text; never `raw_content`). `fetch_chunks(ids)` returns the chunks by id under the caller's RLS; ids the caller cannot see are silently absent (the caller treats absence as verification failure). `today` is `date.today()` in UTC taken from an injectable clock. The stale threshold is a named constant (12 months, from G-52's \"over 12 months old\"; confirm in questions), not a literal in call sites.\n\nOut of scope: building the full `search_firm_kb` payload (E3-T9), the citation verifier itself (E4).",
+      "acceptance_criteria": [
+        "Given two child hits that share one parent when `expand_parents` runs then one expanded item is returned with the parent's text and the better-ranked child's chunk id (test `backend/tests/test_expand_parents.py::test_dedup_shared_parent`).",
+        "Given a parent in another tenant that the caller cannot see when `expand_parents` runs then it is absent and no error text mentions the other tenant (test `test_parent_rls`).",
+        "Given `last_reviewed_at` = today minus 366 days and a fixed clock when `is_stale` runs then True; today minus 365 days then False; None then True-or-False exactly as the constant's documented rule (test `backend/tests/test_staleness.py::test_threshold_boundary`).",
+        "Given ids [visible, other-tenant, nonexistent] when `fetch_chunks` runs under RLS then exactly one chunk is returned (test `test_fetch_chunks_only_visible`)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#6.3",
+        "decisions.md#adr-008",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T5"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T9",
+      "title": "retrieve pipeline, search_firm_kb tool and retrieval metrics",
+      "summary": "Wire embed, hybrid search, rerank, gate and parent expansion into one retrieve call, rebuild search_firm_kb on it, and emit the retrieval metrics.",
+      "description": "Add `RetrievalService.retrieve(query_text, top_k=None) -> RetrievalResult` in `backend/src/retrieval/service.py` and rebuild `backend/src/agent/tools/search_kb.py` on it.\n\nPipeline order (\u00a74.14 flow and \u00a74.5): embed (`embed_query`, E3-T3) -> `search` (E3-T5, `limit=RERANK_CANDIDATES`) -> `rerank` (E3-T6) -> `gate` (E3-T7) -> `expand_parents` (E3-T8). `RetrievalResult` carries: ordered results, `gate: GateResult`, `degraded: bool`, `degraded_reason`, `total_found`, `today`. Gate failure returns the result with no expanded text (the orchestrator issues the refusal; E4).\n\nTool contract (\u00a76.3): `search_firm_kb`, input `query: string`, `top_k?: int` (lower and upper bound enforced; arch gives no numbers: use named constants 1 and 10 until decided, see questions), output `{results:[{n, chunk_id, source_title, regulatory_ref, last_reviewed_at, stale, text}], total_found, today}` via `model_dump_json()`; \"arguments validated by Pydantic models; errors are `{\"error_code\"}` without exception text\"; the tool accepts no tenant, tier or jurisdiction argument and unknown extra arguments are rejected (Pydantic `extra='forbid'`).\n\nMetrics and spans (overview \u00a79): histograms `retrieval_first_stage_ms` (embed + SQL) and `rerank_ms`; counters `rerank_fallback_total{reason}`, `rerank_429_total`, `gate_refusals_total`; gauge/ratio `retrieval_degraded_ratio` derived from degraded vs total retrievals; spans `embed.query`, `retrieval.hybrid_sql`, `retrieval.rerank`, `retrieval.gate`. No query text, tenant text or chunk text in attributes (chunk ids and scores only, for the Langfuse retrieval span).\n\nOut of scope: the orchestrator calling retrieve first and emitting SSE `meta` / `refusal` (E4), the alert rule (E8).",
+      "acceptance_criteria": [
+        "Given stubs for Voyage embed and rerank and the synthetic corpus when `retrieve('What is the suitability rule for structured notes?')` runs then results are <= `RERANK_TOP_N`, each has `stale` as a bool, and `today` equals the injected clock date (test `backend/tests/test_retrieve_pipeline.py::test_pipeline_shape`, `integration`).",
+        "Given the gate fails when `retrieve` runs then the returned results list is empty, `gate.passed=False` and the expand_parents method was not called (test `test_gate_failure_skips_expansion`).",
+        "Given the tool is called with `{'query':'x','tenant_id':'t1'}` or `top_k=0` or `top_k=1000` then it returns `{\"error_code\": ...}` with no exception text (test `backend/tests/test_search_kb.py::test_tool_rejects_extra_and_bad_top_k`).",
+        "After one successful and one rerank-timeout retrieve the metrics reader shows `retrieval_first_stage_ms` count 2, `rerank_ms` count 2, `rerank_fallback_total{reason='rerank_timeout'}` = 1 (test `test_retrieval_metrics_emitted`).",
+        "The span exporter test shows spans named `embed.query`, `retrieval.hybrid_sql`, `retrieval.rerank`, `retrieval.gate` with no attribute value equal to the query string (test `test_spans_have_no_query_text`)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#6.3",
+        "overview.md#9",
+        "decisions.md#adr-008",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T3",
+        "E3-T6",
+        "E3-T7",
+        "E3-T8"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T10",
+      "title": "Reimplement lookup_product_factsheet on RetrievalService",
+      "summary": "Move the factsheet tool onto RetrievalService with escaped input, a LIMIT, and redacted chunks only.",
+      "description": "Add `RetrievalService.factsheet(product_name) -> FactsheetResult` and rewrite `backend/src/agent/tools/lookup_factsheet.py` to call it. The tool no longer issues SQL.\n\nArch (\u00a76.3): `lookup_product_factsheet`, input `product_name: string` (\"wildcards escaped, `LIMIT` enforced\"), output `{results:[{title, jurisdiction, regulatory_ref, last_reviewed_at, product_category, risk_level, stale, chunks:[redacted text]}], total_found}`, \"redacted chunks only; no `raw_content` (G-03)\". \u00a75.2: \"The factsheet tool returns document metadata plus up to `FACTSHEET_MAX_CHUNKS` redacted parent chunks through `retrieval.factsheet`, never raw content.\" Config: `FACTSHEET_MAX_CHUNKS` (required; value set in E4: read it from Settings, tests use a fixture value).\n\nBehaviour: match `documents.title` / `product_category` with a parameterized ILIKE where `%`, `_` and the escape character in `product_name` are escaped (use `ESCAPE '\\'`); hard `LIMIT` on documents (a named constant) and `FACTSHEET_MAX_CHUNKS` parent chunks per document; only documents with `status='active'`; staleness through `is_stale` (E3-T8); tenant / tier / jurisdiction come from RLS only. Pydantic input model with `extra='forbid'` and a max length; the tool takes no tenant, tier or jurisdiction argument; errors return `{\"error_code\"}`. Selected columns never include a `raw_content` column (which no longer exists after E1).\n\nOut of scope: choosing the value of `FACTSHEET_MAX_CHUNKS` (E4), suitability (E3-T11).",
+      "acceptance_criteria": [
+        "Given `product_name='%'` when the tool runs then it matches only documents whose title literally contains '%' (none in the fixture) and returns `total_found=0` (test `backend/tests/test_lookup_factsheet.py::test_wildcards_escaped`).",
+        "Given 50 matching documents when the tool runs then at most the LIMIT constant documents are returned and each has at most `FACTSHEET_MAX_CHUNKS` chunks (test `test_limits_enforced`).",
+        "Given a document with `tier_required` above the principal's tier when the tool runs then it is absent (test `test_factsheet_respects_rls`).",
+        "Given the tool is called with `tenant_id` as an argument then `{\"error_code\"}` is returned (test `test_tool_rejects_tenant_argument`).",
+        "A SQL-text scan test asserts the factsheet query string contains neither `raw_content` nor string interpolation of `product_name` (test `test_no_raw_content_no_interpolation`)."
+      ],
+      "arch_refs": [
+        "overview.md#6.3",
+        "overview.md#5.2",
+        "overview.md#4.5",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T8"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T11",
+      "title": "Reimplement lookup_suitability_rule on RetrievalService",
+      "summary": "Move the suitability tool onto RetrievalService with typed inputs, a LIMIT and staleness.",
+      "description": "Add `RetrievalService.suitability(product_category, client_risk_profile) -> SuitabilityResult` and rewrite `backend/src/agent/tools/lookup_suitability.py` to call it.\n\nArch (\u00a76.3): `lookup_suitability_rule`, input `product_category: string`, `client_risk_profile: enum(conservative, moderate, aggressive)`, output `{rules:[{rule_name, product_category, client_risk_profile, jurisdiction, regulatory_ref, rule_text, last_reviewed_at, stale}], total_found}`; \"reads `suitability_rules`, populated by the ETL (G-07)\". \u00a75.2 `suitability_rules`: `rule_name`, `product_category`, `client_risk_profile` CHECK 3 values, `min_tier_required`, `jurisdiction`, `regulatory_ref`, `rule_text` (redacted), `last_reviewed_at`. ADR-004 / the epic scope: \"factsheet and suitability tools reimplemented on `RetrievalService` (no `raw_content`, escaped input, `LIMIT`)\".\n\nBehaviour: parameterized query on `suitability_rules` (exact or escaped-ILIKE match on `product_category` - use the same escaping helper as E3-T10, extracted to `retrieval/sql_utils.py` if not yet shared), `client_risk_profile` validated by the enum, hard `LIMIT` constant, `stale` via `is_stale`; access filtering by RLS (own tenant plus PUBLIC, tier and jurisdiction), no WHERE on `min_tier_required` in application code. Pydantic input model `extra='forbid'`; errors `{\"error_code\"}`.\n\nOut of scope: populating `suitability_rules` (ETL, E6).",
+      "acceptance_criteria": [
+        "Given rules for conservative and aggressive profiles when the tool is called with `conservative` then only conservative rules are returned (test `backend/tests/test_lookup_suitability.py::test_filters_by_profile`).",
+        "Given `client_risk_profile='reckless'` then the tool returns `{\"error_code\"}` and issues no SQL (test `test_invalid_enum_rejected`).",
+        "Given a rule with `min_tier_required` above the principal's tier when the tool runs then it is absent without any tier predicate in the application SQL string (tests `test_rls_filters_rules` and `test_no_tier_predicate_in_sql`).",
+        "Given 200 matching rules then at most the LIMIT constant are returned and `total_found` reports the returned count (test `test_limit_enforced`)."
+      ],
+      "arch_refs": [
+        "overview.md#6.3",
+        "overview.md#5.2",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T5"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T12",
+      "title": "Enforce RetrievalService as sole content-table accessor",
+      "summary": "Add an import-linter contract and tests so only the retrieval module touches content tables and fa_app cannot write them.",
+      "description": "Enforce ADR-004 by tooling. Prerequisite: the tools and any other chat-api module no longer query `chunks`, `documents` or `suitability_rules` directly (E3-T9, T10, T11); delete the old direct accessor `backend/src/retrieval/vector_store.py` and any remaining direct SQL in `agent`, `api` or `db` modules for these tables.\n\nArch (\u00a74.5): \"Single deployable, modular monolith. Import-linter contracts enforce the boundaries below, plus a test. DB login role `fa_app`: SELECT only on content tables, no write on content tables anywhere in `chat-api`.\" `retrieval`: \"Only module allowed to touch content tables (`documents`, `chunks`, `suitability_rules`), read-only.\" \u00a75.3: `fa_app` \"SELECT on `chunks`, `documents`, `suitability_rules` (read-only: no write grant on any content table)... Content tables are touched only by the `retrieval` module (import-linter + test)\". ADR-004: \"`fa_app` has SELECT only on content tables\".\n\nDeliver: (1) `.importlinter` (or pyproject section) with a `forbidden` contract: the content-table accessor modules (`retrieval._content` or whichever internal module holds the SQL; public surface is `retrieval.service.RetrievalService` only) may be imported by no module outside `retrieval`; wire `lint-imports` into the existing CI job so it fails the PR. (2) A test that scans `backend/src/**/*.py` outside `retrieval/` for the table names `chunks`, `documents`, `suitability_rules` in SQL strings (regex `\\b(from|join|into|update)\\s+(chunks|documents|suitability_rules)\\b`, case-insensitive) and fails on a match. (3) A DB test connected as `fa_app` that asserts INSERT, UPDATE and DELETE on each of the three content tables (and a direct partition of `chunks`) raise `permission denied`, and SELECT through the parent succeeds.\n\nScope: the `chat-api` package only; worker and job code that legitimately holds other roles is out of scope (see questions on package layout). Out of scope: changing grants (E1 owns them; this ticket only tests).",
+      "acceptance_criteria": [
+        "Given a deliberately added `from src.retrieval._content import x` in `src/agent/tools/foo.py` when `lint-imports` runs then it exits non-zero naming the contract (test `backend/tests/test_import_contracts.py::test_forbidden_import_is_caught`, which runs lint-imports against a temp module).",
+        "Given a string `'SELECT * FROM chunks'` placed in a module outside `retrieval` when the scan test runs then it fails; on the clean tree it passes (test `test_no_content_sql_outside_retrieval`).",
+        "Given a connection as `fa_app` when INSERT, UPDATE and DELETE are issued against `chunks`, `documents` and `suitability_rules` then each raises `permission denied`, and the same against a tenant partition of `chunks` also raises `permission denied` (test `backend/tests/test_roles_content_readonly.py::test_fa_app_cannot_write_content`, `integration`).",
+        "CI runs `lint-imports` as a required step: the workflow file contains the step and the job fails when the contract is broken (checked by `test_ci_runs_lint_imports` reading the workflow YAML)."
+      ],
+      "arch_refs": [
+        "overview.md#4.5",
+        "overview.md#5.3",
+        "decisions.md#adr-004"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T9",
+        "E3-T10",
+        "E3-T11"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T13",
+      "title": "Answer cache: table, versioned key and store",
+      "summary": "Create the UNLOGGED answer_cache table with own RLS and a cache_key that changes with every version input.",
+      "description": "Add the `answer_cache` table (if the E1 baseline did not already create it; check first) and the `AnswerCache` class in `backend/src/retrieval/answer_cache.py`, owned by the `retrieval` module (\u00a74.5: \"Also owns the `answer_cache` read/write (not a content table)\").\n\nArch (ADR-015): \"Table `answer_cache` (UNLOGGED), own RLS + FORCE. Key = hash(tenant, tier, jurisdiction set, corpus_version (own and PUBLIC), acl_version, user entitlement version, prompt_version, model, normalized redacted question). Single-turn only, TTL 24 h.\" Overview \u00a75.7: \"`cache_key = sha256(tenant_id, tier, sorted jurisdictions, corpus_version of the tenant and of PUBLIC, acl_version, entitlement_version of the user, prompt_version, model, normalized redacted question)`. Columns: `cache_key`, `answer` (redacted), `citations` (chunk ids, indexes), `source_document_ids uuid[]`, `created_at`, `expires_at`.\" PK `(tenant_id, cache_key)`; indexes `(expires_at)` and GIN on `source_document_ids` (\u00a75.5). RLS: tenant match for `fa_app`; `fa_worker` DELETE; `fa_maint` DELETE limited by policy to expired rows (\u00a75.3, \u00a75.4). Config: `ANSWER_CACHE_ENABLED` (true), `ANSWER_CACHE_TTL_S` (86400), `PROMPT_VERSION`.\n\nDeliver: Alembic migration (UNLOGGED, ENABLE + FORCE RLS, policies, indexes, grants exactly per \u00a75.3: `fa_app` SELECT/INSERT/UPDATE); `make_cache_key(principal, versions, prompt_version, model, question) -> str` as a pure function (fields joined with an unambiguous length-prefixed or JSON canonical encoding, not naive concatenation; question normalized by trim, lowercase and whitespace collapse; the input is already PII-redacted); `AnswerCache.put(...)` which writes `answer`, `citations`, `source_document_ids`, `expires_at = now + ANSWER_CACHE_TTL_S` and `AnswerCache.get_raw(key)` (no verification here; E3-T14). Versions are read in the same transaction: `tenants.corpus_version` and `acl_version` for the caller's tenant, `corpus_version` for PUBLIC, and `advisors.entitlement_version` from the Principal. Writes are skipped when `ANSWER_CACHE_ENABLED` is false.\n\nOut of scope: hit verification and eligibility rules (E3-T14), purge (E3-T15), calling the cache from the orchestrator (E4).",
+      "acceptance_criteria": [
+        "Given a base input when exactly one of {acl_version, own corpus_version, PUBLIC corpus_version, entitlement_version, tier, jurisdiction set, prompt_version, model, question text} changes then `make_cache_key` returns a different key for each of the nine changes (parametrized test `backend/tests/test_answer_cache_key.py::test_key_changes_with_each_input`).",
+        "Given jurisdictions ['US','EU'] and ['EU','US'] and a question with extra whitespace/case differences then the keys are equal (test `test_key_is_order_and_whitespace_insensitive`); given field values that concatenate identically ('ab','c' vs 'a','bc') the keys differ (test `test_key_encoding_unambiguous`).",
+        "Given a put by tenant A when tenant B's principal does `get_raw` with the same key then no row is returned (RLS; test `backend/tests/test_answer_cache_rls.py::test_cross_tenant_get_returns_nothing`, `integration`).",
+        "`pg_class.relpersistence` for `answer_cache` is 'u' and `relforcerowsecurity` is true; `fa_app` has no DELETE grant on it (test `test_answer_cache_is_unlogged_forced_rls`).",
+        "Given `ANSWER_CACHE_ENABLED=false` when `put` runs then no row is written (test `test_disabled_cache_writes_nothing`)."
+      ],
+      "arch_refs": [
+        "overview.md#5.7",
+        "overview.md#5.2",
+        "overview.md#5.3",
+        "overview.md#4.5",
+        "decisions.md#adr-015"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1",
+        "E3-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T14",
+      "title": "Answer cache lookup: verifier re-run and eligibility",
+      "summary": "Make a cache hit safe: re-verify citations against fresh chunks under RLS, recompute staleness, and never cache side-effect turns.",
+      "description": "Add `AnswerCache.lookup(key, principal, verifier) -> CachedAnswer | None` and `AnswerCache.store_if_eligible(turn, ...)` in `backend/src/retrieval/answer_cache.py`.\n\nArch (ADR-015): \"On a hit, re-run the citation verifier against freshly fetched chunks under the caller's RLS and recompute staleness; any failure is a miss. Turns that called a side-effect tool (`escalate_to_compliance`) are never cached.\" \u00a75.7: \"single-turn requests only\". \u00a76.3: \"A turn that calls this tool [`escalate_to_compliance`] is never written to the answer cache\". \u00a74.5 `retrieval`: `fetch_chunks(ids)` \"used by the citation verifier and the cache-hit path\".\n\nBehaviour of `lookup`: read the row (not expired); call `RetrievalService.fetch_chunks(citation chunk ids)` (E3-T8) under the caller's RLS; call the injected `verifier(answer, citations, chunks) -> bool` (the deterministic citation verifier is built in E4 `guardrails`; here define the `CitationVerifier` Protocol and depend only on it); recompute `stale` for each citation with `is_stale` and today's date; return the answer with fresh staleness flags. Any of: row missing, expired, a cited chunk not returned by `fetch_chunks` (deleted or ACL-restricted), verifier returns False or raises -> return None (a miss) and increment `answer_cache_total{result=\"miss_verifier\"}`; a hit increments `answer_cache_total{result=\"hit\"}`; a plain absence `result=\"miss\"`. A verifier exception never propagates and never returns the cached answer.\n\n`store_if_eligible` writes only when: `ANSWER_CACHE_ENABLED`, the request had no prior conversation history (single-turn), the turn's completed status is `complete`, the turn did not call `escalate_to_compliance` (the turn record passed in carries `tools_called`), and the answer passed the verifier on the live path. Otherwise it is a no-op.\n\nOut of scope: the orchestrator's call order (E4), implementing the verifier, purge (E3-T15).",
+      "acceptance_criteria": [
+        "Given a stored answer whose verifier stub returns False when `lookup` runs then it returns None and `answer_cache_total{result='miss_verifier'}` increased by 1 (test `backend/tests/test_answer_cache_lookup.py::test_verifier_failure_is_miss`).",
+        "Given the verifier stub raises an exception when `lookup` runs then the result is None (test `test_verifier_exception_is_miss`).",
+        "Given a stored answer citing chunk C and C has since been made invisible to the caller (higher `tier_required`) when `lookup` runs then None (test `test_acl_tightened_chunk_is_miss`, `integration`).",
+        "Given a turn whose `tools_called` contains `escalate_to_compliance` when `store_if_eligible` runs then no row is written, even if the answer verified (test `test_side_effect_turn_never_cached`); given a multi-turn request then no row is written (test `test_multi_turn_not_cached`).",
+        "Given a hit with a cited chunk whose `last_reviewed_at` crossed the stale threshold since storage when `lookup` runs then the returned citation has `stale=True` (test `test_staleness_recomputed_on_hit`).",
+        "Given the cache holds an answer stored when `acl_version` was 3 and the tenant is now at 4 when the new key is computed then `lookup` returns None as a plain miss (test `test_acl_version_bump_makes_entry_unreachable`)."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-015",
+        "overview.md#5.7",
+        "overview.md#6.3",
+        "overview.md#4.5"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T8",
+        "E3-T13"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T15",
+      "title": "Answer cache purge by document and by expiry",
+      "summary": "Provide the purge operations the acl-applier and maintenance job call, and prove each role can only delete what it should.",
+      "description": "Add two functions in `backend/src/retrieval/answer_cache_purge.py` (no dependency on the rest of `retrieval`, so the worker and job entrypoints can import them without importing a content-table accessor): `purge_for_documents(conn, tenant_id, document_ids) -> int` and `purge_expired(conn) -> int`.\n\nArch (ADR-015): \"Purged by the `acl-applier` on ACL change and document delete, and by the `maintenance` job when expired (D16.8, D16.18).\" \u00a75.7: \"Purged by the `acl-applier` on ACL change and document delete (GIN on `source_document_ids`) and by `maintenance` when expired.\" \u00a75.3: `fa_worker` \"DELETE on `answer_cache`\" (writes limited to its own non-PUBLIC tenant by policy); `fa_maint` \"DELETE on `answer_cache` and `turn_events` limited by policy to expired rows\".\n\nBehaviour: `purge_for_documents` runs `DELETE FROM answer_cache WHERE tenant_id = $1 AND source_document_ids && $2::uuid[]` using the GIN index and returns the deleted count; `purge_expired` runs `DELETE FROM answer_cache WHERE expires_at < now()` (the `fa_maint` policy limits it to expired rows). Both use bind parameters. The call sites live in the acl-applier (E6) and the maintenance job (E1/E10); this ticket only ships and tests the functions, plus a one-paragraph note in `docs/` naming them for those epics. Cache entries for a PUBLIC document cited by a firm tenant's answer are deleted by the tenant-scoped call when the applier passes that tenant's id; how a PUBLIC document change reaches firm tenants' entries is covered by the `corpus_version` bump in the key (E3-T13), see questions.\n\nOut of scope: the applier and maintenance job code themselves.",
+      "acceptance_criteria": [
+        "Given three cached rows where two list document D in `source_document_ids` when `purge_for_documents(tenant, [D])` runs as `fa_worker` then it returns 2 and the third row remains (test `backend/tests/test_answer_cache_purge.py::test_purge_by_document`, `integration`).",
+        "Given one expired and one live row when `purge_expired` runs as `fa_maint` then exactly the expired row is deleted; attempting `DELETE ... WHERE expires_at > now()` as `fa_maint` deletes 0 rows (test `test_maint_deletes_only_expired`).",
+        "Given `fa_worker` for tenant A tries to delete tenant B's cached row then 0 rows are deleted (test `test_worker_cannot_purge_other_tenant`).",
+        "`EXPLAIN` of the `purge_for_documents` statement shows use of the GIN index on `source_document_ids` when the table has > 1000 rows (test `test_purge_uses_gin_index`)."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-015",
+        "overview.md#5.7",
+        "overview.md#5.3"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T13"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E3-T16",
+      "title": "Retrieval benchmark and rerank ablation on 10k chunks",
+      "summary": "Measure first-stage and rerank p95 against the latency targets on the synthetic corpus, run the rerank on/off ablation, and record the ADR.",
+      "description": "Add `backend/scripts/bench_retrieval.py` and run it against the E3 pipeline (`RetrievalService.retrieve`, E3-T9) on the 10,000-chunk synthetic corpus from E3-T2; record the result as `docs/adr/ADR-E3-03-retrieval-latency-and-rerank-ablation.md`.\n\nArch targets (overview \u00a72.1): \"Retrieval first stage (embed + hybrid SQL) | p95 < 300 ms\"; \"Rerank | p95 < 700 ms\". ADR-008: \"kept or dropped by the eval ablation on recall and latency ... Trigger to revisit: ... ANN p95 > 100 ms; rerank latency or TPM unmet\". Epic done-when: \"On a 10k-chunk synthetic corpus, retrieval first stage (embed + SQL) p95 < 300 ms and rerank p95 < 700 ms are measured against overview \u00a72.1 (fail if above, or the ablation drops rerank and the ADR says why).\"\n\nThe script: runs >= 400 queries per configuration with the real Voyage `voyage-4` query embedding and real `rerank-2.5-lite` (needs `VOYAGE_API_KEY`; a `--stub-voyage` mode with fixed delays exists only for CI smoke and its output is labelled non-authoritative), for caller profiles (unrestricted tier-4 all-jurisdictions; restrictive tier-1 US). Reports p50/p95/p99 for `retrieval_first_stage_ms` and `rerank_ms`, the degraded-turn share, and (ablation) recall@RERANK_TOP_N on the synthetic set's known relevant chunks for rerank enabled vs disabled, at `RERANK_CANDIDATES` 10, 15 and 30. Exit code 1 if first-stage p95 >= 300 ms or rerank p95 >= 700 ms.\n\nThe ADR states: measured table; whether `RERANK_ENABLED` stays true (if the ablation drops rerank, the ADR gives the recall and latency numbers that justify it); the preliminary `RERANK_CANDIDATES` (E7 L1 ablation makes the final call); the initial `GATE_MIN_SCORE` with the rerank-score distribution for answerable vs unanswerable synthetic queries (E3-T7); and the `RERANK_TIMEOUT_MS` consistency with E3-T1.\n\nOut of scope: the full eval harness and final threshold tuning (E7), load testing of chat-api (E10).",
+      "acceptance_criteria": [
+        "Given `VOYAGE_API_KEY` and the 10k corpus when `python backend/scripts/bench_retrieval.py --queries 400` runs then it exits 0 only if measured first-stage p95 < 300 ms and rerank p95 < 700 ms, and exits 1 otherwise (script exit code; `backend/tests/test_bench_retrieval.py::test_exit_code_reflects_targets` feeds fixed latencies of 299/699 ms and 301/699 ms through the evaluator function and asserts 0 and 1).",
+        "The ADR contains a measured table with p50/p95/p99 for first stage and rerank for both caller profiles, and a recall@6 comparison of rerank on vs off at candidates 10, 15 and 30.",
+        "If rerank p95 >= 700 ms or the ablation shows no recall gain, then the ADR sets `RERANK_ENABLED=false` with the numbers, otherwise it states `RERANK_ENABLED=true`; a test (`test_adr_has_decision_line`) asserts the ADR file contains a line matching `^RERANK_ENABLED=(true|false)$` and `^GATE_MIN_SCORE=\\d`.",
+        "Given the restrictive caller profile then 0 of 400 queries return fewer than the requested number of rows in the benchmark's run (reported in the output and asserted by the script, which exits 1 on any short result)."
+      ],
+      "arch_refs": [
+        "overview.md#2.1",
+        "overview.md#5.6",
+        "decisions.md#adr-008",
+        "overview.md#6.6"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E3-T1",
+        "E3-T2",
+        "E3-T9"
+      ],
+      "size": "M",
+      "status": "todo"
+    }
+  ],
+  "questions": [
+    "Does the E1 baseline migration already create `answer_cache`, the HNSW / GIN indexes and the `halfvec(1024)` / `tsv` columns on `chunks`? plan.md E1 lists the tables created but not `answer_cache`, and does not name the retrieval indexes. E3-T4 and E3-T13 are written to add only what is missing; confirm so the two epics do not collide.",
+    "Where does a spike ADR get recorded? The builder works in the FinAdvisor repo, but ADRs live in context/projects/finadvisor/arch/decisions.md. Tickets T1, T2 and T16 write `docs/adr/ADR-E3-0n-*.md` in the repo for the orchestrator to copy into decisions.md; confirm or give another path.",
+    "ADR-008 says rerank timeout or 429 falls back to RRF order, but is silent on other Voyage rerank failures (5xx, network error, malformed response) and on embedding failures/retries. E3-T6 treats only timeout and 429 as the specified degradations; what should other rerank errors do (fall back with a third reason, or fail the turn)? And should embed_query have retries or a circuit breaker (E3-T3 has only an explicit timeout)?",
+    "The confidence gate behaviour when rerank is degraded (RRF order, no rerank scores) is not specified; RRF scores are not comparable with `GATE_MIN_SCORE`. E3-T7 isolates this as `gate_degraded_policy`; which policy is intended (pass if candidates exist, fail closed, or a separate RRF threshold)?",
+    "`GATE_MIN_SCORE` is 'set in E3 by eval' but the eval harness and datasets are E7. E3-T16 sets an initial value from the synthetic corpus; confirm E7 owns the final tuning.",
+    "Staleness threshold: G-52 implies 12 months ('every document is now over 12 months old') and the frontend StaleBadge exists, but no config key or section states the number. E3-T8 uses a 12-month named constant; confirm or provide a key.",
+    "`search_firm_kb` `top_k` bounds are 'lower and upper bound enforced' without numbers; per-leg candidate LIMIT ($2 in \u00a75.6) is also not in the config table. E3-T9 uses 1..10 for `top_k` and E3-T5 takes the per-leg LIMIT from the T2 ADR as a constant. Should these become config keys in \u00a76.6?",
+    "The verifier used on the answer-cache hit path is the `guardrails` citation verifier built in E4, and the orchestrator that calls cache lookup / store is E4 (ADR-007 order: guard-in, answer-cache lookup, embed + screen, ...). E3-T14 depends only on a `CitationVerifier` Protocol; confirm E4 owns the wiring and the cache purge call sites in the acl-applier (E6) and maintenance job.",
+    "A firm tenant's cached answer can cite PUBLIC documents; ACL changes / deletes on PUBLIC documents are made by `etl-public` (which bumps PUBLIC `corpus_version`, in the key) but `acl-applier` purges only by tenant. Is the PUBLIC `corpus_version` key component the intended mechanism for PUBLIC-document changes (so no cross-tenant purge is needed)?",
+    "`FACTSHEET_MAX_CHUNKS` has its value 'set in E4' but E3-T10 needs a value to run; tests use a fixture value. Confirm E4 only sets the production value.",
+    "Import-linter scope: E3-T12 limits the contract to the `chat-api` package modules. If the worker, ETL and `chat-api` live in one Python package in the repo (layout fixed in E0), confirm the forbidden-import contract may name `chat-api` source roots explicitly while leaving worker / job code (which hold other DB roles) outside it.",
+    "The synthetic 10k corpus in E3-T2 uses seeded generated vectors rather than Voyage embeddings (to avoid embedding cost), and real Voyage only for query embedding and rerank. Is that acceptable for the ANN and latency measurements, or must the corpus be embedded with voyage-4?"
+  ]
+}

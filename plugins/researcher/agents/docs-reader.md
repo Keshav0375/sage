@@ -45,12 +45,12 @@ Each leaf costs about 100k tokens just to start, so a leaf pays off only for a L
   WebFetch (it already extracts with a small model) and ask it the exact questions. No leaf.
 - Use a `researcher:page-reader` leaf (Haiku) only for a long PDF, a full paper section, or a
   source over ~20k tokens, with 1-6 exact questions and an output path under
-  `context/.runtime/research/<p>/pages/`. At most 2 leaves at a time, and at most 4 per task.
+  `projects/<p>/library/research/<round>/pages/`. At most 2 leaves at a time, and at most 4 per task.
 You judge and synthesize; leaves only quote. Never cite a leaf quote you did not check against its
 extract file when it carries a decision.
 
 ## Report to a file (token rule)
-Write your full report to the output path the orchestrator gave you (under `context/.runtime/`;
-if none, `context/.runtime/research/<p>/<your-agent-name>-<topic>.md`). Your reply is the status
+Write your full report to the output path the orchestrator gave you (under `projects/<p>/library/research/<round>/`;
+if none, `projects/<p>/library/research/<round>/<your-agent-name>-<topic>.md`). Your reply is the status
 keyword, the path, and a summary of at most 8 lines with the load-bearing findings. The
 orchestrator reads the file only when it needs the details.

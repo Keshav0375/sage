@@ -6,7 +6,7 @@ argument-hint: "[days, default 7]"
 
 # /observe:traces
 
-1. Find the trace folder: the observe plugin option `trace_dir`, else `context/.runtime/traces/`.
+1. Find the trace folder: the observe plugin option `trace_dir`, else `projects/.runtime/traces/`.
 2. **Tokens.** Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/usage.py --days <N> --out <trace folder>`.
    It reads the Claude Code transcripts (main loop and every subagent, with type, depth and model)
    and writes `usage-<date>.md` and `usage-<date>.json` to the trace folder. Use its tables; do not

@@ -2,7 +2,7 @@
   "name": "brain",
   "displayName": "Brain",
   "version": "0.1.0",
-  "description": "Project registry and tracker context, guards, model routing, lazy MCP, STE output style. Shared by researcher and builder.",
+  "description": "Project registry and project-layout context, guards, model routing, lazy MCP, STE output style. Shared by researcher and builder.",
   "author": {
     "name": "Keshav"
   },
@@ -11,7 +11,7 @@
     "context_dir": {
       "type": "directory",
       "title": "Context directory",
-      "description": "The context/ folder that holds registry.json, projects/ and library/.",
+      "description": "The projects/ folder of the harness repo. It holds registry.json, routing.json and one folder per project.",
       "required": false
     },
     "main_model": {
@@ -23,7 +23,7 @@
     "subagent_model": {
       "type": "string",
       "title": "Subagent model",
-      "description": "The model for subagents when the Agent call and context/routing.json name none.",
+      "description": "The model for subagents when the Agent call and projects/routing.json name none.",
       "default": "sonnet"
     },
     "guard_context_percent": {

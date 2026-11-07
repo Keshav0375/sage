@@ -1,0 +1,532 @@
+{
+  "epic": "E2",
+  "tickets": [
+    {
+      "key": "E2-T1",
+      "title": "Spike: X-RL-Key keying and Valkey keys on Kong 3.9.4",
+      "summary": "Prove locally that a pre-function can set X-RL-Key = sha256(Authorization) before rate-limiting runs and that raw bearer tokens never reach Valkey.",
+      "description": "Overview section 10 item 5 and ADR-011. Scratch harness under spikes/e2/xrlkey/ (not shipped): kong:3.9.4 DB-less, a Valkey container, any HTTP upstream. Configure a pre-function (access phase) that sets request header X-RL-Key to the hex sha256 of the Authorization header, and rate-limiting with limit_by: header, header_name: X-RL-Key, policy: redis, sync_rate: 0 against Valkey, low limit (3/min). Quote from 6.5: 'The pre-function sets X-Serverless-Authorization and X-RL-Key = sha256(Authorization) (so raw tokens never become Valkey keys) and runs before rate-limiting in the access phase; verified in the E2 spike.' Determine and record: (a) plugin execution order (pre-function before rate-limiting) and how it is guaranteed; (b) whether sha256 is available inside the pre-function sandbox (which requires, any Kong sandbox setting needed); (c) what rate-limiting does when X-RL-Key is absent (the header is missing when a request has no Authorization); (d) that a client-sent X-RL-Key is overwritten. Out of scope: the production kong.yml, the metadata-server token logic.",
+      "acceptance_criteria": [
+        "Given a 3 per minute limit, when 4 requests with the same Authorization are sent, then the 4th returns 429 with a Retry-After header and a request with a different Authorization returns 200 (script spikes/e2/xrlkey/run.sh output committed with the ADR).",
+        "Given traffic from two bearer tokens, when every Valkey key and value is dumped (valkey-cli --scan plus GET/TTL), then the raw bearer strings occur 0 times (grep -c = 0) and the keys contain the 64-hex sha256 of each token.",
+        "Given a request sending X-RL-Key: fixed with varying Authorization values, when it is repeated beyond the limit with different tokens, then each token keeps its own bucket (client value ignored).",
+        "Given a request with no Authorization header, then the ADR records the observed behaviour (status, key used) measured by a test run, not assumed.",
+        "ADR exists with plugin order, sandbox findings, the four measurements and a verdict. The result is recorded as an ADR file in the repo (see question 1 for location and numbering) containing the measured values, the pass/fail verdict and the named fallback. The arch gives no fail branch for this spike (question 2); on failure the ticket is marked blocked with the ADR instead of choosing one."
+      ],
+      "arch_refs": [
+        "overview.md#10",
+        "overview.md#6.5",
+        "overview.md#4.3",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T2",
+      "title": "Spike: ai-proxy preserve egress to api.anthropic.com",
+      "summary": "Decide by measurement whether LLMClient can use an internal Kong egress route in the native Messages format with streaming and tool use.",
+      "description": "Overview section 10 item 4, ADR-011 (LLM egress), 6.5 llm-egress row, 8.3 'Kong egress route: key-auth (consumer chat-api) + ip-restriction to the VPC range'. Scratch harness under spikes/e2/egress/ (kong:3.9.4 local). Build route prefix /egress/anthropic to https://api.anthropic.com with ai-proxy route_type: preserve (or, if that is not usable on OSS 3.9.4 without Anthropic llm_format, a plain proxy service), key-auth with consumer chat-api, ip-restriction, request-transformer that adds x-api-key from an environment variable (the client sends no Anthropic key), a global rate-limiting for LLM calls, and log_statistics. Native Messages format only; no OpenAI-format translation. The Anthropic key comes from the developer's environment and is never committed. Compare time to first byte and total time against a direct call. Out of scope: changing LLMClient (E4), the production route (E2-T20).",
+      "acceptance_criteria": [
+        "Given stream: true on POST /egress/anthropic/v1/messages through Kong, when the call completes, then the client receives the native event sequence message_start ... content_block_delta ... message_stop and the first event arrives; time to first byte via Kong minus direct (median of 20 runs) is recorded in the ADR.",
+        "Given a request with a tools array, when the model returns a tool_use block, then a follow-up request carrying the matching tool_result is accepted through the same route (HTTP 200).",
+        "Given no apikey header, then the route returns 401; given a source address outside the ip-restriction allow list, then it returns 403 (two named tests in spikes/e2/egress/).",
+        "Given a completed call, then Kong's log output contains the log_statistics token counts and contains neither the Anthropic key, the egress key nor the prompt text (grep -c over captured logs = 0).",
+        "ADR exists with verdict. The result is recorded as an ADR file in the repo (see question 1 for location and numbering) containing the measured values, the pass/fail verdict and the named fallback. Fail fallback per overview 10: LLMClient calls Anthropic directly and the egress route is dropped (E2-T20 closes as not applicable)."
+      ],
+      "arch_refs": [
+        "overview.md#10",
+        "overview.md#6.5",
+        "overview.md#8.3",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T3",
+      "title": "Stub chat-api service for gateway tests",
+      "summary": "A minimal FastAPI stub that echoes received headers (never raw Authorization) and emits timestamped SSE, used by spikes and smoke tests.",
+      "description": "Test tooling for E2 only, under tools/stub-chat-api/. Python 3.12 FastAPI app, image referenced by digest. Endpoints: GET/POST /echo returns JSON of received headers with Authorization replaced by {sha256, length}; GET /sse?events=N&interval_ms=M streams N SSE events whose data holds a server-side monotonic sequence number and a wall-clock emit timestamp in ns; GET /metadata-mock/computeMetadata/v1/instance/service-accounts/default/identity returns a fake unsigned JWT for local compose (aud taken from the audience query parameter) so the pre-function can run without GCE; /echo also decodes (without verifying) the payload of X-Serverless-Authorization and returns aud, email, exp. Never deployed outside spike and test environments. Not a substitute for chat-api (E4).",
+      "acceptance_criteria": [
+        "Given a request with Authorization: Bearer SENTINEL_AAA, when /echo is called, then the response body contains the sha256 of that header value and does not contain SENTINEL_AAA (pytest test_echo_never_returns_raw_authorization).",
+        "Given GET /sse?events=50&interval_ms=20, then exactly 50 events arrive with strictly increasing sequence numbers and emit timestamps (pytest test_sse_sequence).",
+        "Given the metadata mock endpoint with audience=https://x, then /echo decoding of a header built from it returns aud == https://x (pytest).",
+        "docker build of the image succeeds and `docker run` serves /echo with HTTP 200 (CI step or make target named in the PR)."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "overview.md#6.5"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T4",
+      "title": "Terraform: gateway network (PGA, run.app private zone)",
+      "summary": "Create the subnet settings and Cloud DNS private zone that let Cloud Run services reach internal run.app URLs through the VPC with no Cloud NAT.",
+      "description": "ADR-024 and overview 4.3 / 8.3 network rows. In terraform/edge/ (question 3 on overlap with E10 and on the existing MVP terraform/): a subnet in the VPC with private_ip_google_access = true; a Cloud DNS private zone for run.app. attached to the VPC mapping run.app to private.googleapis.com (CNAME on *.run.app. plus the private.googleapis.com A records 199.36.153.8-11); outputs (network, subnetwork) consumed by Cloud Run services for Direct VPC egress with vpc_access egress PRIVATE_RANGES_ONLY. No Cloud NAT, no Serverless VPC Access connector. Out of scope: the Cloud Run services (E2-T5), SQL PSC (E10).",
+      "acceptance_criteria": [
+        "Given `terraform validate` in terraform/edge/, then it exits 0; `terraform plan` shows private_ip_google_access = true and a private managed zone with dns_name run.app.",
+        "Given a CI/policy check (script or conftest rule), when a google_compute_router_nat or a vpc_access_connector resource is added to terraform/, then the check fails (negative fixture included and asserted to fail).",
+        "After apply in the test project, `gcloud dns managed-zones describe` shows visibility private bound to the VPC, and `gcloud compute routers nats list` returns nothing."
+      ],
+      "arch_refs": [
+        "overview.md#8.3",
+        "overview.md#4.3",
+        "decisions.md#adr-024"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T5",
+      "title": "fa-gateway Cloud Run service with Kong 3.9.4 image",
+      "summary": "Build the Kong image and Terraform the fa-gateway service with the required ingress, invoker, egress and health settings.",
+      "description": "Overview 4.1, 4.3, 8.3 and ADR-011 / ADR-012. Quote 4.3: 'Image kong:3.9.4, DB-less, _format_version: \"3.0\", admin API off, status listener for health. Ingress internal-and-cloud-load-balancing, invoker check disabled. min instances 0 (demo), max 2.' Build kong/Dockerfile FROM kong:3.9.4 pinned by digest (replacing the MVP kong:3.9 image and its LiteLLM/http-log kong.yml); admin listener off (KONG_ADMIN_LISTEN=off), status listener on its own port used as the Cloud Run startup probe, proxy access log off. Terraform (terraform/edge/): google_cloud_run_v2_service fa-gateway with ingress INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER, invoker IAM check disabled on this service only (no allUsers binding), a dedicated service account fa-gateway, Direct VPC egress PRIVATE_RANGES_ONLY on the E2-T4 subnet, min 0 / max 2. The chat-api upstream URL and the Valkey endpoint reach Kong as environment variables (no hard-coded values); the baseline kong.yml here has one route to the upstream stub and is replaced in E2-T12. A spike-environment variable set also deploys the E2-T3 stub as `chat-api` (ingress internal, run.invoker only for the fa-gateway service account). Out of scope: ALB (E2-T8), full routes and plugins.",
+      "acceptance_criteria": [
+        "Given `gcloud run services describe fa-gateway`, then ingress is internal-and-cloud-load-balancing and the invoker check is disabled; a script over every Cloud Run service in the project asserts no IAM binding contains allUsers or allAuthenticatedUsers (script exits non-zero on a planted binding in its self-test).",
+        "Given a request to the fa-gateway run.app URL from the public internet, then it is refused (HTTP 403 or 404; the status is recorded in the PR).",
+        "Given the deployed revision, then the Kong status endpoint returns 200 for the startup probe and a TCP connect to the admin port is refused (test in the deploy smoke script).",
+        "Given `docker run` of the image with KONG_DECLARATIVE_CONFIG, then `kong config parse` of the baseline kong.yml exits 0 and the image tag is kong:3.9.4 by digest (grep test on kong/Dockerfile)."
+      ],
+      "arch_refs": [
+        "overview.md#4.1",
+        "overview.md#4.3",
+        "overview.md#8.3",
+        "decisions.md#adr-011",
+        "decisions.md#adr-012"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T3",
+        "E2-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T6",
+      "title": "Spike: private-DNS run.app egress without Cloud NAT",
+      "summary": "Measure whether Kong on Direct VPC egress private-ranges-only reaches an internal-ingress service over the private zone while public SaaS calls still work.",
+      "description": "Overview 10 item 3, ADR-024. Quote: 'With Direct VPC egress private-ranges-only, Private Google Access and a Cloud DNS private zone mapping run.app to private.googleapis.com, Kong reaches chat-api (ingress internal) through the VPC. Fail: all-traffic egress + Cloud NAT (about +$32/month) with an ADR.' Use the E2-T5 deployment and the E2-T3 stub as chat-api. Measurements are taken from a throwaway Cloud Run job in the same subnet and egress settings (diagnostics only, deleted afterwards). The Cloud Run IAM check on the stub still applies, so reachability is proven by the Google front end answering (HTTP 403 for a missing token) rather than a timeout; the authenticated 200 is proven in E2-T7. Include a negative control with the private zone removed.",
+      "acceptance_criteria": [
+        "Given the diagnostic job, when it resolves the stub's run.app host, then the answers fall inside 199.36.153.8/30 (values recorded).",
+        "Given a request to the stub's internal run.app URL from the job, then the response is HTTP 403 from the Google front end within 2 s, 200 of 200 attempts return a response (no timeouts); p50/p95 latency of 200 requests recorded.",
+        "Given the private zone temporarily removed (control), then the same request fails differently (status or timeout recorded), proving the zone is what carries the traffic.",
+        "Given no Cloud NAT in the project (`gcloud compute routers nats list` empty), when the job calls a public HTTPS endpoint (api.anthropic.com), then it gets a TLS response, proving public egress works without NAT.",
+        "ADR exists confirming or superseding ADR-024. The result is recorded as an ADR file in the repo (see question 1 for location and numbering) containing the measured values, the pass/fail verdict and the named fallback. Fallback: all-traffic egress plus Cloud NAT (about +$32/month), recorded as an ADR."
+      ],
+      "arch_refs": [
+        "overview.md#10",
+        "overview.md#4.3",
+        "overview.md#8.3",
+        "decisions.md#adr-024"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T7",
+      "title": "Spike: X-Serverless-Authorization passthrough",
+      "summary": "Prove Cloud Run IAM accepts the Kong-issued ID token while the user Authorization reaches the app byte-identical.",
+      "description": "Overview 10 item 2, 8.2 step 6 and ADR-011. Quote: 'A Kong pre-function sets X-Serverless-Authorization (metadata-server ID token, audience = chat-api URL) and Cloud Run IAM accepts it while the user Authorization header reaches FastAPI unchanged (documented for IAM; \"unchanged\" is inferred).' Spike pre-function (spikes/e2/idtoken/, promoted in E2-T13): fetch an ID token from the metadata server identity endpoint (audience = chat-api URL from env), cache in a shared dict until near expiry (record the refresh margin chosen), set X-Serverless-Authorization: Bearer <token> and leave Authorization alone. Use the E2-T5 deployment and the E2-T3 stub with run.invoker only for the fa-gateway service account.",
+      "acceptance_criteria": [
+        "Given a call to the stub's internal URL with only a user Authorization bearer, when made from an in-VPC job, then Cloud Run IAM answers 403; given the same call through Kong, then it returns 200.",
+        "Given three Authorization values (short, with embedded spaces, 2 KB), when sent through Kong, then the stub's echoed sha256 of Authorization equals the sha256 computed by the client for all three (byte-identical).",
+        "Given the stub echo of the decoded token, then aud equals the chat-api URL and email equals the fa-gateway service account; a client-sent X-Serverless-Authorization: garbage is replaced (stub sees the Google token's aud).",
+        "Given 100 requests in a minute, then the metadata server is called at most once (counter logged by the spike) and, with the refresh margin set to 3590 s, the next request triggers exactly one new metadata call.",
+        "ADR exists with verdict. The result is recorded as an ADR file in the repo (see question 1 for location and numbering) containing the measured values, the pass/fail verdict and the named fallback. Fallback: ingress internal only plus application JWT verification on that hop, recorded as an ADR."
+      ],
+      "arch_refs": [
+        "overview.md#10",
+        "overview.md#8.2",
+        "overview.md#4.3",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T6",
+        "E2-T1"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T8",
+      "title": "Terraform: external ALB, URL map, serverless NEG",
+      "summary": "Provide the single public entry: managed certificate, /* to the SPA bucket, /v1/* to fa-gateway.",
+      "description": "Overview 4.1 and ADR-012. Quote: 'URL map: /* to the GCS backend bucket (SPA, CDN); /v1/* to the fa-gateway serverless NEG. Managed certificate. Persistent ... never torn down by demo-down.' In terraform/edge/: global external Application Load Balancer, reserved IP, Google-managed certificate for a domain variable, HTTP to HTTPS redirect, backend bucket (name taken from a variable, CDN on), serverless NEG and backend service for fa-gateway with an explicit timeout variable large enough for the SSE streams (E2-T9 measures what is required), URL map with the two paths. Cloud Armor is attached in E2-T18, not here. Questions 4 and 12 cover the domain and the SPA bucket owner. Out of scope: the SPA build (E8).",
+      "acceptance_criteria": [
+        "Given `terraform validate` and `terraform plan`, then the plan contains a URL map whose path matcher routes /v1/* to the gateway backend service and defaults to the backend bucket.",
+        "Given the applied ALB, when GET https://<domain>/v1/does-not-exist is requested, then the response is Kong's 404 JSON (`no Route matched`) with a Kong Via/Server header, proving the request reached Kong.",
+        "Given GET https://<domain>/ , then the SPA bucket object (or its 404 page) is served by the backend bucket, not Kong.",
+        "Given the fa-gateway run.app URL requested directly from the internet, then it is still refused (as in E2-T5)."
+      ],
+      "arch_refs": [
+        "overview.md#4.1",
+        "decisions.md#adr-012"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T9",
+      "title": "Spike: SSE pass-through ALB to Kong to chat-api",
+      "summary": "Measure SSE latency added by Kong and the ALB against a direct stream and decide pass or the route-around ADR.",
+      "description": "Overview 10 item 1, 4.3 and D16.16. Quote: 'Verify tokens stream without buffering through ALB, Kong (response_buffering: false, request_buffering: false, read_timeout 3,600,000 ms) and chat-api. Pass: SSE through Kong adds <= 50 ms p95 over a direct chat-api stream.' Use the E2-T8 ALB, E2-T5 Kong and the E2-T3 stub /sse. A spike route POST|GET /v1/chat with the SSE settings and a service read_timeout of 3,600,000 ms. A client job in the same region and VPC opens the same event stream (a) directly against the stub's internal URL with its own ID token and (b) through the ALB and Kong, interleaved. Per-event delay = client receive time minus the stub's emit timestamp (clock skew cancels in the difference). Run at least 2,000 events per path at 20 ms intervals. Also hold one stream for 10 minutes and note the ALB backend timeout and Cloud Run request timeout (set to 3,600 s on the stub) needed. Run a control with response_buffering: true. Question 5 asks whether the ALB hop counts toward the 50 ms.",
+      "acceptance_criteria": [
+        "Given 2,000+ events per path, then p95(via ALB+Kong delay) - p95(direct delay) is recorded in the ADR and is <= 50 ms for a pass.",
+        "Given the control with response_buffering: true, then events arrive in bursts (max inter-arrival gap or p95 delay at least 5x the unbuffered run), showing the test can fail.",
+        "Given one stream held for 10 minutes through the ALB, then it ends only when the server closes it (0 premature disconnects), and the ALB backend timeout / Cloud Run timeout values required are written down.",
+        "ADR exists with the numbers and verdict. The result is recorded as an ADR file in the repo (see question 1 for location and numbering) containing the measured values, the pass/fail verdict and the named fallback. Fail fallback per overview 10: ADR routing the SSE route around Kong (ALB URL map sends the chat routes straight to chat-api)."
+      ],
+      "arch_refs": [
+        "overview.md#10",
+        "overview.md#4.3",
+        "overview.md#4.1",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T8",
+        "E2-T7"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T10",
+      "title": "Spike: Cloud Armor cost from the billing catalog",
+      "summary": "Replace the UNVERIFIED Cloud Armor estimate with SKU prices and a computed monthly figure for the planned rule set.",
+      "description": "Overview 10 item 9 (Cloud Armor part), 4.2 and ADR-012. Quote 4.2: 'Cost ~$0.75/1M requests + policy fee: exact cost UNVERIFIED.' Pull the Cloud Armor SKUs from the Cloud Billing Catalog API (policy fee, rule fee, per-million-request charge, any WAF/advanced charges), commit the query script (spikes/e2/armor-cost/), and compute the monthly cost for the planned policy: preconfigured WAF rules, geo rule, one coarse per-IP throttle rule (propose the rule count here for E2-T18) at 0, 1M and 5M requests per month. The idle-budget figure to compare against is the ~$6-10/month in ADR-012 / overview section 10. Confirming against the billing export happens in E10 during the cost month; note it. Out of scope: Confluent cost.",
+      "acceptance_criteria": [
+        "Given the script, when run, then it prints each SKU id, unit price and currency, and exits non-zero if a Cloud Armor SKU is not found (test with a bogus service filter).",
+        "Given the planned rule set, then the ADR table shows total monthly cost at 0, 1M and 5M requests; pass if the 0 request figure is <= $10/month.",
+        "ADR exists with verdict. The result is recorded as an ADR file in the repo (see question 1 for location and numbering) containing the measured values, the pass/fail verdict and the named fallback. Trigger from ADR-012: if the idle budget fails, escalate to the researcher; the ticket does not remove Armor on its own."
+      ],
+      "arch_refs": [
+        "overview.md#10",
+        "overview.md#4.2",
+        "decisions.md#adr-012"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T11",
+      "title": "Compose: Kong 3.9.4, Valkey and the stub",
+      "summary": "Run the gateway locally with Valkey and the stub, replacing the MVP LiteLLM-based Kong wiring.",
+      "description": "Overview 4.3 'Local: kong:3.9.4 + Valkey in compose', 4.6 and stack.md (Valkey 'pin at implementation'). Update docker-compose.yml: kong built from kong/Dockerfile (E2-T5), env-driven host port, admin listener off, status listener on its own port, healthcheck; a valkey service (pin the image tag by digest, record the version in the PR for stack.md) with a healthcheck (valkey-cli ping); the E2-T3 stub as service `chat-api-stub` (profile gateway-test); remove the unused redis service and every LiteLLM reference from kong/ and compose. Kong env: VALKEY_HOST/PORT, CHAT_API_URL and the metadata mock host. Out of scope: other compose services (E0).",
+      "acceptance_criteria": [
+        "Given `docker compose --profile gateway-test up -d kong valkey chat-api-stub`, then all three report healthy within 60 s.",
+        "Given a request to the Kong proxy host port for an unknown path, then the response is HTTP 404 with Kong's JSON body; a connection to the admin port (8001) is refused.",
+        "Given the repo, `grep -ril litellm kong docker-compose*.yml` returns nothing and `grep -n 'redis:7' docker-compose.yml` returns nothing (test script tests/gateway/test_no_legacy.sh).",
+        "Given `docker compose config`, then it exits 0 with no fixed host-port collision when two checkouts use different port env values."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "overview.md#4.6",
+        "stack.md"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T3",
+        "E2-T1",
+        "E0"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T12",
+      "title": "kong.yml routes, header stripping, CORS, size limit, correlation-id",
+      "summary": "Define the four routes and the non-limiting plugins with the exact path rules of the arch.",
+      "description": "Section 6.5 route table. Routes: chat POST ~/v1/chat$; chat-resume GET ~/v1/chat/[^/]+/events$; api prefix /v1/ (lower priority); tenant-discovery GET ~/v1/tenants/[^/]+$. Paths are prefixes or ~ regexes, never globs; anything unlisted gets Kong's 404; no /internal route. Upstream is the chat-api URL from the environment. chat and chat-resume: request_buffering false, response_buffering false, upstream service read_timeout 3,600,000 ms (a separate Kong service entry with the same URL carries the long timeout; question 14). Plugins per route as in the table: request-transformer removing client X-User-Id, X-Tenant-Id, X-Serverless-Authorization, X-RL-Key; cors with the SPA origin from CORS_ALLOWED_ORIGINS; correlation-id on X-Request-Id; request-size-limiting; bot-detection. tenant-discovery: cors, correlation-id, request-size-limiting (rate limit and file-log come in E2-T14/T15). Strip the identity headers on tenant-discovery too so the done-when holds (question 10). The size value is provisional (question 7). Not used: jwt, http-log, openid-connect, Enterprise plugins. Rate limits, pre-function, observability are separate tickets.",
+      "acceptance_criteria": [
+        "Given the Kong container with this kong.yml, when `POST /v1/chat`, `GET /v1/chat/abc/events`, `GET /v1/anything` and `GET /v1/tenants/acme` are sent, then each returns the stub's 200; `GET /v1/tenants/a/b` is served by the api route (stub 200) (pytest tests/gateway/test_routes.py).",
+        "Given `GET /internal/audit/gateway` and `GET /egress/anthropic/v1/messages`, then both return 404 from Kong.",
+        "Given a request carrying X-User-Id, X-Tenant-Id, X-Serverless-Authorization and X-RL-Key with value 'evil' on each of the four routes, then the stub's /echo shows no X-User-Id and no X-Tenant-Id, and no header with the value 'evil'.",
+        "Given a body larger than the size limit on POST /v1/chat, then Kong returns 413; given an Origin not in CORS_ALLOWED_ORIGINS, then no Access-Control-Allow-Origin is returned; given any request, then X-Request-Id is present on the upstream request and the response.",
+        "Given `kong config parse kong/kong.yml`, then it exits 0, and the chat route in the parsed output has request_buffering false, response_buffering false and its service read_timeout 3600000."
+      ],
+      "arch_refs": [
+        "overview.md#6.5",
+        "overview.md#4.3",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T11"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T13",
+      "title": "pre-function: Google ID token and X-RL-Key",
+      "summary": "Promote the spike logic into the production pre-function that sets X-Serverless-Authorization and X-RL-Key on every proxied route.",
+      "description": "Sections 4.3, 6.5, 8.2 step 6 and ADR-011, using the E2-T1 and E2-T7 results (if either ADR chose a fallback, implement that fallback instead and say so). Quote 4.3: pre-function '(a) sets X-Serverless-Authorization: Bearer <Google ID token> (from the metadata server, audience = chat-api URL, cached until near expiry), leaving the user's Authorization intact, and (b) sets X-RL-Key = sha256(Authorization) so raw tokens never reach Valkey keys.' Keep the Lua in git (kong/lua/), unit-tested, and inlined into kong.yml by a documented build step that CI re-runs. Metadata host from GCE_METADATA_HOST (default metadata.google.internal) so compose points at the stub mock. The pre-function runs before rate-limiting in the access phase on chat, chat-resume and api (tenant-discovery has no bearer). Behaviour on metadata failure and on a missing Authorization follows question 9; until answered fail closed with 503 on metadata failure and record the choice.",
+      "acceptance_criteria": [
+        "Given Lua unit tests (test_sha256_known_vector with the NIST vector for 'abc', test_token_cache_reuse, test_token_refresh_within_margin with an injected clock and fake metadata), then all pass in CI.",
+        "Given compose and the metadata mock, when a request with Authorization: Bearer SENTINEL_BBB is sent to POST /v1/chat, then the stub sees X-Serverless-Authorization with the mock token (aud = CHAT_API_URL), an unchanged Authorization (equal sha256) and X-RL-Key equal to sha256 of the Authorization value.",
+        "Given the metadata mock stopped, then the request returns 503 and the stub receives nothing; the chosen behaviour is stated in the PR.",
+        "Given the order test from E2-T1 re-run on the final kong.yml, then X-RL-Key is set before rate-limiting evaluates (a burst by one token is limited, a different token is not)."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "overview.md#6.5",
+        "overview.md#8.2",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T12",
+        "E2-T7",
+        "E2-T1"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T14",
+      "title": "Rate limits per IP and per session on Valkey",
+      "summary": "Add the rate-limiting plugins with numeric limits, Retry-After and Valkey-backed counters.",
+      "description": "Sections 4.3, 4.6, 6.5, 6.6 and ADR-011. Quote 6.5: rate-limiting 'limit_by: ip, and limit_by: header with header_name: X-RL-Key, policy: redis against Valkey, sync_rate: 0 on the chat route, 429 with Retry-After'. Plugins: per-IP on every route (tenant-discovery has only this one, no bearer), per-session on X-RL-Key for chat, chat-resume and api, stricter on POST /v1/chat. Values come from RATE_LIMIT_IP_PER_MIN, RATE_LIMIT_TOKEN_PER_MIN, RATE_LIMIT_CHAT_PER_MIN, which this ticket sets (section 6.6 'set in E2'); choose small demo values, document them next to the keys, and flag them for confirmation (question 6). Valkey host/port from environment. Counters live only in Valkey; no other use of Valkey. The behaviour if Valkey is down (fault_tolerant) is question 6; set it explicitly rather than rely on the default and record the choice. Use the missing-header behaviour found in E2-T1.",
+      "acceptance_criteria": [
+        "Given RATE_LIMIT_IP_PER_MIN=N on tenant-discovery, when N+1 requests arrive from one IP within a minute, then the (N+1)th returns 429 with a Retry-After header (test_ip_limit).",
+        "Given RATE_LIMIT_CHAT_PER_MIN=M and one bearer token, when M+1 POST /v1/chat requests are sent while the IP limit is not reached, then the (M+1)th returns 429 with Retry-After and a request with another token returns 200 (test_session_limit).",
+        "Given traffic from the two tests, when Valkey is scanned, then no key or value contains a raw bearer sentinel and keys contain the 64-hex hash (test_no_raw_token_in_valkey).",
+        "Given Valkey stopped, then requests behave as the documented fault_tolerant choice (test_valkey_down asserts the chosen status).",
+        "Given `kong config parse`, then it exits 0 and policy is redis with sync_rate 0 on the chat route."
+      ],
+      "arch_refs": [
+        "overview.md#6.5",
+        "overview.md#6.6",
+        "overview.md#4.6",
+        "overview.md#4.3",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T13"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T15",
+      "title": "Observability plugins and file-log audit whitelist",
+      "summary": "Emit traces, metrics and a whitelisted JSON audit line per request to stdout.",
+      "description": "Sections 4.3, 6.5, 8.5 (D16.9, D16.10) and ADR-023. Quote 6.5: 'file-log writes to stdout with a field whitelist: timestamp, route, method, status, latency, request id, client IP hash; no Authorization, no bodies, no query strings.' Configure opentelemetry (OTLP endpoint from OTEL_EXPORTER_OTLP_ENDPOINT, W3C traceparent propagated to chat-api), prometheus (served on the status listener), and file-log to /dev/stdout implemented so only the whitelisted fields are emitted (remove the default request/response objects, headers, uri and querystring from the log entry). The client IP hash algorithm and salt are question 8 (until answered: sha256 with a salt from an environment variable, no default). Turn the nginx proxy access log off, since it carries the URI and query. Kong error-log lines on upstream failures can print the request line; the test below checks it and any leak is reported rather than hidden (question 13). Out of scope: the log sink (E2-T19).",
+      "acceptance_criteria": [
+        "Given a request with Authorization: Bearer SENTINEL_TOKEN, query ?q=SENTINEL_QUERY and a JSON body containing SENTINEL_BODY, when the file-log line is captured, then it is valid JSON whose key set equals exactly {timestamp, route, method, status, latency, request_id, client_ip_hash} (set-equality assertion) and `grep -c SENTINEL` over all Kong stdout and stderr is 0.",
+        "Given the same request with the upstream stopped (502/504 path), then `grep -c SENTINEL` over Kong stderr is 0; if the nginx error log leaks the query this test fails and the ticket records question 13 instead of weakening the test.",
+        "Given a request carrying traceparent 00-<trace>-<span>-01, then the stub receives a traceparent with the same trace id.",
+        "Given traffic, then GET /metrics on the status listener contains kong_http_requests_total with the route label and is not reachable on the proxy port."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "overview.md#6.5",
+        "overview.md#8.5",
+        "decisions.md#adr-023"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T13"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T16",
+      "title": "CI: kong config parse, deck validation, forbidden-plugin guard",
+      "summary": "Make CI fail on an unparsable or non-compliant kong.yml.",
+      "description": "Overview 4.3 'kong.yml in git, validated in CI with kong config parse, smoke-tested with deck/curl' and stack.md CI/CD row (kong config parse, deck; versions pinned at implementation). Add a job to .github/workflows/ci.yml: run kong config parse with kong:3.9.4 on kong/kong.yml (required env set to dummy values), run deck offline validation (pin the deck version), and a guard script that fails if kong.yml contains plugins or paths the arch lists as not used (jwt, http-log, openid-connect, rate-limiting-advanced, any Enterprise ai-* plugin) or any /internal path. The job must be required for the PR to pass.",
+      "acceptance_criteria": [
+        "Given a fixture kong.yml with invalid YAML structure, when the parse step runs in the CI script, then it exits non-zero (tests/gateway/test_ci_negative.sh asserts this).",
+        "Given a fixture adding an http-log plugin, a jwt plugin or an /internal route, then the guard exits non-zero for each (three named fixtures).",
+        "Given the real kong/kong.yml, then the job exits 0.",
+        "Given the workflow file, then the job id appears in the branch-protection required checks list documented in the PR (grep of the workflow for the job name)."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "stack.md",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T12",
+        "E0"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T17",
+      "title": "Gateway smoke tests (curl/deck) in compose and CI",
+      "summary": "One repeatable suite proves the limits, size cap, header stripping and no-token-leak behaviour end to end locally.",
+      "description": "Done-when of the epic (E2 section of plan.md). Quote: 'a smoke test shows 429 with Retry-After for the IP limit and the session-key limit, 413 over the size limit, and client-supplied X-User-Id / X-Tenant-Id / X-Serverless-Authorization / X-RL-Key never reaching chat-api; no raw bearer token appears in Valkey keys or in file-log output.' Implement tests/gateway/smoke.sh (curl plus deck where useful, with a browser-like User-Agent if bot-detection blocks curl) run by `make gateway-smoke` against compose with the stub and wired as a CI job. Fixes G-14 (the MVP identifier parameter did not exist) and G-46 (CORS) by test.",
+      "acceptance_criteria": [
+        "Given compose up, when `make gateway-smoke` runs, then it exits 0 and prints PASS for each of: ip_limit_429_retry_after, session_limit_429_retry_after, size_413, header_spoof_stripped, no_raw_token_in_valkey, no_raw_token_in_filelog, unknown_route_404.",
+        "Given a deliberately broken kong.yml (rate-limit plugin removed), then the same suite exits non-zero at ip_limit or session_limit (mutation test in tests/gateway/test_smoke_can_fail.sh).",
+        "Given the CI workflow, then a job runs the suite and a failing assertion fails the PR."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "overview.md#6.5",
+        "overview.md#8.5",
+        "plan.md#e2"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T14",
+        "E2-T15",
+        "E2-T16"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T18",
+      "title": "Terraform: Cloud Armor policy on the ALB backend service",
+      "summary": "Attach DDoS/WAF/geo rules and a coarse per-IP throttle to the gateway backend service.",
+      "description": "Overview 4.2 and ADR-012. Quote 4.2: 'Policy attached to the ALB backend services: DDoS / WAF preconfigured rules, geo rules, coarse per-IP throttle. Kong keeps the fine-grained limits; Cloud Armor keeps DDoS / WAF / geo.' In terraform/edge/: a google_compute_security_policy with the rule set sized in E2-T10, attached to the fa-gateway backend service (the backend bucket cannot take a backend-service policy; note it). Geo allow-list and the throttle threshold are variables (question 11); the throttle must be looser than Kong's limits. Out of scope: Kong limits.",
+      "acceptance_criteria": [
+        "Given `terraform plan`, then the policy lists the WAF rules named in E2-T10, a geo rule, a throttle rule with a variable threshold and a default allow; `gcloud compute security-policies describe` after apply matches.",
+        "Given a request through the ALB with query q=' OR 1=1-- , then the response is 403 from Cloud Armor, not Kong's (no Kong Via header).",
+        "Given 10 benign advisor-style chat messages (fund names, words such as select, drop, union in prose) POSTed through the ALB, then none is blocked by Cloud Armor (0 of 10 return 403); any block is reported as a rule exclusion decision.",
+        "Given more requests per minute from one IP than the throttle threshold, then Cloud Armor returns 429."
+      ],
+      "arch_refs": [
+        "overview.md#4.2",
+        "decisions.md#adr-012"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T8",
+        "E2-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T19",
+      "title": "Cloud Logging sink to BigQuery gateway_audit",
+      "summary": "Route the whitelisted Kong audit lines into a partitioned BigQuery table.",
+      "description": "ADR-023 and overview 4.3 / 4.11. Quote: 'A Cloud Logging sink exports to BigQuery gateway_audit. The /internal/audit/gateway route and the gateway.audit.v1 topic do not exist.' In terraform/edge/: dataset gateway_audit, a google_logging_project_sink with a filter selecting fa-gateway Cloud Run audit JSON lines (exclude Kong's stderr text), unique writer identity with BigQuery data editor on the dataset, partitioned tables (day-partitioned on timestamp). Columns are exactly the whitelist from E2-T15. No tenant column (Kong cannot see it). Fixes G-48. Out of scope: marts, authorized views (E5/E9).",
+      "acceptance_criteria": [
+        "Given traffic through the deployed gateway including a sentinel bearer and query string, when queried 5 minutes later, then `SELECT COUNT(*) FROM gateway_audit.*` for the test request ids returns the number of requests sent.",
+        "Given the table schema, then its column names equal the E2-T15 whitelist exactly and `SELECT COUNT(*) WHERE TO_JSON_STRING(t) LIKE '%SENTINEL%'` returns 0 (test script tests/gateway/test_audit_sink.sh).",
+        "Given `terraform validate`, then it exits 0, and the table is day-partitioned (bq show output asserted)."
+      ],
+      "arch_refs": [
+        "overview.md#4.3",
+        "overview.md#4.11",
+        "decisions.md#adr-023"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T15",
+        "E2-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T20",
+      "title": "llm-egress route (conditional on the egress spike)",
+      "summary": "If E2-T2 passed, add the internal Kong route that holds the Anthropic key and protects it with key-auth and ip-restriction.",
+      "description": "6.5 llm-egress row, 8.3, 8.4, ADR-011, using the E2-T2 result. If the E2-T2 ADR failed, set this ticket to done with a note 'not applicable, see ADR' and make no changes (LLMClient calls Anthropic directly). If it passed: route prefix /egress/anthropic to https://api.anthropic.com with the working configuration from the spike (ai-proxy route_type: preserve or plain proxy), key-auth with consumer chat-api (key from Secret Manager, KONG_EGRESS_KEY), ip-restriction to the VPC range (variable), request-transformer adding the Anthropic key from env, global LLM rate-limiting, log_statistics, native Messages format only. Secrets are injected from Secret Manager into the fa-gateway service by Terraform (no values in state). LLMClient wiring via ANTHROPIC_BASE_URL is E4.",
+      "acceptance_criteria": [
+        "Given the E2-T2 verdict is fail, then the ticket closes with no kong.yml change and a test asserts `grep -c egress kong/kong.yml` is 0.",
+        "Given a pass, when POST /egress/anthropic/v1/messages is sent without apikey, then 401; from an address outside the VPC range, then 403 (tests in tests/gateway/test_egress.py against a mock Anthropic upstream).",
+        "Given a valid key and stream: true against the mock upstream, then the native event sequence is relayed unchanged and Kong logs the log_statistics fields with no key or prompt text (grep -c = 0).",
+        "Given `kong config parse` and the E2-T16 guard, then both exit 0 with the route present."
+      ],
+      "arch_refs": [
+        "overview.md#6.5",
+        "overview.md#8.3",
+        "overview.md#8.4",
+        "decisions.md#adr-011"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T2",
+        "E2-T12",
+        "E2-T16"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E2-T21",
+      "title": "Cloud acceptance: full gateway through the ALB",
+      "summary": "Deploy the final kong.yml to fa-gateway and verify every done-when item in the cloud, re-measuring SSE with the full plugin set.",
+      "description": "Done-when of the E2 section of plan.md. Deploy the final image to fa-gateway with CHAT_API_URL, Valkey endpoint (question 12: a manually created Memorystore Valkey instance outside Terraform, as in 4.6), CORS origin and secrets; run against the ALB domain. Re-run the E2-T9 SSE measurement with every plugin active (pre-function, rate-limiting on Valkey, file-log, opentelemetry, prometheus) and `response_buffering: false`. The chat-api target is the real service if E1/E4 have deployed it, otherwise the E2-T3 stub with the same IAM settings (question 15). Record all results in the PR and, for the measurements, in an ADR note appended to the E2-T9 ADR.",
+      "acceptance_criteria": [
+        "Given the full plugin set, then SSE through ALB and Kong adds <= 50 ms p95 over the direct stream (2,000+ events per path, numbers recorded; fails the ticket otherwise).",
+        "Given the E2-T17 smoke assertions run against https://<domain>/v1/..., then 429 with Retry-After (IP and session), 413 and header-spoof stripping all pass.",
+        "Given an in-VPC call to chat-api carrying only a user bearer and no Kong ID token, then it is rejected (HTTP 403 from Cloud Run IAM); given the same call through Kong, then 200 (or the E2-T7 fallback is in place and the ADR says so).",
+        "Given `gcloud compute routers nats list` is empty and Kong still reaches chat-api, then the no-NAT path works (or the E2-T6 fallback ADR is in place).",
+        "Given the traffic, then rows reach BigQuery gateway_audit and Valkey scans show no raw bearer (reuse E2-T19 and E2-T14 tests against the cloud)."
+      ],
+      "arch_refs": [
+        "overview.md#4.1",
+        "overview.md#4.3",
+        "overview.md#8.3",
+        "overview.md#10",
+        "decisions.md#adr-011",
+        "decisions.md#adr-012",
+        "decisions.md#adr-023",
+        "decisions.md#adr-024"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E2-T9",
+        "E2-T17",
+        "E2-T18",
+        "E2-T19",
+        "E2-T20",
+        "E1"
+      ],
+      "size": "M",
+      "status": "todo"
+    }
+  ],
+  "questions": [
+    "1. Where are spike ADRs recorded and what numbers do they take? ADRs live in the context repo decisions.md (ADR-024 is the last), but the builder works in the FinAdvisor repo. Tickets assume an ADR file in the repo (docs/adr/) that the researcher later merges into decisions.md.",
+    "2. Spike 5 (X-RL-Key) has no fail branch in overview section 10 or ADR-011. If the pre-function cannot set the header before rate-limiting or sha256 is unavailable, what is the fallback?",
+    "3. Who owns the VPC, subnet, Private Google Access and run.app zone in Terraform, E2 or E10? Plan lists them in both E2 and E10 scope, and the repo's existing terraform/ is the MVP. Tickets put the gateway-related pieces in terraform/edge/ and assume E10 reuses them.",
+    "4. Which domain and managed certificate does the ALB use, and which epic owns the SPA GCS backend bucket (E8?) referenced by the /* backend? E2-T8 takes both as variables.",
+    "5. Does the 'SSE through Kong adds <= 50 ms p95 over a direct chat-api stream' measure include the ALB hop? Kong is only reachable through the ALB, so the measurement compares ALB+Kong against a direct internal stream; confirm that reading.",
+    "6. Numeric values for RATE_LIMIT_IP_PER_MIN, RATE_LIMIT_TOKEN_PER_MIN, RATE_LIMIT_CHAT_PER_MIN are 'set in E2' with no basis in the arch; which limit applies to which route (does the strict chat limit also key on IP)? And should Kong fail open or closed if Valkey is unreachable (rate-limiting fault_tolerant)?",
+    "7. The request-size-limiting value: section 6.6 ties Kong's size limit to INPUT_MAX_CHARS, which is set in E4. What provisional value does E2 use until then?",
+    "8. Algorithm and salt for the 'client IP hash' in the file-log whitelist are not specified.",
+    "9. pre-function behaviour is unspecified when the metadata server fails (fail closed 503 assumed) and when Authorization is absent on chat/api routes (what X-RL-Key value, or reject).",
+    "10. The 6.5 table omits request-transformer on tenant-discovery, but the done-when says client identity headers never reach chat-api. Tickets strip them on all routes; confirm.",
+    "11. Cloud Armor inputs not in the arch: geo allow-list countries, the coarse per-IP throttle threshold, which preconfigured WAF rules, and the pass threshold for the cost spike (assumed <= $10/month at zero traffic from the idle budget).",
+    "12. Valkey for cloud acceptance: demo-up (E10) creates Memorystore, but E2-T21 needs one earlier. Assumed a manual fixed-name instance outside Terraform. Valkey image/version pin is also needed (stack.md says pin at implementation).",
+    "13. nginx error-log lines on upstream failures can contain the request line including the query string, which would conflict with 'no query strings' in logs reaching Cloud Logging. E2-T15 tests for it; if it leaks, what is the accepted control?",
+    "14. Splitting chat/chat-resume onto a Kong service with read_timeout 3,600,000 ms and the other routes on a second service with the same URL is an inference from 'service read_timeout' in 4.3; confirm the api routes may keep the default timeout.",
+    "15. The real chat-api Cloud Run service (ingress internal, run.invoker only for the Kong service account) is built in E1/E4/E10. E2 uses a stub stand-in for spikes and acceptance; confirm the 'chat-api rejects a call without the Kong ID token' check may run against the stub until the real service exists."
+  ]
+}

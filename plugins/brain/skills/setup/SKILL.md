@@ -23,7 +23,7 @@ ones the harness needs into `~/.claude/settings.json`. It is idempotent: run it 
    `ENABLE_TOOL_SEARCH`.
 3. **Show Keshav the diff** (old vs new JSON for the changed keys only). Write only after he says yes.
 4. **context_dir.** Check that the brain plugin option `context_dir` is set (`/config` shows it under
-   the plugin). It must point to the `context/` folder of the harness repo. If unset, tell Keshav
+   the plugin). It must point to the `projects/` folder of the harness repo. If unset, tell Keshav
    to set it in `/config`; do not edit `pluginConfigs` by hand.
 5. **Registry.** Check `<context_dir>/registry.json` parses as JSON with a `projects` object.
    For each repo path, report whether it exists on disk.
