@@ -7,7 +7,7 @@ repo: "FinAdvisor"
 status: "todo"
 depends_on: ["E11", "E5", "E6", "E1"]
 arch_refs: ["deep-dive/04-2-source-lifecycle-and-cells.md#4.17", "deep-dive/04-2-source-lifecycle-and-cells.md#4.19", "deep-dive/04-2-source-lifecycle-and-cells.md#4.20", "deep-dive/04-2-source-lifecycle-and-cells.md#4.22", "deep-dive/04-2-source-lifecycle-and-cells.md#4.23", "deep-dive/04-2-source-lifecycle-and-cells.md#4.27", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.11", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.12", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.13", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.14", "deep-dive/06-interfaces-and-contracts.md#6.9", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.4", "deep-dive/09-observability.md#9.7", "deep-dive/09-observability.md#9.8", "decision-logs.md#adr-028", "decision-logs.md#adr-029", "decision-logs.md#adr-030", "decision-logs.md#adr-034", "decision-logs.md#adr-035", "decision-logs.md#adr-039"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 116, "id": 6263449381, "url": "https://github.com/Keshav0375/FinAdvisor/issues/116"}
 updated: "2026-11-07"
 ---
 

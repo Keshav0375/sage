@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E10-T18", "E10-T20", "E3-T16", "E4-T27"]
 arch_refs: ["deep-dive/02-quality-attributes.md#2.1", "deep-dive/02-quality-attributes.md#2.3", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.1 rerank 429", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.2", "ADR-020"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 245, "id": 6263663058, "url": "https://github.com/Keshav0375/FinAdvisor/issues/245"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

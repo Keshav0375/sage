@@ -7,10 +7,10 @@ size: "S"
 status: "todo"
 depends_on: ["E6-T15", "E1-T17"]
 arch_refs: ["deep-dive/05-data-model-and-storage.md#5.2", "deep-dive/04-components-and-responsibilities.md#4.8", "decision-logs.md#adr-014"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 149, "id": 6263504909, "url": "https://github.com/Keshav0375/FinAdvisor/issues/149"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

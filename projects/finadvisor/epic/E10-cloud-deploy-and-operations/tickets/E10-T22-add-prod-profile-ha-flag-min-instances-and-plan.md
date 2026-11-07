@@ -7,10 +7,10 @@ size: "S"
 status: "todo"
 depends_on: ["E10-T6", "E10-T8", "E10-T9", "E10-T16"]
 arch_refs: ["deep-dive/07-scaling-failure-modes-and-recovery.md#7.2", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.3", "deep-dive/06-interfaces-and-contracts.md#6.6 ENV_PROFILE", "ADR-020"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 244, "id": 6263661903, "url": "https://github.com/Keshav0375/FinAdvisor/issues/244"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

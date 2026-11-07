@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E8-T3", "E8-T4", "E13-T5", "E13-T11"]
 arch_refs: ["decision-logs.md#adr-032", "decision-logs.md#adr-031", "deep-dive/08-security-and-privacy.md#8.2", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.4"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 195, "id": 6263575138, "url": "https://github.com/Keshav0375/FinAdvisor/issues/195"}
 branch: null
 pr: null
 updated: "2026-11-07"

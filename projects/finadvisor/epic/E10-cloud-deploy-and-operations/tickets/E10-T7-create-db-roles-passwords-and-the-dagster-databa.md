@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E10-T6", "E1-T3"]
 arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.8", "deep-dive/08-security-and-privacy.md#8.4", "deep-dive/06-interfaces-and-contracts.md#6.6 DAGSTER_PG_*, DB_*", "ADR-020"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 255, "id": 6263682167, "url": "https://github.com/Keshav0375/FinAdvisor/issues/255"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

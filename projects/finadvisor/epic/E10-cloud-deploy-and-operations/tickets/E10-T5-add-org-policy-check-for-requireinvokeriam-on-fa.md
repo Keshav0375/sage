@@ -7,10 +7,10 @@ size: "S"
 status: "todo"
 depends_on: ["E10-T4"]
 arch_refs: ["deep-dive/08-security-and-privacy.md#8.3", "ADR-012"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 253, "id": 6263675684, "url": "https://github.com/Keshav0375/FinAdvisor/issues/253"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

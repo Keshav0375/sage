@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E7-T2", "E11-T26"]
 arch_refs: ["deep-dive/02-quality-attributes.md#2.10", "deep-dive/10-open-questions.md#10", "decision-logs.md#adr-037"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 174, "id": 6263547129, "url": "https://github.com/Keshav0375/FinAdvisor/issues/174"}
 branch: null
 pr: null
 updated: "2026-11-07"

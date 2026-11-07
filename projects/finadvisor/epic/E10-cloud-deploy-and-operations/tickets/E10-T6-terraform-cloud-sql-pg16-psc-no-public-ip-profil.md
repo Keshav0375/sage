@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E10-T4", "E2-T4", "E2-T5", "E2-T8", "E2-T18", "E2-T19"]
 arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.9", "deep-dive/08-security-and-privacy.md#8.3", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.14", "decision-logs.md#adr-020", "decision-logs.md#adr-024", "decision-logs.md#adr-029", "decision-logs.md#adr-039"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 254, "id": 6263676564, "url": "https://github.com/Keshav0375/FinAdvisor/issues/254"}
 branch: null
 pr: null
 updated: "2026-11-07"

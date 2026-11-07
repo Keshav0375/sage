@@ -7,8 +7,8 @@ repo: "FinAdvisor"
 status: "todo"
 depends_on: []
 arch_refs: ["deep-dive/09-observability.md#9", "deep-dive/06-interfaces-and-contracts.md#6.1 (`/readyz`)", "ADR-018"]
-issue: null
-updated: "2026-11-01"
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 113, "id": 6263447026, "url": "https://github.com/Keshav0375/FinAdvisor/issues/113"}
+updated: "2026-11-07"
 ---
 
 ## Goal

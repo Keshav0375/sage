@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E6-T2", "E11-T4"]
 arch_refs: ["deep-dive/04-2-source-lifecycle-and-cells.md#4.15", "deep-dive/06-interfaces-and-contracts.md#6.7", "decision-logs.md#adr-26"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 282, "id": 6263739473, "url": "https://github.com/Keshav0375/FinAdvisor/issues/282"}
 branch: null
 pr: null
 updated: "2026-11-07"

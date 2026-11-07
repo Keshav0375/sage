@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E10-T6", "E10-T18", "E10-T25", "E12-T20", "E12-T21"]
 arch_refs: ["deep-dive/07-scaling-failure-modes-and-recovery.md#7.4", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.2", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.14", "decision-logs.md#adr-029", "decision-logs.md#adr-030"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 250, "id": 6263672678, "url": "https://github.com/Keshav0375/FinAdvisor/issues/250"}
 branch: null
 pr: null
 updated: "2026-11-07"

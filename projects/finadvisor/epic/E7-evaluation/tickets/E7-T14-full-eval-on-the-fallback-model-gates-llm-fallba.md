@@ -7,10 +7,10 @@ size: "S"
 status: "todo"
 depends_on: ["E7-T13", "E4-T27"]
 arch_refs: ["deep-dive/06-interfaces-and-contracts.md#6.6", "ADR-017", "ADR-005"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 169, "id": 6263538167, "url": "https://github.com/Keshav0375/FinAdvisor/issues/169"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

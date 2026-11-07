@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E9-T1", "E9-T2", "E3-T9"]
 arch_refs: ["deep-dive/09-observability.md#9.2", "decision-logs.md#adr-018", "decision-logs.md#adr-034", "decision-logs.md#adr-036"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 225, "id": 6263628867, "url": "https://github.com/Keshav0375/FinAdvisor/issues/225"}
 branch: null
 pr: null
 updated: "2026-11-07"

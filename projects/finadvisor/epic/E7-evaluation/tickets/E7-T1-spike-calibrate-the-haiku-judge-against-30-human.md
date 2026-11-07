@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E4-T27"]
 arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.7", "deep-dive/09-observability.md#9.6", "decision-logs.md#adr-017", "decision-logs.md#adr-037"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 164, "id": 6263523535, "url": "https://github.com/Keshav0375/FinAdvisor/issues/164"}
 branch: null
 pr: null
 updated: "2026-11-07"

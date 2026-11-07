@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E9-T12", "E9-T5", "E12-T16", "E12-T21", "E12-T23"]
 arch_refs: ["deep-dive/09-observability.md#9.7", "deep-dive/09-observability.md#9.8", "deep-dive/09-observability.md#9.2", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.14", "decision-logs.md#adr-030", "decision-logs.md#adr-034"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 216, "id": 6263615699, "url": "https://github.com/Keshav0375/FinAdvisor/issues/216"}
 branch: null
 pr: null
 updated: "2026-11-07"
