@@ -2,12 +2,12 @@
 // runs git, and passes text in.
 //
 // The ledger is the files on disk, not a separate state file, so it cannot drift from the work:
-//   <context>/.runtime/builder/<p>/<ticket>/context.md     fetcher
-//   <context>/.runtime/worktrees/<p>/<ticket>/              brancher (the git worktree)
-//   <context>/.runtime/builder/<p>/<ticket>/{review,security,tests,arch-check}.md   checkers
-//   <context>/.runtime/builder/<p>/<ticket>/verdict.md      verifier
-//   <context>/.runtime/builder/<p>/<ticket>/claim.json      which session owns the ticket
-//   <context>/.runtime/builder/<p>/<ticket>/log.jsonl       one line per builder agent spawn
+//   <context_dir>/.runtime/builder/<p>/<ticket>/context.md     fetcher
+//   <context_dir>/.runtime/worktrees/<p>/<ticket>/              brancher (the git worktree)
+//   <context_dir>/.runtime/builder/<p>/<ticket>/{review,security,tests,arch-check}.md   checkers
+//   <context_dir>/.runtime/builder/<p>/<ticket>/verdict.md      verifier
+//   <context_dir>/.runtime/builder/<p>/<ticket>/claim.json      which session owns the ticket
+//   <context_dir>/.runtime/builder/<p>/<ticket>/log.jsonl       one line per builder agent spawn
 // Each report starts with `sha: <HEAD>` and `status: <keyword>`, so a report about an older commit
 // is stale and counts as not done.
 
@@ -176,7 +176,7 @@ export const NEXT: Record<Step, string> = {
   verified: 'ship',
   shipped: 'wait for CI and merge',
   done: '-',
-  blocked: 'see STATE.md',
+  blocked: 'see state.md',
 }
 
 export type TicketRow = { project: string; ticket: string; title?: string; step: Step; attempts: number; claim?: Claim }
@@ -190,39 +190,4 @@ export function renderRuns(rows: TicketRow[], session: string, now: number): str
     lines.push(`- ${r.project} ${r.ticket}${r.title ? ` ${r.title}` : ''}: ${r.step}${tries} → next: ${NEXT[r.step]}${owner}`)
   }
   return lines.join('\n')
-}
-
-// Applies allowed field changes to one ticket in tracker text. Returns the new text.
-export const TICKET_FIELDS = ['status', 'branch', 'pr'] as const
-export const STATUSES = ['todo', 'in_progress', 'review', 'done', 'blocked']
-
-export function updateTicket(text: string, ticket: string, fields: Record<string, unknown>, today: string): string {
-  const data = JSON.parse(text)
-  for (const key of Object.keys(fields)) {
-    if (!(TICKET_FIELDS as readonly string[]).includes(key)) throw new Error(`field "${key}" is not allowed; use ${TICKET_FIELDS.join(', ')}`)
-  }
-  if (fields.status !== undefined && !STATUSES.includes(String(fields.status))) {
-    throw new Error(`status must be one of ${STATUSES.join(', ')}`)
-  }
-  for (const epic of data.epics ?? []) {
-    for (const t of epic.tickets ?? []) {
-      if (t.key !== ticket) continue
-      Object.assign(t, fields)
-      data.updated = today
-      return JSON.stringify(data, null, 2) + '\n'
-    }
-  }
-  throw new Error(`ticket ${ticket} is not in tracker.json`)
-}
-
-// Tickets that are in progress in a tracker, with titles.
-export function activeTickets(text: string): { ticket: string; title?: string; status?: string; pr?: string | null }[] {
-  const data = JSON.parse(text)
-  const out = []
-  for (const epic of data.epics ?? []) {
-    for (const t of epic.tickets ?? []) {
-      if (t.status === 'in_progress' || t.status === 'blocked') out.push({ ticket: t.key, title: t.title, status: t.status, pr: t.pr })
-    }
-  }
-  return out
 }

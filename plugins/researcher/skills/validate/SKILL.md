@@ -7,7 +7,7 @@ argument-hint: "<project> [arch section or ADR number]"
 # /researcher:validate
 
 ## 1. Extract (main session)
-Read the target from `context/projects/<p>/arch/` (one section, one ADR, or the whole overview by
+Read the target from `projects/<p>/arch/` (one section, one ADR, or the whole `architecture.md` and its deep-dive files by
 section). List:
 - every **decision** (what was chosen, and the reason given),
 - every **technology** it relies on (cloud services, databases, brokers, frameworks, libraries),
@@ -38,4 +38,5 @@ Inside `/researcher:run` or `/builder:build`, apply every `improve` or `change` 
 supports through `researcher:arch-writer`, with an ADR each, and report them. When Keshav runs
 this skill by itself, present the table and the top three improvements, and record his choices
 with `/researcher:decide`. Save the evidence to
-`context/library/research/<yyyy-mm-dd>-validate-<project>.md`.
+`projects/<p>/library/research/<round>/validate-<project>.md` and add a row for every source it cites to
+`projects/<p>/library/index.md`.

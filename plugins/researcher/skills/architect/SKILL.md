@@ -1,13 +1,13 @@
 ---
 name: architect
-description: Create or extend a project's binding architecture in context/projects/<p>/arch/ at solution-architect level — current docs, papers, competing designs, adversarial check, then an evidence-based decision recorded as an ADR. Trigger /researcher:architect <project> <problem>.
+description: Create or extend a project's binding architecture in projects/<p>/arch/ at solution-architect level — current docs, papers, competing designs, adversarial check, then an evidence-based decision recorded as an ADR. Trigger /researcher:architect <project> <problem>.
 argument-hint: "<project> <problem or feature>"
 ---
 
 # /researcher:architect
 
-The output is `context/projects/<p>/arch/`: `overview.md` (sections from the template, with
-diagrams), `stack.md`, `decisions.md` and `plan.md`. Architecture is binding, so every load-bearing choice needs evidence.
+The output is `projects/<p>/arch/`: `architecture.md` (top down), `architecture-diagram.md`,
+`deep-dive/*.md`, `decision-logs.md` and `state.md`, plus `epic/plan.md`. Architecture is binding, so every load-bearing choice needs evidence.
 Follow the `brain:pipeline` skill. The main session orchestrates; it never skips a step.
 
 ## 1. Frame (main session)
@@ -20,7 +20,7 @@ Follow the `brain:pipeline` skill. The main session orchestrates; it never skips
 
 ## 2. Research (waves of ≤ 4 per `brain:pipeline`; independent inputs only)
 One docs-reader per *decision-relevant* technology group (not per candidate); readers delegate pages
-to Haiku page-readers. Each writes to `context/.runtime/research/<p>/`.
+to Haiku page-readers. Each writes to `projects/<p>/library/research/<round>/`.
 - `researcher:reference-scout` — well-known systems that solved a similar problem, and the cloud
   vendor's reference architecture for this workload (Azure Architecture Center, AWS
   Architecture Center, Google Cloud Architecture Center).
@@ -52,11 +52,13 @@ preference, budget or compliance scope: then ask one short question with your re
 ## 6. Record (delegate the writing)
 After the decision, spawn `researcher:arch-writer` with the decided design, the requirements,
 the evidence links and the rejected options. It writes:
-- `arch/overview.md` by section, with Mermaid diagrams: system context, containers/components,
-  key flows (sequence), and deployment when infrastructure is in scope,
-- `arch/stack.md`: the tech stack table with versions and official docs links,
-- an ADR in `arch/decisions.md` (context, options with costs, evidence, decision, what it makes
+- `arch/architecture.md`, top down, linking each deep-dive file,
+- `arch/architecture-diagram.md`: the full-flow Mermaid diagram; every node names its deep-dive file,
+- `arch/deep-dive/<nn>-<slug>.md` (≤ 250 lines each, each linking back to the diagram): one per key
+  component, with key flows and deployment when infrastructure is in scope,
+- an ADR in `arch/decision-logs.md` (context, options with costs, evidence, decision, what it makes
   harder later),
-- `arch/plan.md`: the high-level implementation plan, phases and epics in order.
+- `arch/state.md`: what is decided, validated, open,
+- `epic/plan.md`: the high-level implementation plan, phases and epics in order.
 Then the main session reads the result: diagrams match the text, every choice has evidence.
-Remove the question from `STATE.md` open decisions. Next step: `/researcher:plan`.
+Remove the question from `state.md` open decisions. Next step: `/researcher:plan`.

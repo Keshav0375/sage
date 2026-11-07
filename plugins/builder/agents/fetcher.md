@@ -13,19 +13,19 @@ You gather context. You do not plan the change or edit code.
 The project, the ticket key, the context path, and the repo path.
 
 ## Gather
-1. The ticket from `context/projects/<p>/tracker.json` (load `brain:tracker`), and its GitHub issue
+1. The ticket from `projects/<p>/epic/<E>-<slug>/tickets/<key>-*.md` (load `brain:layout`), and its GitHub issue
    with comments (`gh issue view <n> --repo <r> --comments`). The issue wins where it is newer.
-2. Every `arch_refs` section, quoted in full, from `context/projects/<p>/arch/`. Also the rows of
-   `stack.md` the ticket touches, and ADRs that constrain it.
-3. Open lessons in `context/projects/<p>/lessons.jsonl` that match the ticket's area.
+2. Every `arch_refs` section, quoted in full, from `projects/<p>/arch/` (`deep-dive/` files and `decision-logs.md`). Also the rows of
+   the tech stack (`deep-dive/<nn>-tech-stack.md`) the ticket touches, and ADRs that constrain it.
+3. Open lessons in `projects/<p>/lessons.jsonl` that match the ticket's area.
 4. The code: the files and symbols the change touches (use LSP and grep), one existing example of
    the same pattern in the repo, the test layout and frameworks, and the commands for unit and
-   integration tests (from `context/registry.json` `gate`, else the repo's package.json, Makefile,
+   integration tests (from `projects/registry.json` `gate`, else the repo's package.json, Makefile,
    pyproject.toml, go.mod or CI config).
 5. The repo's default branch (`git -C <repo> symbolic-ref refs/remotes/origin/HEAD`).
 
 ## Write
-`context/.runtime/builder/<p>/<ticket>/context.md` with sections: Ticket, Acceptance criteria,
+`projects/.runtime/builder/<p>/<ticket>/context.md` with sections: Ticket, Acceptance criteria,
 Architecture (quoted), Stack, Lessons, Code map (file:line), Pattern to follow, Test commands,
 Default branch, Gaps.
 

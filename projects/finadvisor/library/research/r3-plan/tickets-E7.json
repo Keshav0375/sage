@@ -1,0 +1,433 @@
+{
+ "epic": "E7",
+ "tickets": [
+  {
+   "key": "E7-T1",
+   "title": "Spike: calibrate the Haiku judge against ~30 human labels",
+   "summary": "Measure Cohen's kappa between the Haiku 5.5 judge and ~30 human labels and record whether L2 numbers can be trusted.",
+   "description": "Spike (must finish before any L2 number is trusted). Build a calibration set of ~30 (question, answer, cited excerpts) items drawn from the existing data/eval/golden_qa.json and a few saved model answers, each with a human label for faithfulness (pass/fail) and citation correctness (pass/fail) stored in data/eval/judge_calibration.json (labels entered by the operator; the ticket supplies the file schema, a labelling CLI `python -m scripts.label_calibration`, and the runner). Run the judge (`LLM_MODEL_JUDGE` = claude-haiku-5-5, must differ from `LLM_MODEL_ANSWER`) with the existing data/eval/judge_prompt.txt as the starting prompt, in both A/B and swapped order where the prompt is pairwise (MT-Bench swap-order check). Compute Cohen's kappa per metric. Write the result to docs/adr/judge-calibration.md with: n, kappa per metric, confusion matrix, prompt version, and a go/no-go statement. Quote ADR-017: \"Haiku 5.5 judge ... calibrated on ~30 human labels (Cohen's kappa)\"; trigger to revisit: \"Judge kappa below acceptable\". Out of scope: the Ragas runner (E7-T8), choosing a different judge model (a no-go result is reported, not fixed here).",
+   "acceptance_criteria": [
+    "Given the ~30 labelled items, `python -m scripts.calibrate_judge` prints kappa for faithfulness and citation and exits 0; a unit test with a fixed fake judge and known labels asserts the kappa value equals the hand-computed value (e.g. 0.6) to 3 decimals.",
+    "docs/adr/judge-calibration.md exists in the repo and contains n >= 30, a kappa value per metric, the judge model id and the prompt file hash; a CI check (grep test) fails if any of these is missing.",
+    "Unit test: the calibration runner raises if LLM_MODEL_JUDGE equals LLM_MODEL_ANSWER.",
+    "The ADR states an explicit threshold used for go/no-go and the decision (go or no-go) next to the measured kappa."
+   ],
+   "arch_refs": [
+    "overview.md#4.7",
+    "overview.md#9.6",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T2",
+   "title": "Define the golden-set schema and loader with tenant parameters",
+   "summary": "Give the golden set a validated, tenant-parameterised schema and migrate the existing 50-or-fewer cases into it.",
+   "description": "The repo already has data/eval/golden_qa.json and scripts/run_eval.py (MVP). Define a Pydantic model `GoldenCase` {id, category (answerable, adversarial, refusal, cross_tenant, tier, jurisdiction), question, persona (advisor tier, jurisdictions, licenses, role as a template, never a hard-coded tenant id), tenant_param (placeholder resolved to the `eval` tenant via `EVAL_TENANT_ID` at run time), expected_chunk_ids or expected_doc_refs (for L1), must_cite_refs, must_not_contain, expected_refusal (code or null), reference_answer (optional, for Ragas), notes}. Add a loader `load_golden(path)` that validates every case, rejects duplicate ids and unknown categories, and resolves tenant parameters. Convert the existing cases to the schema (target: 50 cases at this ticket). Quote ADR-017: \"Golden set 50 growing to ~300, tenant-parameterised.\" Out of scope: adding cases beyond 50 (E7-T3), runners.",
+   "acceptance_criteria": [
+    "Given a golden file with a duplicate id, `load_golden` raises ValueError naming the id (unit test).",
+    "Given a case with a hard-coded tenant uuid instead of the placeholder, validation fails (unit test).",
+    "`pytest backend/tests/test_golden_set.py` passes and asserts the shipped file holds >= 50 cases covering every category name at least once except where E7-T3 adds them.",
+    "With EVAL_TENANT_ID set to uuid X, every resolved case reports tenant_id == X (unit test)."
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "overview.md#6.6",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T3",
+   "title": "Add adversarial, refusal and leak-probe cases to the golden set",
+   "summary": "Extend the golden set with adversarial, refusal, and cross-tenant / tier / jurisdiction probe cases.",
+   "description": "Add at least 40 cases to the golden set: prompt-injection attempts in the question and in retrieved text, requests the system must refuse (no firm documentation -> NO_FIRM_DOCUMENTATION refusal, out-of-jurisdiction, above-tier content), and cross-tenant probes (a question whose only matching content belongs to another tenant, so the right answer is a refusal and no foreign chunk id may appear). Each case sets expected_refusal or must_not_contain. Add seed fixtures (a second synthetic tenant with distinct content, plus restricted-tier and other-jurisdiction documents inside the `eval` tenant) under data/eval/fixtures/ so that probes have something to leak. Quote ADR-017 L3: \"cross-tenant / tier / jurisdiction refusal and promptfoo red team\" and OWASP table LLM01/LLM08 tests. Out of scope: the runner that executes them (E7-T10).",
+   "acceptance_criteria": [
+    "`pytest backend/tests/test_golden_set.py` asserts >= 40 cases in categories adversarial, refusal, cross_tenant, tier, jurisdiction, with at least 5 in each.",
+    "Test asserts every cross_tenant case names a foreign-tenant chunk id in a `forbidden_chunk_ids` field that exists in the fixtures.",
+    "Loading the fixtures into a test database via the existing seed path creates documents for two tenants and the test fails if the second tenant has no chunks."
+   ],
+   "arch_refs": [
+    "overview.md#8.1",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T2"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T4",
+   "title": "Grow the golden set to about 300 curated cases",
+   "summary": "Reach ~300 golden cases, curated per tenant and balanced by category.",
+   "description": "Grow data/eval/golden_qa.json to 280-320 cases across answerable, adversarial and refusal categories, parameterised by tenant (the `eval` tenant plus the second fixture tenant). Cases are authored from the corpus documents (regulatory refs and chunk ids must resolve). Add a coverage script `python -m scripts.golden_stats` that prints counts per category and per document and fails on unresolved expected chunk ids. Quote ADR-017: \"Golden set 50 growing to ~300\"; consequence: \"the golden set must be curated per tenant\". Out of scope: the human calibration labels (E7-T1).",
+   "acceptance_criteria": [
+    "`python -m scripts.golden_stats` exits 0 and reports total between 280 and 320.",
+    "A test fails if any expected_chunk_id / expected_doc_ref does not exist in the seeded eval-tenant corpus.",
+    "A test fails if any category has fewer than 5% of total cases or any single document is referenced by more than 10% of answerable cases."
+   ],
+   "arch_refs": [
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T3"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T5",
+   "title": "Build the eval job entrypoint, Langfuse datasets and run record",
+   "summary": "Provide a `jobs eval` entrypoint that runs as fa_eval against the eval tenant, syncs the golden set to Langfuse and emits EvalRunCompleted.",
+   "description": "Add the `eval` Cloud Run job entrypoint on the existing `jobs` image entrypoint (arch 4.8: `eval` | `fa_eval` | \"Full or subset eval run (L1-L3) against the dedicated `eval` tenant; results to Langfuse and `eval.events.v1`\"). Arguments: `--subset pr|full`, `--layers l1,l2,l3`, `--model answer|fallback`. It opens DB connections as `fa_eval` only (role created in E1), pinned to `EVAL_TENANT_ID`; it must refuse to start if EVAL_TENANT_ID is unset or if the connected role is not fa_eval. It syncs the golden set to a Langfuse dataset (`run_experiment`), writes a JSON result file (metrics, git sha, model ids, prompt version) and produces `EvalRunCompleted` on `eval.events.v1` with the `eval` service-account Kafka key using an idempotent producer (event_id derived from run id). The ~60-question PR subset is selected by a `subset: pr` flag on cases (stratified, set in this ticket for existing cases). Out of scope: metric computation (T6, T8, T10), CI wiring (T12).",
+   "acceptance_criteria": [
+    "Given DB user fa_app, the entrypoint exits non-zero with a message naming the role mismatch (unit test).",
+    "Given EVAL_TENANT_ID unset, the entrypoint exits non-zero before any DB or LLM call (unit test).",
+    "`--subset pr` selects between 55 and 65 cases and every category is represented (unit test on the shipped golden set once T3 is merged).",
+    "Integration test with the CI Kafka container: a dry run produces exactly one EvalRunCompleted message; running it twice with the same run id yields one logical event (dedupe on event_id)."
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "overview.md#6.4",
+    "overview.md#6.6",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E1",
+    "E5",
+    "E7-T2"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T6",
+   "title": "Implement L1 retrieval metrics: recall@k, MRR and nDCG",
+   "summary": "Compute retrieval quality metrics for a retrieval configuration over the golden set.",
+   "description": "In `backend/src/evals/l1.py` (or the repo's existing eval package location) compute recall@k (k in 5, 10, 15), MRR and nDCG@10 per case and aggregate, calling the production `RetrievalService.search` path under the `fa_eval` role and the `eval` tenant so RLS applies exactly as in chat. Accept a config object {mode: dense|fts|hybrid|hybrid_rerank, rerank_candidates, contextual_headers: bool}, which sets the corresponding settings for the run only (RRF_K 60, HNSW settings from config). Record p50/p95 latency of the first stage and of rerank per config. Only answerable cases with expected chunk ids are scored. Output JSON per config. Quote ADR-008: \"RRF k = 60 in one SQL statement with RLS on both legs\" and ADR-017 L1. Out of scope: choosing the winning config (E7-T7).",
+   "acceptance_criteria": [
+    "Unit test with a fake retriever and hand-built ranked lists asserts recall@5, MRR and nDCG@10 equal hand-computed values to 4 decimals.",
+    "Integration test (real pgvector in CI) runs mode=dense and mode=hybrid on 5 seeded cases and returns metrics with latency fields non-null.",
+    "Test asserts the L1 run opens its connection as fa_eval and that a query using a foreign tenant id returns zero results."
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "ADR-008",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E3",
+    "E7-T5"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T7",
+   "title": "Spike: run the retrieval ablation and decide rerank and contextual retrieval",
+   "summary": "Run dense / FTS / hybrid / rerank (with and without contextual headers) ablation and record the decisions.",
+   "description": "Spike. Using E7-T6, run these configs over the full golden set: dense, FTS, hybrid (RRF k=60), hybrid + rerank with RERANK_CANDIDATES in {10, 15, 20, 30}, each with CONTEXTUAL_RETRIEVAL_ENABLED on and off (requires the corpus re-indexed with and without `chunks.context_header`). Record recall@5/10/15, MRR, nDCG@10 and first-stage / rerank p95 latency. Write docs/adr/retrieval-ablation.md with the table and these decisions: RERANK_ENABLED (kept or dropped), RERANK_CANDIDATES (value in range 10-30), CONTEXTUAL_RETRIEVAL_ENABLED (kept or dropped). Quote ADR-008: \"kept or dropped by the eval ablation on recall and latency; `RERANK_CANDIDATES` default 15 (range 10-30), set by the L1 ablation (D14.1)\" and ADR-016: \"The L1 ablation decides whether it stays.\" The ticket also records the latency budget check: first stage p95 < 300 ms, rerank p95 < 700 ms. Out of scope: GATE_MIN_SCORE (set in E3-T16). Applying the chosen values to config defaults is part of this ticket (config change only).",
+   "acceptance_criteria": [
+    "docs/adr/retrieval-ablation.md exists with one row per config containing recall@10, MRR, nDCG@10 and p95 latency as numbers; a grep test fails on empty cells.",
+    "The ADR states RERANK_ENABLED, RERANK_CANDIDATES (between 10 and 30) and CONTEXTUAL_RETRIEVAL_ENABLED each as kept/dropped or a value, with the recall delta in points and latency delta in ms that justify it.",
+    "The default values in `Settings` equal the ADR decisions (unit test reads both).",
+    "Rerun of the winning config reproduces recall@10 within 1 point of the ADR value (command recorded in the ADR)."
+   ],
+   "arch_refs": [
+    "ADR-008",
+    "ADR-016",
+    "ADR-017",
+    "overview.md#6.6"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T6",
+    "E3",
+    "E5"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T8",
+   "title": "Implement L2 Ragas runner with CI lower bounds",
+   "summary": "Score answers with Ragas collections using the Haiku judge and report metrics with confidence-interval lower bounds.",
+   "description": "Implement the L2 runner: for each answerable case run the real chat pipeline (answer model from `--model`) as fa_eval on the eval tenant, then score with Ragas collections API (pinned version): faithfulness, context precision, context recall, noise sensitivity, plus the deterministic citation score from the E4 CitationVerifier output (do not reimplement the verifier; call E4-T11). Judge model is `LLM_MODEL_JUDGE`; the runner refuses to run if judge == answer model. Report each metric as mean plus a bootstrap 95% confidence interval and its lower bound (ARES-style, arXiv 2311.09476). Refuse to emit gate-eligible numbers unless docs/adr/judge-calibration.md records a go decision (read a machine-readable `judge_calibration.json` written by E7-T1 containing kappa and `go`). Out of scope: the gate comparison (T11).",
+   "acceptance_criteria": [
+    "Unit test: bootstrap CI on a fixed score vector with fixed seed returns the hand-verified lower bound to 3 decimals.",
+    "Unit test: runner raises when judge model equals answer model.",
+    "Unit test: runner raises a clear error when judge_calibration.json is missing or has go=false.",
+    "Integration test with a stub LLM and stub judge on 5 cases produces a result JSON with mean, ci_low, ci_high for faithfulness, context_precision, context_recall, noise_sensitivity and citation."
+   ],
+   "arch_refs": [
+    "overview.md#9.6",
+    "overview.md#8.1",
+    "ADR-017",
+    "ADR-005"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T1",
+    "E7-T5",
+    "E4-T11"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T9",
+   "title": "Implement L3 refusal, tier, jurisdiction and cross-tenant runner",
+   "summary": "Execute the refusal and leak-probe golden cases and count leaks.",
+   "description": "Run all cases in categories refusal, cross_tenant, tier, jurisdiction, adversarial through the real chat API path as fa_eval/eval tenant personas. A leak is defined as: any returned citation, SSE event, or answer text containing a chunk id, document id or marker from `forbidden_chunk_ids`, or an answer where expected_refusal is set but no refusal event occurred. Output {refusal_pass_rate, leaks} and the offending case ids. Quote ADR-017: \"Gate: ... leaks = 0\" and OWASP LLM02/LLM08 tests. Add a way to plant a leak for self-tests: env flag `EVAL_PLANT_LEAK=1` is NOT allowed in production code; instead the runner accepts an injected `retriever_override` used only by tests. Out of scope: promptfoo red team (T15).",
+   "acceptance_criteria": [
+    "Unit test with a fake chat client that returns a forbidden chunk id: runner reports leaks == 1 and names the case.",
+    "Unit test with a fake client that answers instead of refusing on a refusal case: refusal_pass_rate < 1.0.",
+    "Integration test (real DB, stub LLM) with the shipped probes: leaks == 0 and the run exits 0 on the unmodified pipeline.",
+    "Test asserts no production module reads an EVAL_PLANT_LEAK-style env flag (grep test)."
+   ],
+   "arch_refs": [
+    "overview.md#8.1",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T3",
+    "E7-T5",
+    "E4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T10",
+   "title": "Add the gate evaluator with thresholds and recall baseline",
+   "summary": "Compare run results to the gate thresholds and the stored recall baseline and fail with a clear reason.",
+   "description": "Implement `python -m scripts.eval_gate result.json --baseline data/eval/baseline.json` that exits non-zero if: citation < 0.95, faithfulness < 0.90 (judged on the CI lower bound when the full run, on the point estimate on the PR subset), leaks > 0, or recall@10 drops by more than 2 points versus baseline. Thresholds are constants in config (not scattered). Add `scripts.eval_baseline_update` to write a new baseline (manual, reviewed in PR). Quote ADR-017: \"Gate: citation >= 0.95, faithfulness >= 0.90, leaks = 0, recall regression <= 2 pts\" and \"gate thresholds need re-tuning when the corpus grows\". Output a one-line failure reason per breached rule. Out of scope: running the metrics (T6, T8, T9) and CI wiring (T11).",
+   "acceptance_criteria": [
+    "Parametrised unit tests: citation 0.949 fails, 0.95 passes; faithfulness 0.899 fails, 0.90 passes; leaks 1 fails; recall drop 2.1 points fails, 2.0 passes.",
+    "Each failing case prints the rule name and the measured and required values (asserted by output match).",
+    "A missing baseline file makes the gate exit non-zero with a message (unit test), never pass silently."
+   ],
+   "arch_refs": [
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T5"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T11",
+   "title": "Wire the path-filtered PR eval job in CI",
+   "summary": "Run the ~60-question subset as the blocking `eval` job on relevant PRs.",
+   "description": "Add a GitHub Actions workflow `eval-pr.yml` extending the E0 CI (Postgres with pgvector and Kafka service containers already exist): path filter on backend/src/{retrieval,agent,guardrails,llm,prompts}, data/eval, and prompt files; steps: migrate, seed the eval tenant, run `jobs eval --subset pr --layers l1,l2,l3` as fa_eval, then `scripts.eval_gate`; upload result JSON as an artifact; fail the check on gate failure. Secrets for Anthropic and Voyage come from GitHub secrets; the job runs only when secrets exist (fork PRs skip with a visible neutral status). Out of scope: the weekly workflow (T13); the L0 jobs (E0/E1).",
+   "acceptance_criteria": [
+    "On a PR touching backend/src/retrieval the workflow runs and the check named `eval` appears; on a docs-only PR it does not run (verified by a workflow path-filter test via `act` or recorded run links in the PR description).",
+    "A forced gate failure (E7-T12 fixtures) turns the `eval` check red; the green path posts the metrics table as an artifact.",
+    "The job's DB user is fa_eval (assert in a CI step that `select current_user` equals fa_eval)."
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0",
+    "E7-T6",
+    "E7-T8",
+    "E7-T9",
+    "E7-T10"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T12",
+   "title": "Prove the gate with four deliberate-regression test PRs",
+   "summary": "Show that the PR gate fails for each of four seeded regressions.",
+   "description": "Create four regression patches kept as reviewed fixtures under tests/eval_gate/regressions/: (1) break the citation verifier call so citation < 0.95; (2) change the system prompt to encourage unsupported claims so faithfulness < 0.90; (3) plant a cross-tenant leak by dropping the tenant predicate in a retriever double used by the eval run (via the retriever_override from E7-T9, not by editing production RLS); (4) lower RERANK_CANDIDATES / disable the FTS leg so recall@10 drops by more than 2 points. Add a workflow `eval-gate-selftest.yml` (manual dispatch) that applies each patch to a throwaway branch, runs the PR eval job, and asserts the gate fails with the expected rule. Open four draft PRs and record their links and the failing rule in docs/eval/gate-proof.md. Quote the epic done-when: \"The PR gate fails a deliberate regression in each of: citation < 0.95, faithfulness < 0.90, a planted cross-tenant leak, recall drop > 2 points (four test PRs).\"",
+   "acceptance_criteria": [
+    "For each of the four patches, the selftest workflow reports the eval job failed with the rule name citation, faithfulness, leaks or recall respectively (four recorded run URLs in docs/eval/gate-proof.md).",
+    "A fifth control run with no patch passes the gate.",
+    "A test fails if docs/eval/gate-proof.md lists fewer than four PR links or any entry lacks the measured value."
+   ],
+   "arch_refs": [
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T11"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T13",
+   "title": "Add the weekly full eval run with CI lower bounds",
+   "summary": "Run the full golden set weekly and before demos, reporting lower bounds.",
+   "description": "Add a scheduled workflow `eval-full.yml` (cron weekly plus workflow_dispatch for before-demo runs) that runs `jobs eval --subset full --layers l1,l2,l3` against the answer model, applies `scripts.eval_gate` using CI lower bounds for faithfulness and citation, publishes a Markdown report (metrics, CI low/high, per-category breakdown, comparison with baseline) to the workflow summary and to Langfuse, and emits EvalRunCompleted. Quote ADR-017: \"the full set runs weekly and before demos\". Cloud Scheduler/Cloud Run job scheduling is E10; this ticket is the CI/GitHub-hosted run only.",
+   "acceptance_criteria": [
+    "After a workflow_dispatch run the summary contains ci_low for faithfulness and citation as numbers; a test on the report generator fails if any is missing.",
+    "The run uses the full set (>= 280 cases) asserted by the result JSON `n_cases`.",
+    "A forced faithfulness lower bound below 0.90 in a stub run makes the job fail (unit test on the report/gate step)."
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T4",
+    "E7-T11"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T14",
+   "title": "Run the full eval against the fallback model and gate LLM_FALLBACK_ENABLED",
+   "summary": "Evaluate claude-sonnet-4-6 once and make enabling the fallback depend on that result.",
+   "description": "Run `jobs eval --subset full --model fallback` using LLM_MODEL_FALLBACK (claude-sonnet-4-6) and store the result as data/eval/fallback_result.json with the gate verdict. Add a startup check in config validation: `LLM_FALLBACK_ENABLED=true` is rejected unless data/eval/fallback_result.json (or the configured eval-record location) shows pass for the same fallback model id and a prompt version equal to current PROMPT_VERSION. Quote config table: \"`LLM_FALLBACK_ENABLED` ... `false` until the gate passes against it\" and ADR-017: \"once against the fallback model\".",
+   "acceptance_criteria": [
+    "Unit test: Settings with LLM_FALLBACK_ENABLED=true and no passing record raises at boot.",
+    "Unit test: a passing record for a different model id or different PROMPT_VERSION still raises.",
+    "A fallback full-run result exists in the repo with model id claude-sonnet-4-6 and the gate verdict recorded as pass or fail with numbers."
+   ],
+   "arch_refs": [
+    "overview.md#6.6",
+    "ADR-017",
+    "ADR-005"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T13",
+    "E4"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T15",
+   "title": "Add the promptfoo red-team job",
+   "summary": "Run a promptfoo red team against the API as fa_eval in the redteam job.",
+   "description": "Add a promptfoo config (pinned version) under evals/redteam/ targeting the chat API in an ephemeral environment, with plugins for prompt injection, system prompt leakage, PII, cross-tenant/BOLA-style probes and excessive agency, mapped to OWASP LLM01, LLM02, LLM06, LLM07 (arch 8.1 tests column). Add the `redteam` job entrypoint (DB role `fa_eval`, eval tenant) and a CI workflow step on the weekly workflow; a failing probe category fails the job. Out of scope: golden-set L3 (T9).",
+   "acceptance_criteria": [
+    "`promptfoo redteam run` in CI against the stub-LLM stack produces a report artifact and exits non-zero when a seeded vulnerable prompt (test fixture) leaks the system prompt.",
+    "Config test asserts plugins cover LLM01, LLM02, LLM06, LLM07 (named mapping in the file).",
+    "The redteam job fails to start if the connected DB role is not fa_eval (unit test)."
+   ],
+   "arch_refs": [
+    "overview.md#8.1",
+    "overview.md#4.8",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T5",
+    "E4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T16",
+   "title": "Emit eval.sample.v1 outbox rows and thumbs feedback events",
+   "summary": "Have chat-api sample EVAL_SAMPLE_RATE of completed turns into the outbox and send feedback to eval.events.v1.",
+   "description": "In chat-api's end-of-turn transaction (arch flow 1: \"persist assistant message, turn_events, outbox rows (chat.audit, chat.usage, sampled eval.sample)\") add the sampled `TurnSampled` outbox row {message_id, redacted question, redacted answer, cited excerpts (redacted)} for a fraction `EVAL_SAMPLE_RATE` (default 0.05, allowed 0.05-0.10, validated). Sampling is deterministic from message_id hash so tests are repeatable. Ensure `POST /v1/messages/{id}/feedback` (`{score: -1|1, comment?}`) writes `feedback` and an outbox `FeedbackRecorded` for `eval.events.v1`. Only redacted text enters the payload. Do this only if E4/E6 have not already implemented the pieces: check the repo and implement the missing parts. Out of scope: the relay (E5).",
+   "acceptance_criteria": [
+    "Unit test: with EVAL_SAMPLE_RATE=0.10 over 1000 synthetic message ids between 8% and 12% are sampled; with 0 none; the setting rejects 0.5.",
+    "Integration test: a completed turn selected by the sampler leaves one outbox row of type TurnSampled whose payload contains no raw PII fixture value.",
+    "Integration test: POST feedback with score 1 creates a feedback row and a FeedbackRecorded outbox row; score 2 returns 422."
+   ],
+   "arch_refs": [
+    "overview.md#4.14",
+    "overview.md#6.4",
+    "overview.md#9.6",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4",
+    "E6"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T17",
+   "title": "Implement the eval-judge worker role",
+   "summary": "Consume eval.sample.v1, judge with Haiku 5.5 and write Langfuse scores and eval_scores.",
+   "description": "Add worker role `eval-judge` (selected via WORKER_ROLES) on the E5 Kafka consumer framework, group `cg.eval-judge`. For each `TurnSampled`: envelope check (tenant_id equals key and not PUBLIC, else dlq.v1), dedupe on message_id + metric via `processed_events`, score faithfulness and citation with `LLM_MODEL_JUDGE` (claude-haiku-5-5, must differ from the answer model) using the calibrated prompt from E7-T1, in one transaction with `app.tenant_id` set insert rows into `eval_scores` {message_id, judge_model, metric, score, rationale (redacted), created_at} as `fa_worker`, send scores to Langfuse (no Langfuse-side evaluators), and write a `JudgeScored` outbox row for `eval.events.v1`. Quote 4.7: \"scores the redacted question / answer / cited excerpts with `claude-haiku-5-5` ..., writes scores to Langfuse and `eval_scores`, emits `JudgeScored` on `eval.events.v1`.\" Out of scope: the sampler (T16), the table and grants (E1).",
+   "acceptance_criteria": [
+    "Unit test: a message whose envelope tenant_id differs from the key goes to dlq.v1 with a reason and writes no score.",
+    "Unit test: delivering the same message twice yields one eval_scores row per metric.",
+    "Unit test: worker raises at boot if the judge model equals the answer model.",
+    "Integration test (CI Postgres + Kafka, stub judge): a TurnSampled message produces rows in eval_scores for the right tenant and an outbox JudgeScored row."
+   ],
+   "arch_refs": [
+    "overview.md#4.7",
+    "overview.md#9.6",
+    "overview.md#6.4",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E5",
+    "E1",
+    "E7-T1",
+    "E7-T16"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E7-T18",
+   "title": "Verify eval-judge end to end with RLS on eval_scores",
+   "summary": "Show one sampled turn scored into Langfuse and eval_scores with tenant isolation and no fa_app access.",
+   "description": "Add an end-to-end test and a short runbook docs/eval/online-judge.md: chat turn on the eval tenant sampled at rate 1.0 in test -> outbox -> relay -> eval.sample.v1 -> eval-judge -> row in eval_scores and a Langfuse score (Langfuse local container or recorded API call in CI). Also assert the DB-level properties: tenant B's session cannot read tenant A's eval_scores rows; `fa_app` has no privilege on the table. Set the shipped default `EVAL_SAMPLE_RATE` (0.05-0.10) in the demo profile and note the value in the runbook. Quote the done-when: \"The `eval-judge` scores at least one sampled turn end to end into Langfuse and `eval_scores` (tenant RLS applies; `fa_app` has no access to the table).\"",
+   "acceptance_criteria": [
+    "E2E test passes: after one sampled turn, `select count(*) from eval_scores where message_id = :id` returns >= 2 (faithfulness and citation) and the Langfuse score exists for the trace.",
+    "Test: as fa_app, `select * from eval_scores` fails with permission denied.",
+    "Test: with app.tenant_id set to tenant B, selecting tenant A's eval_scores rows returns 0 rows.",
+    "A feedback POST in the same test run results in a FeedbackRecorded message on eval.events.v1."
+   ],
+   "arch_refs": [
+    "overview.md#4.7",
+    "overview.md#9.6",
+    "overview.md#5",
+    "ADR-017"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E7-T17"
+   ],
+   "size": "S",
+   "status": "todo"
+  }
+ ],
+ "questions": [
+  "Arch does not say who implements the chat-api eval.sample.v1 outbox row and the feedback endpoint (E4, E6 or E7); E7-T16 implements only what is missing. Please confirm the owner.",
+  "Arch gives no numeric kappa threshold for 'acceptable' judge agreement (ADR-017 trigger says only 'kappa below acceptable'); E7-T1 records the threshold it chose in the ADR, but a decision is needed.",
+  "The PR gate applies faithfulness >= 0.90 and citation >= 0.95; arch does not say whether the PR subset (~60 cases) uses the point estimate or the CI lower bound. E7-T10 uses point estimate on PR and lower bound on the full run.",
+  "Arch does not say where the baseline recall file and the fallback-model eval record are stored (repo vs Langfuse vs GCS); tickets store them in the repo under data/eval/.",
+  "Arch does not say which source supplies the ~30 human labels (who labels); E7-T1 assumes the operator labels them with a CLI.",
+  "The eval job schedule in Cloud Scheduler is not specified for E7; weekly run is implemented as a GitHub Actions cron. Confirm that Cloud Scheduler wiring belongs to E10."
+ ]
+}

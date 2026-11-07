@@ -1,0 +1,291 @@
+{
+  "epic": "E8",
+  "tickets": [
+    {
+      "key": "E8-T1",
+      "title": "Replace Next.js 14 with a Vite React 19 TS scaffold",
+      "summary": "The frontend builds as a static Vite + React 19 + TypeScript SPA and Next.js is gone.",
+      "description": "Implements overview 4.4 (\"Vite + React 19 + TypeScript single-page app, static files in a GCS bucket ... Replaces Next.js 14 (G-13, G-57)\") and ADR-019. In frontend/: add vite, @vitejs/plugin-react, react/react-dom 19, typescript; index.html + src/main.tsx entry; vite.config.ts (dev server proxies /v1 to the compose gateway so the SPA stays same-origin); keep tailwind, zustand, react-markdown, eventsource-parser only if later tickets use them. Move existing components/hooks from src/app + src/components into a Vite layout without behaviour changes (still the MVP header-user flow until E8-T3). Update the E0-T10 artefacts for Vite: `npm run test` (vitest, jsdom), `npm run typecheck` (tsc --noEmit), and the frontend dev Dockerfile (vite dev server, port documented). Remove next, eslint-config-next, next.config.mjs, next-env.d.ts; replace with plain eslint config. Pin Vite and TypeScript versions in package.json (stack.md: pin at implementation). Out of scope: bucket/ALB deploy (E10), auth, new features. Use SPA fallback so /t/<slug> deep links work in the dev server and `vite preview`.",
+      "acceptance_criteria": [
+        "Given a clean checkout, when `npm ci && npm run build` runs in frontend/, then it exits 0 and dist/index.html plus hashed assets exist.",
+        "Given package.json, when searched, then no `next` or `eslint-config-next` dependency and no next.config.mjs remain (checked by a vitest/grep test or CI step).",
+        "Given the dev server or `vite preview`, when GET /t/acme is requested, then index.html is returned (SPA fallback), asserted by a vitest or curl check.",
+        "`npm run typecheck` and `npm run test` exit 0, with at least one smoke test rendering <App/>.",
+        "The frontend dev Dockerfile builds (`docker build`) and serves the Vite dev server."
+      ],
+      "arch_refs": [
+        "overview.md#4.4",
+        "decisions.md#adr-019",
+        "stack.md"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T2",
+      "title": "Add tenant discovery at /t/<slug>",
+      "summary": "The SPA resolves the firm from the URL slug through the public tenant endpoint and shows a not-found state.",
+      "description": "Implements overview 8.2 step 1 and 6.1 `GET /v1/tenants/{slug}` -> `{display_name, idp_tenant_id}` only; 404 `TENANT_NOT_FOUND`. Add react-router route `/t/:slug`; typed `fetchTenant(slug)` in src/lib/api.ts (unauthenticated, no Authorization header); a tenant context holding {slug, display_name, idp_tenant_id}; the firm display_name shown in the header. Unknown slug renders a firm-not-found page keyed by the error code (no crash). Routes outside /t/:slug show a short 'use your firm link' page. Out of scope: sign-in (E8-T3), the endpoint itself (E1-T16).",
+      "acceptance_criteria": [
+        "Given a mocked 200 `{display_name:'Acme', idp_tenant_id:'t-1'}`, when /t/acme renders, then 'Acme' appears and the tenant context holds idp_tenant_id 't-1' (vitest + testing-library).",
+        "Given a mocked 404 `TENANT_NOT_FOUND`, when /t/nope renders, then the not-found page shows and no sign-in form renders.",
+        "Given the request is captured, when fetchTenant runs, then it carries no Authorization header (unit test).",
+        "Given a network failure, when /t/acme renders, then a retryable error state shows, not an unhandled exception."
+      ],
+      "arch_refs": [
+        "overview.md#8.2",
+        "overview.md#6.1",
+        "decisions.md#adr-010"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T1",
+        "E1-T16"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T3",
+      "title": "Add Identity Platform tenant sign-in with in-memory token",
+      "summary": "An advisor signs in to their firm's IdP tenant and API calls carry the ID token, never persisted to localStorage.",
+      "description": "Implements overview 8.2 steps 2-3 and ADR-010. Use the Firebase/Identity Platform web SDK: set `auth.tenantId = idp_tenant_id` from E8-T2, email/password sign-in, token from `getIdToken()` kept only in memory (SDK auth persistence set to `inMemoryPersistence`; no localStorage/sessionStorage/IndexedDB or cookie for the token). Build an `apiFetch` wrapper that adds `Authorization: Bearer <token>` and refreshes via getIdToken. After sign-in call `GET /v1/me` and store {advisor_id, display_name, role, tier}. Provide sign-out. Remove the MVP UserSwitcher/X-User header flow. Config: Firebase web config via Vite env (VITE_*), no secrets. Out of scope: SSO, tenant onboarding (E1/E10), 401 UI handling (E8-T4).",
+      "acceptance_criteria": [
+        "Given a signed-in session in a vitest test with a mocked SDK, when apiFetch is called, then the request has `Authorization: Bearer <token>`.",
+        "Given sign-in completes, when localStorage, sessionStorage and document.cookie are inspected, then none contains the token string (unit test; repeated in Playwright E8-T11).",
+        "Given the SDK auth instance, when initialised, then tenantId equals the discovered idp_tenant_id and persistence is in-memory (unit test).",
+        "Given sign-out, when called, then the in-memory token and /v1/me state are cleared and the sign-in form shows.",
+        "grep of src/ finds no `X-User` header or UserSwitcher."
+      ],
+      "arch_refs": [
+        "overview.md#8.2",
+        "decisions.md#adr-010",
+        "overview.md#6.1"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T2",
+        "E1"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T4",
+      "title": "Map API error codes to UI states with 401 and 429 handling",
+      "summary": "Every API error renders a fixed, code-keyed message and 401 and 429 never crash the app.",
+      "description": "Implements overview 4.4 'error states keyed by error code' and 6.1 error shape `{\"error\":{code,message,request_id,retryable}}`. Add src/lib/errors.ts: parse the error body into ApiError; a table keyed by every 6.1 code (UNAUTHENTICATED, FORBIDDEN, INPUT_TOO_LONG, INPUT_BLOCKED, GUARD_UNAVAILABLE, RATE_LIMITED, TENANT_BUDGET_EXCEEDED, NO_FIRM_DOCUMENTATION, LLM_UNAVAILABLE, RETRIEVAL_UNAVAILABLE, TURN_INTERRUPTED, IDEMPOTENCY_KEY_REUSED, INTERNAL) to client-owned copy and a retry hint; unknown codes fall back to INTERNAL copy. Never display server `message` text verbatim as HTML; show request_id for support. 401: refresh token once, retry once, else return to sign-in. 429: read `Retry-After`, show a countdown and disable send until it elapses. Add an error boundary. Out of scope: SSE-specific handling (E8-T5/T6).",
+      "acceptance_criteria": [
+        "Given each code in the 6.1 list, when mapped, then a non-empty message exists (table-driven vitest over all codes) and an unknown code maps to the INTERNAL copy.",
+        "Given a 429 with `Retry-After: 5`, when the chat send is attempted, then the send button is disabled and a countdown shows, re-enabling after 5 s (fake timers).",
+        "Given a 401 whose retry after token refresh also returns 401, when it occurs, then the sign-in view shows and no uncaught exception is logged.",
+        "Given a render error in a child, when thrown, then the error boundary shows a fallback (unit test)."
+      ],
+      "arch_refs": [
+        "overview.md#4.4",
+        "overview.md#6.1"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T3"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T5",
+      "title": "Build fetch-based SSE client with resume and idempotency",
+      "summary": "A typed SSE client posts a chat turn with an Idempotency-Key and resumes from Last-Event-ID after a drop.",
+      "description": "Implements overview 6.2 and 6.1. src/lib/sse.ts, fetch + ReadableStream (not EventSource, because of the Authorization header and POST), parsing with eventsource-parser. Typed discriminated union for events turn, meta, tool, delta, citation, refusal, error, done with the 6.2 data shapes. `sendTurn({conversation_id?, message})`: generate `Idempotency-Key` (crypto.randomUUID) per user submit, POST /v1/chat, record `turn_id` from the `turn` event and the last `id:` seq. On a transport drop before `done`/`error`, reconnect to `GET /v1/chat/{turn_id}/events` with `Last-Event-ID: <last seq>`, bounded retries with backoff (config constants), ignoring events with seq <= last seen (no duplicate deltas). If the drop happens before the `turn` event, retry POST with the same key. `error` event with TURN_INTERRUPTED retryable: surface to caller, which resubmits with a NEW key. 409 IDEMPOTENCY_KEY_REUSED surfaces as an ApiError. Support AbortController. Ignore heartbeat comment lines. Out of scope: server side (E4).",
+      "acceptance_criteria": [
+        "Given a stream cut after seq 3, when the client reconnects, then the GET carries `Last-Event-ID: 3` and the output has no duplicated delta text (vitest with a fake fetch).",
+        "Given a drop before the `turn` event, when retried, then the POST reuses the same Idempotency-Key.",
+        "Given an `error {TURN_INTERRUPTED, retryable:true}`, when received, then the client emits it to the caller and does not auto-resume; a resubmit uses a different key (unit test).",
+        "Given a heartbeat comment line and a replayed event with seq <= last seen, when parsed, then neither reaches the caller.",
+        "Given an unknown event name, when received, then it is ignored without throwing."
+      ],
+      "arch_refs": [
+        "overview.md#6.2",
+        "overview.md#6.1",
+        "overview.md#4.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T4",
+        "E4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T6",
+      "title": "Render the streamed turn with meta notice and refusal",
+      "summary": "The chat view shows deltas as they arrive, tool status, a degraded-retrieval notice, refusals and errors.",
+      "description": "Implements overview 6.2 behaviour in the UI. Rewrite useChat (zustand store) on top of E8-T5: `turn` sets ids; `delta` appends to the in-progress assistant message; `tool` shows a status chip (tool name and status only); `meta` with retrieval_degraded=true shows a visible notice ('answer built with reduced ranking quality', reason optional), stored on the message; `refusal` NO_FIRM_DOCUMENTATION shows the refusal message and, if escalate_offer, an escalation hint (no endpoint call beyond arch); `error` shows the code-keyed state from E8-T4 with Retry when retryable; `done` finalises with message_id and finish_reason (max_tokens shows a 'truncated' note). Disable input while streaming; Stop button aborts. Remove client-side citation parsing of `[n]` (server emits citations; E8-T7). Out of scope: markdown (E8-T7), history (E8-T8).",
+      "acceptance_criteria": [
+        "Given a scripted event sequence turn, delta x3, done, when processed, then the message text equals the concatenated deltas and finish state is set (vitest store test).",
+        "Given `meta {retrieval_degraded:true}`, when received, then the degraded notice is in the DOM; given false, it is absent.",
+        "Given `refusal {escalate_offer:true}`, when received, then the refusal view and escalation hint render and no assistant text is shown.",
+        "Given `error {code:'LLM_UNAVAILABLE',retryable:true}`, when received, then the mapped message and a Retry button show; given retryable false, no Retry button.",
+        "Given the Stop button, when clicked mid-stream, then the fetch is aborted and input is re-enabled."
+      ],
+      "arch_refs": [
+        "overview.md#6.2",
+        "overview.md#4.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T7",
+      "title": "Render sanitized markdown, citations with excerpts and stale badges",
+      "summary": "Answers render as sanitized markdown with server-emitted citations, excerpts and stale badges.",
+      "description": "Implements overview 4.4 'citations with excerpts, stale badges ... Renders sanitized markdown only' and the `citation` event `{index, chunk_id, source_title, regulatory_ref, last_reviewed_at, stale, excerpt}`. Markdown via react-markdown with no raw HTML (no rehype-raw), plus an explicit sanitiser (rehype-sanitize with a minimal allowlist; links limited to http/https/mailto and rel=noopener noreferrer; images not rendered). Inline `[n]` markers link to the citation with that index from `citation` events only; a marker with no matching event renders as plain text. Citation panel lists source_title, regulatory_ref, last_reviewed_at, excerpt (as text, never HTML) and a StaleBadge when stale=true. Reuse/adapt existing MarkdownContent, CitationPanel, StaleBadge, SourcesPanel. Also used for history messages (E8-T8). Out of scope: client-side citation verification.",
+      "acceptance_criteria": [
+        "Given answer text containing `<script>alert(1)</script>`, `<img src=x onerror=...>` and `[x](javascript:alert(1))`, when rendered, then the DOM has no script/img element, no onerror attribute and no javascript: href (vitest + testing-library).",
+        "Given a `citation` event with stale=true, when rendered, then the stale badge shows; with stale=false it does not.",
+        "Given a citation excerpt `<b>x</b>`, when rendered, then it appears as literal text with no <b> element.",
+        "Given `[2]` in the text with no citation index 2, when rendered, then it is plain text, not a link.",
+        "Given a citation with index 1, when `[1]` is clicked, then the panel entry for index 1 is highlighted."
+      ],
+      "arch_refs": [
+        "overview.md#4.4",
+        "overview.md#6.2"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T6"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T8",
+      "title": "Add conversation history list, load and delete",
+      "summary": "An advisor can list, reopen and delete their own conversations.",
+      "description": "Implements overview 6.1: `GET /v1/conversations?cursor`, `GET /v1/conversations/{id}/messages?cursor` (messages with citations, redacted), `DELETE /v1/conversations/{id}` (204). Sidebar list with cursor 'load more'; selecting loads messages (rendered with E8-T7 including citations and stale badges, and the stored retrieval_degraded notice if the response includes it; if the response shape lacks it, see questions); new chat button; delete with confirm, removes from list and clears view if active. Subsequent sends in an opened conversation pass its `conversation_id`. Empty and error states use E8-T4. Out of scope: search, rename, escalations list.",
+      "acceptance_criteria": [
+        "Given a mocked first page with next cursor, when 'load more' is clicked, then the request carries `?cursor=<value>` and rows append (vitest).",
+        "Given a conversation is selected, when messages load, then citations render under the assistant message.",
+        "Given delete is confirmed and the API returns 204, when processed, then the row disappears; given it returns 403, then the row stays and the code-keyed error shows.",
+        "Given an opened conversation, when a message is sent, then the POST body contains that conversation_id."
+      ],
+      "arch_refs": [
+        "overview.md#6.1",
+        "overview.md#4.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T7"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T9",
+      "title": "Add thumbs feedback on assistant messages",
+      "summary": "An advisor can rate an answer up or down with an optional comment.",
+      "description": "Implements overview 6.1 `POST /v1/messages/{id}/feedback` body `{score: -1 | 1, comment?: string}` -> 204. Thumbs up/down on each completed assistant message (message_id from `done` or history); thumbs down opens an optional comment field. State: pending, saved, failed (retry); selection persists in view after reload of history only if the messages API returns it (otherwise questions). Disabled while streaming and for refusal/error messages. Out of scope: eval pipeline (backend).",
+      "acceptance_criteria": [
+        "Given thumbs-up on message m1, when clicked, then POST /v1/messages/m1/feedback is sent with body `{score:1}` (vitest fake fetch).",
+        "Given thumbs-down with comment 'wrong', when submitted, then the body is `{score:-1, comment:'wrong'}`.",
+        "Given a 500/INTERNAL response, when received, then the button shows failed with Retry and no exception escapes.",
+        "Given a message still streaming, when rendered, then feedback buttons are disabled."
+      ],
+      "arch_refs": [
+        "overview.md#6.1",
+        "overview.md#4.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T6"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T10",
+      "title": "Set up Playwright and an auditable test harness for the SPA",
+      "summary": "Playwright runs against the built SPA with a controllable API and IdP stub, wired into CI.",
+      "description": "Implements overview 4.4 'Tests: vitest + Playwright'. Add @playwright/test (pinned), playwright.config.ts that serves `vite preview` of the production build, a fixture API stub (route-level mocking via page.route, plus a small SSE stub server able to emit scripted events with ids, drop the connection at a given seq and honour Last-Event-ID) and an Identity Platform auth stub or the Firebase Auth emulator (decision in questions; default the emulator with two tenants `acme` and `globex`). Add npm script `test:e2e` and a CI job step. One smoke spec: /t/acme loads and shows the firm name. Out of scope: the scenario specs (E8-T11, E8-T12) and running against the real deployed stack.",
+      "acceptance_criteria": [
+        "Given `npm run test:e2e`, when run in CI, then the smoke spec passes and the HTML report is uploaded as an artifact.",
+        "Given the SSE stub scripted to drop after seq 2, when a client reconnects with `Last-Event-ID: 2`, then the stub replays from seq 3 (stub self-test).",
+        "Given tenants acme and globex are seeded, when /t/acme and /t/globex load, then each shows its own display_name.",
+        "Given the workflow file, when parsed, then the e2e job runs after the build step (CI config check)."
+      ],
+      "arch_refs": [
+        "overview.md#4.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T9"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T11",
+      "title": "Add Playwright specs for sign-in, streamed cited answer and feedback",
+      "summary": "E2E proves two-tenant sign-in, a streamed cited answer, a stale badge and thumbs feedback.",
+      "description": "Part of E8 Done-when. Specs: (1) sign in as advisor of acme and as advisor of globex; each sees its own firm name and `/v1/me` display_name; a tenant-mismatched token attempt shows the UNAUTHENTICATED state. (2) ask a question: deltas stream into the answer incrementally (assert partial text before `done`), `meta` degraded notice appears when scripted, citations with excerpts render, one stale=true citation shows the stale badge. (3) thumbs-up and thumbs-down send the correct feedback request. (4) conversation history shows the turn after reload. Out of scope: failure scenarios (E8-T12).",
+      "acceptance_criteria": [
+        "Given two seeded tenants, when each signs in, then each page shows its own firm name and no cross-tenant data (Playwright assertion).",
+        "Given a scripted stream of 3 deltas then done, when asked, then the answer text is observed with partial content before the final delta.",
+        "Given a citation scripted with stale=true, when rendered, then `getByText` for the stale badge is visible; a stale=false citation has none.",
+        "Given thumbs-up click, when sent, then page.waitForRequest sees POST /v1/messages/<id>/feedback with `{score:1}`."
+      ],
+      "arch_refs": [
+        "overview.md#4.4",
+        "overview.md#6.2",
+        "overview.md#8.2"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E8-T12",
+      "title": "Add Playwright specs for resume, 429, 401 and XSS safety",
+      "summary": "E2E proves resume after disconnect, graceful 429 and 401, no unsanitized HTML and no token in localStorage.",
+      "description": "Part of E8 Done-when. Specs: (1) mid-stream disconnect at seq N: the stub drops the connection; the UI reconnects with `Last-Event-ID: N`, final text equals the full answer with no duplicated text. (2) 429 with Retry-After on POST /v1/chat: the rate-limit message and countdown show, the page remains usable, send re-enables. (3) 401 on an API call: token refresh retried once, then the sign-in view shows, no page error (`page.on('pageerror')` count 0). (4) Injected payload: the answer text and a citation excerpt contain `<img src=x onerror=window.__xss=1>` and `<script>window.__xss=1</script>`; after render `window.__xss` is undefined and no such elements exist. (5) After sign-in and a chat, localStorage, sessionStorage and IndexedDB dumps do not contain the ID token string. Also covers TURN_INTERRUPTED: Retry resubmits with a new Idempotency-Key.",
+      "acceptance_criteria": [
+        "Given a drop after seq 2 of 5 events, when the test completes, then the request log shows a GET with `Last-Event-ID: 2` and the answer contains each delta exactly once.",
+        "Given a 429 `Retry-After: 2`, when sent, then the countdown is visible, `pageerror` count is 0 and send is enabled after about 2 s.",
+        "Given 401 twice, when it occurs, then the sign-in view is visible and `pageerror` count is 0.",
+        "Given the XSS payload, when rendered, then `window.__xss` is undefined and `page.locator('img[onerror], script:not([src])')` inside the message area has count 0.",
+        "Given a completed signed-in chat, when browser storage is dumped, then the ID token string appears in none of localStorage, sessionStorage or IndexedDB."
+      ],
+      "arch_refs": [
+        "overview.md#4.4",
+        "overview.md#6.2",
+        "overview.md#8.2"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E8-T11"
+      ],
+      "size": "M",
+      "status": "todo"
+    }
+  ],
+  "questions": [
+    "Playwright against what: stubbed API plus Firebase Auth emulator (assumed in E8-T10) or the real compose stack with an Identity Platform test tenant? The arch names tests but not the harness.",
+    "Firebase web SDK config (apiKey, authDomain) delivery: assumed VITE_* build-time env; arch does not say how the SPA gets it, nor how E10 injects it into the bucket build.",
+    "Does GET /v1/conversations/{id}/messages return retrieval_degraded and the user's prior feedback score? 6.1 only says 'messages with citations (redacted)'; E8-T8/T9 assume they may be absent.",
+    "Arch does not define an escalation action for refusal escalate_offer=true (only GET /v1/escalations exists); E8-T6 shows a hint only.",
+    "Client retry limits and backoff for SSE resume are not specified (SSE_* config keys are server-side); E8-T5 uses constants chosen at implementation.",
+    "Kong/ALB must pass `Last-Event-ID` and not buffer SSE for the same-origin SPA; assumed handled in E4/E10."
+  ]
+}

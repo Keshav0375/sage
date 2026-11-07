@@ -1,0 +1,412 @@
+{
+ "epic": "E9",
+ "tickets": [
+  {
+   "key": "E9-T1",
+   "title": "Structured JSON logging with redaction processor",
+   "summary": "Every log line is JSON with the 9.3 field set and passes through a redactor that drops bodies, queries, prompts and exception text.",
+   "description": "Implements overview.md 9.3: \"Structured JSON to stdout, redacted before writing: ts, severity, trace, request_id, tenant_id, advisor_hash, event, error_code. No request bodies, queries, prompts, tool payloads or exception text for clients.\"\nExtend backend/src/observability/logging.py (structlog already present; it currently binds user_id and renders exception info). Build:\n- Processors producing exactly the keys ts, severity, trace (Cloud Trace id from the current OTel span, empty if none), request_id, tenant_id, advisor_hash (sha256 of advisor_id, never the raw id), event, error_code, plus event-specific scalar fields.\n- A redaction processor with a denylist of keys (body, query, prompt, message, messages, content, tool_input, tool_output, sql, params, exc_info, exception, traceback, authorization, token) that replaces the value with \"[redacted]\", and runs the E4 PII scrubber (backend/src/pii) over remaining string values.\n- Remove format_exc_info: log error_code and exception class name only.\n- bind_request_context takes request_id, tenant_id, advisor_id (hash applied inside).\nOut of scope: Kong file-log (E2-T15), Langfuse masking (E0-T8), spans (E9-T2), log-based metric definitions (E9-T11).",
+   "acceptance_criteria": [
+    "Given logger.info('x', body='secret text', query='SELECT 1', error_code='INTERNAL'), When captured by a test sink, Then the JSON has body and query equal to '[redacted]', contains the keys ts, severity, trace, request_id, tenant_id, advisor_hash, event, error_code, and the test fails if any other key carries the secret text (pytest backend/tests/observability/test_logging.py).",
+    "Given logger.exception inside an except ValueError('card 4111 1111 1111 1111'), When captured, Then the line has no 'traceback' or 'exc_info' key and the string '4111' does not appear anywhere in the line.",
+    "Given bound advisor_id='adv-123', When a line is logged, Then advisor_hash is a 64-hex sha256 and 'adv-123' does not appear in the line.",
+    "Given an active OTel span, When a line is logged, Then trace equals the span's trace id in Cloud Trace format projects/<p>/traces/<id>; with no span it is an empty string."
+   ],
+   "arch_refs": [
+    "overview.md#9.3",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0-T3"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T2",
+   "title": "OpenTelemetry bootstrap for chat-api and workers",
+   "summary": "One shared init function configures OTel tracing with FastAPI, asyncpg and HTTP client instrumentation, SQL parameter capture off, exporting to the OTLP endpoint.",
+   "description": "Implements overview.md 9.1: \"OpenTelemetry end to end: Kong opentelemetry (traceparent) to chat-api (FastAPI, asyncpg / SQLAlchemy, Voyage and Anthropic HTTP calls) to workers ... to Cloud Trace. SQL parameter capture off; no request bodies in spans (D13o).\" Stack: OpenTelemetry SDK + exporters, versions pinned at implementation (stack.md).\nBuild backend/src/observability/tracing.py (exists; rework) with init_tracing(service_name) used by the chat-api app factory and by the worker/job entrypoints:\n- TracerProvider with resource service.name, deployment.environment = ENV_PROFILE; OTLP exporter to OTEL_EXPORTER_OTLP_ENDPOINT (config key, required); BatchSpanProcessor.\n- W3C traceparent propagation; FastAPI instrumentation continues the traceparent Kong sends.\n- asyncpg / SQLAlchemy instrumentation with parameter capture controlled only by OTEL_DB_CAPTURE_PARAMS (default false; the db.statement attribute is replaced by the operation and table, no literals).\n- httpx/aiohttp instrumentation for Voyage and Anthropic calls with request/response body and header capture disabled.\n- A SpanProcessor that deletes any attribute whose key is in the E9-T1 denylist or that is longer than 256 characters.\n- init is a no-op when the endpoint is unset in dev profile.\nOut of scope: span names in the turn pipeline (E9-T3), worker spans (E9-T4), the Kong plugin (E2-T15).\nExport path (resolution R77): direct OTLP to the Google Cloud Telemetry API endpoint (telemetry.googleapis.com) authenticated with Application Default Credentials; no sidecar. FIRST step of this ticket is a verification: send a test span from a Cloud Run service (or a scratch project with ADC) and confirm it appears in Cloud Trace. Write the outcome to docs/adr/otel-export.md. If direct export fails, the fallback is an OTel Collector sidecar on Cloud Run; record that decision, the evidence and the changed deployment in the same ADR before building it. OTEL_EXPORTER_OTLP_ENDPOINT is set accordingly.",
+   "acceptance_criteria": [
+    "Given OTEL_DB_CAPTURE_PARAMS=false, When a query 'SELECT * FROM advisors WHERE email = $1' runs with a parameter 'a@b.com' under an in-memory exporter, Then no exported span attribute value contains 'a@b.com' (pytest test_tracing_sql.py).",
+    "Given a request with a traceparent header, When it hits GET /healthz, Then the exported server span has the same trace_id and its parent_span_id equals the header's span id.",
+    "Given an httpx call to a stubbed api.anthropic.com with a JSON body containing 'SECRETPROMPT', When exported, Then no span attribute contains 'SECRETPROMPT'.",
+    "Given an attribute named 'body' or a 300-char value is set on a span, When the span ends, Then the exported span lacks it.",
+    "Given the verification run, When a span is exported with ADC to the Telemetry API endpoint, Then it is returned by the Cloud Trace API (gcloud/REST get trace) within 60 s, and docs/adr/otel-export.md exists with the result and the fallback decision (CI file-presence check fails if the ADR is missing)."
+   ],
+   "arch_refs": [
+    "overview.md#9.1",
+    "ADR-018",
+    "stack.md (Telemetry)"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0-T3",
+    "E9-T1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T3",
+   "title": "Instrument the chat turn with the named spans",
+   "summary": "The chat turn emits chat.turn and its child spans with the 9.1 names and only non-sensitive attributes.",
+   "description": "Implements the span-name list of overview.md 9.1: chat.turn, auth.verify, principal.load, guard.input, guard.model_armor, embed.query, retrieval.hybrid_sql, retrieval.rerank, retrieval.gate, llm.stream, guard.output, persist.turn.\nAdd backend/src/observability/spans.py: constants for the names above and a helper span(name, **attrs) that rejects (raises in tests, drops in prod) attributes outside an allowlist (tenant_id, turn_id, model, token counts, chunk_count, degraded, gate_result, cache_hit, error_code). Wrap the existing call sites in auth, principal, guardrails, retrieval, llm, agent and persistence code in the matching span. chat.turn is the parent; llm.stream carries model, input/output/cache-read token counts; retrieval.gate carries gate_result. Spans must not carry query text, prompts, chunk text or SQL parameters.\nOut of scope: changing the behaviour of those stages; Langfuse generations (E0-T8); worker spans (E9-T4).",
+   "acceptance_criteria": [
+    "Given one stubbed POST /v1/chat that is answered, When spans are collected with an in-memory exporter, Then all twelve span names exist, share one trace_id, and every one except chat.turn has a parent in the trace (pytest test_turn_spans.py).",
+    "Given a refusal turn (gate refuses), When collected, Then retrieval.gate has gate_result='refused' and no llm.stream span exists.",
+    "Given span('x', query='abc'), When run under pytest, Then it raises ValueError; with ENV_PROFILE=prod it drops the attribute and the exported span lacks it.",
+    "Given the turn, When exported, Then llm.stream has integer attributes for input, output and cache-read tokens."
+   ],
+   "arch_refs": [
+    "overview.md#9.1",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T2",
+    "E4-T19"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T4",
+   "title": "Link consumer spans to producer spans over Kafka headers",
+   "summary": "outbox.relay and consumer.<role> spans are emitted and each consumer span carries a span link to the producing span from the traceparent header.",
+   "description": "Implements overview.md 9.1: \"workers (traceparent carried in Kafka headers)\", spans outbox.relay and consumer.<role>. The producer wrapper already sets traceparent (E5-T6) and the consumer base class exists (E5-T7).\nBuild: in the outbox-relay role (E5-T10) wrap each publish in an outbox.relay span, writing the current context into the Kafka traceparent header (via the E5-T6 wrapper, do not duplicate it). In the consumer base (E5-T7) start consumer.<role> for each message with a Link to the SpanContext extracted from traceparent (a link, not a parent, so batch/retry does not stretch traces); retries and DLQ publishing (E5-T8) stay inside the span. Attributes: topic, partition, offset, tenant_id, role, outcome. No payloads.\nOut of scope: producer header logic, consumer semantics.",
+   "acceptance_criteria": [
+    "Given a message produced inside a span S through the E5-T6 wrapper and consumed by the E5-T7 base in a test with an in-memory exporter, When the handler finishes, Then a span named 'consumer.<role>' exists whose links contain S's trace_id and span_id (pytest test_consumer_links.py).",
+    "Given a message without a traceparent header, When consumed, Then consumer.<role> is still emitted with no links and no exception.",
+    "Given a handler that raises, When retried then sent to the DLQ, Then the span has outcome='dlq' and error_code set, and its attributes contain no payload text.",
+    "Given the outbox-relay role publishes 3 rows, When collected, Then three outbox.relay spans exist, each with topic and tenant_id attributes."
+   ],
+   "arch_refs": [
+    "overview.md#9.1",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T2",
+    "E5-T6",
+    "E5-T7",
+    "E5-T10"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T5",
+   "title": "Shared metrics module and 9.2 metric registry",
+   "summary": "One module owns metric names, types and labels from the 9.2 table and records them to OTel and to a log line for log-based metrics.",
+   "description": "Implements overview.md 9.2: \"Metrics (log-based and OTel, in Cloud Monitoring)\". Create backend/src/observability/metrics.py:\n- A registry listing every metric in the table with name, kind (counter, histogram, gauge), unit and allowed labels: chat_ttft_ms, chat_total_ms, retrieval_first_stage_ms, rerank_ms, rerank_fallback_total{reason}, rerank_429_total, retrieval_degraded_ratio, gate_refusals_total, guard_blocks_total{guard}, llm_fallback_total, llm_breaker_state, answer_cache_hit_ratio, outbox_oldest_age_s, consumer_lag{group}, acl_apply_lag_s, dlq_messages_total, tenant_budget_rejections_total{tenant}, default_partition_rows, db_connections_in_use.\n- record(name, value, **labels) that rejects unknown names or labels and records through the OTel metrics API (OTLP) and also writes one structured log line (event='metric', metric, value, labels) through the E9-T1 logger so log-based metrics work.\n- Existing emitters from E3-T9, E4 and E5 are migrated to call record() where they currently do something else; do not change their values.\nOut of scope: dashboards, alerts, new emitters (E9-T6, E9-T7).\nAdd to the registry (resolutions R73, R74): llm_cost_usd_total{provider,model} (counter, USD), readiness_failing (gauge 0/1) and model_retirement_days (gauge, days until the earliest retirement of a configured model). The registry now has 22 metrics; the 9.2 table copy in backend/tests/observability/metrics_9_2.txt includes these three (the architecture table \u00a79.2 gains these rows). Earlier epics emit with plain OTel meters; this ticket moves them to the registry (R71).",
+   "acceptance_criteria": [
+    "Given record('not_a_metric', 1), When called, Then it raises KeyError; given record('rerank_fallback_total', 1, reason='x', extra='y'), Then it raises on the unknown label (pytest test_metrics_registry.py).",
+    "Given the registry, When compared with the metric names parsed from the overview.md 9.2 table copied into backend/tests/observability/metrics_9_2.txt, Then the sets are equal (the test fails if one is added or missing).",
+    "Given record('chat_ttft_ms', 1200), When captured, Then one OTel data point and one log line with event='metric', metric='chat_ttft_ms' and value 1200 exist.",
+    "Given a label value tenant_id longer than 64 chars or containing newline, When recorded, Then it is rejected or truncated so the log line stays a single JSON line.",
+    "Given record('llm_cost_usd_total', 0.01, provider='anthropic', model='x'), When captured, Then it is accepted; with a label other than provider and model it raises; the registry has exactly the 22 names in metrics_9_2.txt."
+   ],
+   "arch_refs": [
+    "overview.md#9.2",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T1",
+    "E9-T2",
+    "E3-T9"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T6",
+   "title": "Emit chat latency, cache, budget, DB pool and LLM cost metrics",
+   "summary": "The chat path emits the 9.2 metrics no other epic owns: TTFT, total latency, cache ratio, tenant budget rejections and connection use.",
+   "description": "Implements the 9.2 rows for chat_ttft_ms, chat_total_ms, answer_cache_hit_ratio, tenant_budget_rejections_total{tenant} and db_connections_in_use. Retrieval metrics are emitted by E3-T9, guard and LLM metrics (guard_blocks_total, llm_fallback_total, llm_breaker_state, gate_refusals_total) by E4, acl_apply_lag_s by E5; do not touch those.\nUsing metrics.record (E9-T5): in the chat orchestrator record chat_ttft_ms at the first delta event and chat_total_ms at done (also on errors, with the elapsed time); record answer_cache_hit_ratio as a rolling ratio gauge over the last N turns (window config constant, default 100); record tenant_budget_rejections_total when TENANT_BUDGET_EXCEEDED is returned; sample db_connections_in_use from the asyncpg pool every 15 s in a background task (pool size is DB_POOL_SIZE; budget is 300 connections overall, 9.2).\nIf E4 already emits any of these names, keep one emitter and delete the duplicate (check with grep before coding).\nAlso emit llm_cost_usd_total{provider,model} (R73): cost = input/output/cache-read/cache-write token counts from each Anthropic call (and Voyage embed/rerank usage) multiplied by a price table in config (new Settings key LLM_PRICE_TABLE_JSON, a mapping provider/model to USD per million tokens by token kind; a missing model logs a warning and records 0 with a label-free counter llm_cost_unpriced). Recorded in the llm client after each call; no payloads.",
+   "acceptance_criteria": [
+    "Given a stubbed turn with the first delta after 1.2 s and done after 3.0 s using a fake clock, When it completes, Then chat_ttft_ms=1200 and chat_total_ms=3000 are recorded exactly once each (pytest test_chat_metrics.py).",
+    "Given 3 cache hits and 1 miss, When answer_cache_hit_ratio is read, Then it is 0.75.",
+    "Given a tenant over its budget, When POST /v1/chat is called, Then the response error code is TENANT_BUDGET_EXCEEDED and tenant_budget_rejections_total{tenant} increments by 1.",
+    "Given a pool with 4 connections acquired, When the sampler runs, Then db_connections_in_use=4. A grep test asserts each of these five names is recorded in exactly one module.",
+    "Given a stubbed call with 1000 input and 500 output tokens on a model priced at $3 and $15 per million, When completed, Then llm_cost_usd_total{provider='anthropic',model=<m>} increases by 0.0105 (pytest test_llm_cost.py).",
+    "Given a model absent from LLM_PRICE_TABLE_JSON, When called, Then no exception is raised and llm_cost_unpriced increments by 1."
+   ],
+   "arch_refs": [
+    "overview.md#9.2"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T5",
+    "E4-T18",
+    "E4-T19"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T7",
+   "title": "Emit event-pipeline and partition health metrics",
+   "summary": "outbox_oldest_age_s, consumer_lag, dlq_messages_total and default_partition_rows are emitted on a schedule.",
+   "description": "Implements the 9.2 rows for outbox_oldest_age_s, consumer_lag{group}, dlq_messages_total and default_partition_rows (\"rows in the DEFAULT chunks / messages partitions (bug signal)\"). acl_apply_lag_s is E5's.\nUsing metrics.record (E9-T5):\n- Worker background task (every 30 s, in roles outbox-relay and the consumer roles): outbox_oldest_age_s = now - min(created_at) of unpublished outbox rows (0 if none), read through the worker's tenant-safe path; consumer_lag{group} = end offset minus committed offset summed over the group's partitions; dlq_messages_total incremented in the E5-T8 DLQ publisher.\n- default_partition_rows: count rows in chunks_default and messages_default (names as created by E1 migrations; check the schema) recorded as a gauge, emitted from the maintenance job (E1-T12) after its checks, with the job still exiting non-zero as E1-T12 defines.\nOut of scope: alerting (E9-T15), the maintenance job's exit code.\nThe maintenance job runs every 15 min in demo mode (E10 schedules it, R76), so default_partition_rows is refreshed at that cadence.",
+   "acceptance_criteria": [
+    "Given an unpublished outbox row created 90 s ago in a test DB, When the sampler runs, Then outbox_oldest_age_s is between 90 and 95; with no unpublished rows it is 0 (pytest test_pipeline_metrics.py, integration with Postgres).",
+    "Given a consumer group committed at offset 10 with end offset 25 on one partition in the local Kafka, When sampled, Then consumer_lag{group}=15.",
+    "Given a message that exhausts retries, When published to dlq.v1, Then dlq_messages_total increments by 1.",
+    "Given one row inserted into the DEFAULT messages partition, When the maintenance job runs, Then default_partition_rows=1 is recorded and the job exits non-zero; with none it records 0 and exits zero."
+   ],
+   "arch_refs": [
+    "overview.md#9.2",
+    "overview.md#9.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T5",
+    "E5-T8",
+    "E5-T9",
+    "E1-T12"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T8",
+   "title": "Complete /readyz with the 9.4 checks",
+   "summary": "/readyz asserts every item in the 9.4 list and returns a per-check result, with Kafka failing only as degraded.",
+   "description": "Implements overview.md 6.1 and 9.4: \"/readyz (DB role flags, FORCE RLS, partition grants, pgvector >= 0.8, Kafka reachability (degraded for chat), model availability, verifier initialised)\". E0-T5 built /healthz and /readyz with database and model checks; E4-T7 added the retired-model check. Extend, do not rewrite:\n- Checks: db_reachable, role_flags (fa_app and fa_worker lack BYPASSRLS and SUPERUSER), force_rls (every tenant table has relforcerowsecurity), partition_grants (the app roles hold privileges on the current and future partitions of chunks and messages), pgvector_version >= 0.8, kafka_reachable (metadata request with a 2 s timeout), models_available (reuse the retired-model check), verifier_initialised (firebase-admin app created).\n- Response 200 {status: 'ok' or 'degraded', checks: {name: 'ok'|'fail'|'degraded'}}; Kafka failure gives status 'degraded' and HTTP 200; any other failure gives 503. No error text, hostnames or credentials in the body.\n- Record readiness_failing (gauge 0/1) via metrics.record for alerting (add it to the registry and to the 9.2 test list as an addition recorded in questions if not accepted).\nOut of scope: /healthz, Kong's status listener, the demo-prewarm call.\nreadiness_failing (gauge 0/1) is part of the 9.2 registry (R74); it is set from the same checks as /readyz on each probe and by a 15 s background task. model_retirement_days is set by the E0-T4 check at each probe.",
+   "acceptance_criteria": [
+    "Given a test DB where fa_app has BYPASSRLS, When GET /readyz, Then status 503 and checks.role_flags='fail' (pytest test_readyz.py).",
+    "Given a table with FORCE RLS disabled, Then 503 with force_rls='fail'; given pgvector 0.7, Then 503 with pgvector_version='fail'.",
+    "Given the Kafka broker unreachable and everything else healthy, When GET /readyz, Then HTTP 200 with status='degraded' and kafka_reachable='degraded'.",
+    "Given any failure, When the response body is serialised, Then it contains none of the DB host, user or exception text (assert on string).",
+    "Given a failing check, When /readyz is probed, Then readiness_failing=1; after recovery it is 0 (pytest)."
+   ],
+   "arch_refs": [
+    "overview.md#6.1",
+    "overview.md#9.4"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0-T5",
+    "E4-T7",
+    "E5-T6"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T9",
+   "title": "Leak test for logs, spans and metrics",
+   "summary": "A test fails if any log line, span, metric label or trace contains a request body, SQL parameter or unredacted PII after a full turn.",
+   "description": "Implements the Done-when item: \"no log line, span or trace contains request bodies, SQL parameters or unredacted PII (test)\". E4-T25 already tests that PII does not reach Voyage, Anthropic, logs or Langfuse; this ticket covers the E9 additions (spans, metric labels, consumer spans) and keeps one canary approach: do not repeat E4-T25's cases, reuse its canary fixtures.\nAdd backend/tests/observability/test_no_leaks.py (integration, local compose with Postgres and Kafka): run a chat turn with canary message text 'CANARY-BODY-7731 jane.doe@example.com 123-45-6789', an ACL change and an eval-sampled event; capture stdout log lines, all spans from an in-memory exporter (including attributes, events and links), and all metric data points and labels; assert none contains the canary strings or the SQL parameter values bound in that run.\nOut of scope: Langfuse payloads (E0-T8, E4-T25).",
+   "acceptance_criteria": [
+    "Given the canary turn, When all logs, spans and metric labels are searched, Then zero matches for 'CANARY-BODY-7731', 'jane.doe@example.com' and '123-45-6789' (pytest test_no_leaks.py fails otherwise).",
+    "Given OTEL_DB_CAPTURE_PARAMS=true is set by the test, When the same run happens, Then the test fails, proving it can detect parameter capture.",
+    "Given a deliberately injected logger.info(body=canary) via a test-only hook, When the redactor is bypassed, Then the test fails (negative control).",
+    "Given the full suite in CI, When it runs, Then this test is included in the required checks."
+   ],
+   "arch_refs": [
+    "overview.md#9.1",
+    "overview.md#9.3",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T3",
+    "E9-T4",
+    "E9-T6",
+    "E4-T25"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T10",
+   "title": "End-to-end trace test across Kong, API, DB and LLM",
+   "summary": "A compose test proves one trace spans Kong, chat-api, a DB query and an LLM call, and a Kafka consumer links to its producer.",
+   "description": "Implements the Done-when item: \"A single trace spans Kong, chat-api, a DB query and an LLM call, and a Kafka event's consumer span links to its producer span.\"\nAdd an integration test run against docker compose with Kong (opentelemetry plugin from E2-T15), chat-api, Postgres, Kafka, a worker, an OpenTelemetry Collector with a file or debug exporter writing spans as JSON, and a stubbed Anthropic/Voyage endpoint. The test sends POST /v1/chat, then reads collector output and asserts the span tree. Add the collector service and config to the compose file and set OTEL_EXPORTER_OTLP_ENDPOINT for services. Document how to run it in docs/runbooks/observability.md.\nOut of scope: Cloud Trace itself (verified manually in the E9-T17 drill note).",
+   "acceptance_criteria": [
+    "Given the compose stack up, When POST /v1/chat is sent through Kong, Then collector output holds one trace_id containing a Kong span, chat.turn, a DB span (asyncpg) and llm.stream with a child HTTP client span (pytest -m e2e test_e2e_trace.py).",
+    "Given a turn that writes an outbox row, When the relay publishes and the worker consumes, Then a consumer.<role> span exists whose link's trace_id equals the turn's trace_id.",
+    "Given the Kong plugin disabled, When the test runs, Then it fails on the missing Kong span (negative check documented in the test).",
+    "Given the e2e run, When the span dump is scanned, Then no span attribute contains the request message text."
+   ],
+   "arch_refs": [
+    "overview.md#9.1",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T3",
+    "E9-T4",
+    "E2-T15"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T11",
+   "title": "Terraform: log-based metrics and notification channel",
+   "summary": "Terraform defines the log-based metrics and the alert notification channel used by all dashboards and alert policies.",
+   "description": "Implements overview.md 9.2 \"log-based and OTel, in Cloud Monitoring\" for metrics emitted as log lines (event='metric', E9-T5), and creates the notification channel the alerts in 9.5 use. Existing terraform/ has main.tf, cloud_run.tf, variables.tf; add terraform/monitoring.tf.\n- google_logging_metric (distribution or counter, label extractors on metric and labels) for every 9.2 metric that is emitted by log line; metrics emitted over OTLP need no resource here.\n- google_monitoring_notification_channel (email) with the address from a variable alert_email (required).\n- Variables env_profile (matches ENV_PROFILE) used by later tickets.\nOut of scope: dashboards (E9-T12), SLOs (E9-T13), alert policies (E9-T14, E9-T15).\nNotification channel: email to alert_email (R75).",
+   "acceptance_criteria": [
+    "Given terraform validate and terraform plan -var-file=ci.tfvars, When run in CI, Then both succeed with no errors.",
+    "Given the plan output, When listed, Then one google_logging_metric exists for each name in the E9-T5 registry that is log-emitted and the notification channel exists (a script scripts/check_monitoring_tf.py compares names to the registry and fails on a gap).",
+    "Given a log line event='metric', metric='rerank_ms', value=412, When tested against the metric's filter with gcloud logging read in the drill (E9-T17), Then it matches and the extractor yields 412.",
+    "Given alert_email unset, When terraform plan, Then it errors (required variable)."
+   ],
+   "arch_refs": [
+    "overview.md#9.2",
+    "overview.md#9.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T5"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T12",
+   "title": "Terraform: four Cloud Monitoring dashboards",
+   "summary": "Dashboards chat, retrieval, events and cost exist as code and together show every 9.2 metric.",
+   "description": "Implements overview.md 9.5: \"Dashboards in Cloud Monitoring (one per concern: chat, retrieval, events, cost)\". Add terraform/dashboards/*.json and google_monitoring_dashboard resources in terraform/dashboards.tf.\n- chat: chat_ttft_ms and chat_total_ms p50/p95 with the SLO lines (3.5 s, 2.0 s, 8 s), gate_refusals_total, guard_blocks_total by guard, llm_fallback_total, llm_breaker_state, answer_cache_hit_ratio, error rate.\n- retrieval: retrieval_first_stage_ms and rerank_ms p95 with lines 300 and 700 ms, rerank_fallback_total by reason, rerank_429_total, retrieval_degraded_ratio.\n- events: outbox_oldest_age_s, consumer_lag by group, acl_apply_lag_s, dlq_messages_total, default_partition_rows.\n- cost: db_connections_in_use against 300, tenant_budget_rejections_total by tenant, Kong prometheus series, billing spend widget.\nEach dashboard's metric names come from the registry; Kong prometheus series appear only where exported.",
+   "acceptance_criteria": [
+    "Given the E9-T5 registry, When scripts/check_monitoring_tf.py runs, Then every one of its 19 names appears in at least one dashboard JSON; the check fails if one is missing.",
+    "Given terraform validate, When run in CI, Then it passes; given terraform apply to a scratch project in the drill, Then four dashboards are listed by gcloud monitoring dashboards list.",
+    "Given the chat dashboard JSON, When parsed, Then threshold lines of 3500, 2000 and 8000 ms exist on the right charts (jq assertions in the check script).",
+    "Given the retrieval dashboard JSON, Then threshold lines at 300 and 700 ms exist."
+   ],
+   "arch_refs": [
+    "overview.md#9.5",
+    "overview.md#9.2"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T11"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T13",
+   "title": "Terraform: availability and latency SLOs with burn-rate alerts",
+   "summary": "SLOs for availability (prod only), latency and retrieval exist with multi-window burn-rate alerts whose thresholds are fixed in the ticket.",
+   "description": "Implements overview.md 9.5 SLO table: availability 99.5% monthly of chat requests not failing, prod profile only; TTFT p95 < 3.5 s (p50 < 2.0 s) and full answer p95 < 8 s on demo and prod; retrieval first stage p95 < 300 ms, rerank p95 < 700 ms on both. \"Windows and thresholds set in E9.\"\nAdd google_monitoring_slo resources in terraform/slo.tf over a custom service for chat-api. Availability SLO created only when env_profile == \"prod\" (count). Burn-rate alert policies: fast (1 h window with 5 min lookback, burn rate 14.4) and slow (6 h window with 30 min lookback, burn rate 6), the standard multi-window values for a 99.5% target; record the choice and the budget (0.5% of a 30-day window = about 3.6 h) in docs/runbooks/slo.md. A chat request fails when the response is HTTP 5xx or the SSE stream ends with an error event other than the intended refusals/4xx codes; define the good/total filter in the doc.\nOut of scope: other alerts.\nBurn-rate numbers fixed by R72: 14.4x over 1 h and 6x over 6 h.",
+   "acceptance_criteria": [
+    "Given env_profile=prod, When terraform plan, Then one availability SLO with goal 0.995 and rolling 30-day period and two burn-rate alert policies are planned; given env_profile=demo, Then the availability SLO and its alerts are absent and the latency SLOs remain (CI plan assertions through terraform show -json).",
+    "Given the plan JSON, When checked, Then the latency SLO thresholds are 3500 ms (p95), 2000 ms (p50), 8000 ms and retrieval 300 and 700 ms.",
+    "Given docs/runbooks/slo.md, When reviewed, Then it states the two windows, burn rates 14.4 and 6, and the failing-request definition (checked by a presence test in scripts/check_monitoring_tf.py).",
+    "Given the drill in E9-T17 injects a 20% error rate for 10 min in a scratch prod-profile project, Then the fast burn alert opens."
+   ],
+   "arch_refs": [
+    "overview.md#9.5",
+    "ADR-018"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T11",
+    "E9-T6"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T14",
+   "title": "Terraform: chat and retrieval alert policies",
+   "summary": "Alert policies exist for degraded turns, rerank 429, LLM fallback, readiness failing and model retirement.",
+   "description": "Implements these alerts from overview.md 9.5: \"degraded turns > 5% in 15 min, rerank 429 > 0, LLM fallback in use, readiness failing, model retirement soon\".\nAdd terraform/alerts_chat.tf with google_monitoring_alert_policy resources using the E9-T11 notification channel:\n- degraded_turns: retrieval_degraded_ratio > 0.05 over a 15 min window.\n- rerank_429: rate of rerank_429_total > 0 over 5 min.\n- llm_fallback_in_use: llm_fallback_total increase > 0 over 5 min.\n- readiness_failing: readiness_failing = 1 for 3 min (metric from E9-T8).\n- model_retirement_soon: model_retirement_days (gauge, R74) < 30 for 5 min; the alert is on the gauge, not a log line.\nThresholds are tfvars with these defaults.",
+   "acceptance_criteria": [
+    "Given terraform plan, When listed, Then five policies exist with the names above (terraform show -json assertion in scripts/check_monitoring_tf.py).",
+    "Given the degraded_turns policy JSON, Then threshold 0.05 and duration 900 s.",
+    "Given the E9-T17 drill emits rerank_429_total=1, When 5 minutes pass, Then the rerank_429 incident opens (drill record in docs/runbooks/alert-drills.md).",
+    "Given the drill stops /readyz (DB role flag changed), Then readiness_failing opens within 5 minutes.",
+    "Given the policy JSON for model_retirement_soon, Then its condition metric is model_retirement_days with threshold 30 and comparison LT (script assertion); no log-based metric is used for it."
+   ],
+   "arch_refs": [
+    "overview.md#9.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T11",
+    "E9-T8",
+    "E0-T4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T15",
+   "title": "Terraform: event pipeline and partition alert policies",
+   "summary": "Alert policies exist for outbox age, ACL applier lag, consumer lag, DLQ non-empty and non-empty DEFAULT partitions.",
+   "description": "Implements from overview.md 9.5: \"outbox oldest age, ACL applier lag, consumer lag, DLQ non-empty, DEFAULT partition non-empty\". Add terraform/alerts_events.tf using the E9-T11 channel. Thresholds fixed by resolution R72, overridable in tfvars:\n- outbox_age: outbox_oldest_age_s > 300 for 5 min.\n- acl_lag: acl_apply_lag_s > 120 (the principal cache TTL is 60 s, 6.1) for 5 min.\n- consumer_lag: consumer_lag{group} > 1000 for 10 min.\n- dlq_non_empty: increase of dlq_messages_total > 0 over 5 min.\n- default_partition_non_empty: default_partition_rows > 0 over a 30 min window (the maintenance job runs every 15 min in demo, R76) (E1-T12 only makes the maintenance job exit non-zero; this is the alert).",
+   "acceptance_criteria": [
+    "Given terraform plan, Then five policies exist with the names above (scripts/check_monitoring_tf.py assertion).",
+    "Given the policy for default_partition_non_empty, When parsed, Then the condition metric is default_partition_rows with threshold 0 and comparison GT. Duration/alignment window is 1800 s.",
+    "Given the E9-T17 drill inserts one row into a DEFAULT messages partition and runs the maintenance job in a scratch project, Then the incident opens within 45 minutes (30 min window plus one 15 min job run).",
+    "Given the drill stops the acl-applier worker and POSTs an ACL change, Then acl_lag opens within 10 minutes."
+   ],
+   "arch_refs": [
+    "overview.md#9.5",
+    "overview.md#9.2"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T11",
+    "E9-T7"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T16",
+   "title": "Terraform: monthly budget alerts on GCP billing and LLM cost",
+   "summary": "A billing budget plus an alert on llm_cost_usd_total cover monthly cloud and LLM spend against the $100-200 budget.",
+   "description": "Implements overview.md 9.5: \"budget alerts on the monthly cloud and LLM spend (thresholds set in E9 against the $100-200 budget)\". Add terraform/budget.tf with google_billing_budget for the project: amount var monthly_budget_usd (default 150), notifications at 50%, 90% and 100% of actual spend and 100% forecasted, to the E9-T11 email channel. LLM spend (R73): add a google_monitoring_alert_policy on the cumulative monthly increase of llm_cost_usd_total (sum over provider and model, 30-day rolling window) with thresholds at 90% and 100% of var llm_monthly_budget_usd (default 75; the sum of monthly_budget_usd for cloud and LLM stays inside the $100-200 range, documented in docs/runbooks/slo.md). No manual check.",
+   "acceptance_criteria": [
+    "Given terraform plan, Then one google_billing_budget exists with amount 150 USD and threshold rules 0.5, 0.9, 1.0 (actual) and 1.0 (forecasted) (plan JSON assertion).",
+    "Given monthly_budget_usd=250 outside the 100-200 range, When terraform plan, Then a validation block fails with a message naming the range 100-200.",
+    "Given billing_account variable unset, Then plan errors.",
+    "Given the drill (E9-T17) lowers the budget to $1 in a scratch project, Then a notification arrives on the channel (drill record).",
+    "Given the plan JSON, Then an alert policy on llm_cost_usd_total exists with thresholds equal to 0.9 and 1.0 times llm_monthly_budget_usd; in the drill, recording llm_cost_usd_total above that threshold opens the incident."
+   ],
+   "arch_refs": [
+    "overview.md#9.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T11",
+    "E9-T6"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E9-T17",
+   "title": "Alert drill runbook and script",
+   "summary": "A script and runbook fire each 9.5 alert in a scratch project and record the result, covering the Done-when drill.",
+   "description": "Implements the Done-when item: \"Each alert in overview.md#9.5 fires in a drill (degraded turns > 5% in 15 min, rerank 429, outbox age, ACL applier lag, DEFAULT partition non-empty, readiness failure, budget)\". Add scripts/alert_drill.py and docs/runbooks/alert-drills.md. The script takes an alert name, injects the condition (writes the matching log-metric line or metric value for the alert; real fault injection where cheap: stop acl-applier, insert a DEFAULT partition row, flip a role flag for readiness, lower budget), polls the Cloud Monitoring API until an incident opens or a timeout (default 15 min), then clears the condition and reports PASS or FAIL as JSON. Include the burn-rate, LLM fallback, consumer lag, DLQ and model-retirement alerts too. The runbook records the date, result and incident link per alert, and a manual check that the E9-T10 trace appears in Cloud Trace.\nRuns only against the scratch project named by a required --project argument and refuses ENV_PROFILE=prod project ids listed in a deny var.\nThe drill also covers the llm_cost_usd_total budget alert and the model_retirement_days alert; the DEFAULT-partition drill waits up to 45 min.",
+   "acceptance_criteria": [
+    "Given a scratch project with E9-T11 to E9-T16 applied, When python scripts/alert_drill.py --all runs, Then each alert in overview.md 9.5 returns PASS in the JSON and the process exits 0; exit non-zero if any fails.",
+    "Given a project where one policy is removed, When the script runs, Then that alert reports FAIL (negative control).",
+    "Given --project equals a name in the deny list, Then the script exits 2 without calling any API (unit test).",
+    "Given docs/runbooks/alert-drills.md, Then it has a row per alert in 9.5 (presence test in scripts/check_monitoring_tf.py)."
+   ],
+   "arch_refs": [
+    "overview.md#9.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E9-T13",
+    "E9-T14",
+    "E9-T15",
+    "E9-T16"
+   ],
+   "size": "M",
+   "status": "todo"
+  }
+ ],
+ "questions": []
+}

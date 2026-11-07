@@ -1,5 +1,10 @@
-# harness runtime: traces, plans, scratch. Local only.
-context/.runtime/
+# harness runtime: traces, builder ledger, context packs, drafts. Local only.
+projects/.runtime/
+# the running session may still write here until it restarts with the new context_dir
+context/
+
+# raw downloads (PDF, HTML, ZIP) agents fetched; the library index and research notes are committed
+projects/*/library/files/
 
 # generated mod types
 plugins/*/.claude-plugin/types/
@@ -10,3 +15,7 @@ __pycache__/
 node_modules/
 .DS_Store
 .claude/settings.local.json
+.env
+.env.*
+*.pem
+*.key

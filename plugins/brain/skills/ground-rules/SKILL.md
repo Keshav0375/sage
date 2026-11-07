@@ -5,9 +5,9 @@ description: Binding rules for every session and every subagent in Keshav's harn
 
 # Ground rules (binding for every session and every subagent)
 
-**Where you are.** The harness repo holds the brain (`context/`: registry, architecture, decisions,
-lessons) and the plugins. Project code lives in the project's own repos, listed in
-`context/registry.json`. **Never put brain files into a code repo.** Use the `mcp__brain__where`
+**Where you are.** The harness repo holds the brain (`projects/`: registry, per-project library, architecture,
+decision logs, epics and tickets, state) and the plugins. Project code lives in the project's own repos, listed in
+`projects/registry.json`. **Never put brain files into a code repo.** Load `brain:layout` before reading or writing project files. Use the `mcp__brain__where`
 tool for the current project card and `mcp__brain__projects` for the board.
 
 ## How to code
@@ -41,10 +41,10 @@ tool for the current project card and `mcp__brain__projects` for the board.
 10. **The human gate is the merge.** Merging PRs and harness promotions are Keshav's call.
     Agents never merge. Everything before the merge (research, design, plan, publish, build,
     verify, PR) runs autonomously; agents report what they decided and what to check.
-11. **Decide with evidence, never by improvising.** Architecture in `context/projects/<p>/arch/`
+11. **Decide with evidence, never by improvising.** Architecture in `projects/<p>/arch/`
     is binding. If the spec and the arch disagree, or the arch is silent on a value you need, the
     orchestrator resolves it with research and records an ADR (`builder:build` step 3). An open
-    decision in `STATE.md` is a question only Keshav can answer (scope, compliance, money): work
+    decision in `state.md` is a question only Keshav can answer (scope, compliance, money): work
     that depends on it stays blocked, and other work continues.
 12. **No Claude attribution.** Keshav is sole author. The brain mod enforces it.
 13. **Deletes are moves.** Move files to `~/.Trash`. No force-push, no `reset --hard`.

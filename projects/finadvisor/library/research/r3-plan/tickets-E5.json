@@ -1,0 +1,351 @@
+{
+  "epic": "E5",
+  "tickets": [
+    {
+      "key": "E5-T1",
+      "title": "Spike: confirm Confluent Basic idle cost",
+      "summary": "Measure the real idle monthly cost of a Confluent Cloud Basic cluster and record it as an ADR.",
+      "description": "ADR-013 quotes ~$0-10/month for Confluent Cloud Basic (first eCKU free then $0.14/eCKU-h, $0.05/GB; Essentials Schema Registry free to 100 schemas) and marks it UNVERIFIED: 'confirm in console'. Create the Basic cluster in us-central1 FIRST (the Schema Registry region is fixed by the first cluster, D13q), leave it idle with one test topic for at least 24 h, read the cost and usage view in the console, and project the monthly idle cost with the demo up and down. Record the result as a new ADR in context/projects/finadvisor/arch/decisions.md (status, measured numbers, date, console screenshot path or figures, decision to keep or revisit). Out of scope: Terraform, service accounts, topics for the product (E5-T13).",
+      "acceptance_criteria": [
+        "Given the cluster has been idle 24 h, when the console cost view is read, then the ADR records the measured idle cost per day in USD and the projected monthly figure, replacing the UNVERIFIED label.",
+        "Given the ADR, when read, then it states the cluster region (us-central1) and the Schema Registry region, and whether the projection is within the ADR-013 estimate of $0-10/month (yes/no with the figure).",
+        "Given the ADR is merged, when `grep -n 'UNVERIFIED' decisions.md` is run on the ADR-013 cost line, then it is annotated with a pointer to the new ADR."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-013",
+        "overview.md#6.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T2",
+      "title": "Spike: partition counts and retention per topic",
+      "summary": "Decide partitions and retention for each topic within the 1,500-partition limit and record them as an ADR.",
+      "description": "overview.md#6.4 says partition counts and retention are 'set in E5 within those limits' (Confluent Basic: 1,500 partitions, 1,000 ACLs, 50 API keys). Topics: docs.bronze.v1, docs.silver.v1, chunks.contextualized.v1, chunks.indexed.v1, ingest.analytics.v1, acl.changes.v1, chat.audit.v1, chat.usage.v1, eval.sample.v1, eval.events.v1, dlq.v1. Keys are tenant_id (per-tenant ordering), ~1-5k events/day, tens of tenants (52 LIST partitions in Postgres). Produce a table of partitions and retention.ms per topic with the arithmetic against the 1,500 limit (include replication factor if the limit counts it, per Confluent docs), and note the local compose values. Record as an ADR. The values feed E5-T3 (local topic creation) and E5-T13 (Terraform). Out of scope: creating topics.",
+      "acceptance_criteria": [
+        "Given the ADR table, when partitions are summed over all 11 topics, then the total is <= 1,500 with a stated headroom of at least 50%, and the sum is shown in the ADR.",
+        "Given each topic row, when read, then it has a partitions value and a retention value with a one-line reason; dlq.v1 retention is at least as long as the longest source topic.",
+        "Given the ADR, when read, then it states how many API keys (4 service accounts) and ACLs the design uses against the 50 and 1,000 limits."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-013",
+        "overview.md#6.4"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T3",
+      "title": "Local compose: Kafka KRaft and Schema Registry",
+      "summary": "Add apache/kafka:4.4.0 and cp-schema-registry to docker compose with the topics created at startup.",
+      "description": "stack.md: local streaming is Apache Kafka KRaft single node `apache/kafka:4.4.0` plus Confluent cp-schema-registry (pin the tag in the compose file; stack.md says 'pin at implementation'). Add both services to docker-compose.yml with env-driven host ports (ADR-019), health checks, and an init step (script or one-shot service) that creates the 11 topics of overview.md#6.4 with the partitions and retention from the E5-T2 ADR. Add settings KAFKA_BOOTSTRAP, KAFKA_API_KEY, KAFKA_API_SECRET, SCHEMA_REGISTRY_URL, SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET to the pydantic-settings Settings class (overview.md#6.6; required, no secret default; local .env values are placeholders, local broker is PLAINTEXT). Out of scope: Confluent Cloud, producers, consumers.",
+      "acceptance_criteria": [
+        "Given `docker compose up -d kafka schema-registry kafka-init`, when `kafka-topics.sh --list` runs in the broker, then exactly the 11 catalogue topics exist with the partition counts from the E5-T2 ADR.",
+        "Given the stack is up, when `curl $SCHEMA_REGISTRY_URL/subjects` runs, then it returns HTTP 200 and `[]`.",
+        "Given Settings is loaded with KAFKA_BOOTSTRAP unset, when the app boots, then it fails with a validation error naming KAFKA_BOOTSTRAP (unit test).",
+        "Given the pinned image tags, when `docker compose config` runs, then the Kafka image is `apache/kafka:4.4.0` and no image uses `latest`."
+      ],
+      "arch_refs": [
+        "stack.md",
+        "overview.md#6.4",
+        "overview.md#6.6",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T2"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T4",
+      "title": "Envelope and event payload models with JSON Schema export",
+      "summary": "Define the common envelope and the catalogue's event payloads as Pydantic models that export JSON Schema.",
+      "description": "Create the module `events` (backend/src/events/). Envelope per overview.md#6.4: `{event_id, event_type, schema_version, tenant_id, occurred_at, trace_context, payload}`. One payload model per event type: DocBronzeLanded, DocSilverReady, ChunksContextualized, ChunksIndexed, PublicIngestStage, AclChangeRequested, AclChangeApplied, AdvisorEntitlementChanged, TurnCompleted, TurnRefused, EscalationCreated, TurnUsage, TurnSampled, FeedbackRecorded, JudgeScored, EvalRunCompleted, with the fields listed in the catalogue row (only the fields named there; where the catalogue gives a free-form list such as 'ids, hashes, redacted text', define typed fields and list the ones invented in `questions`). A registry mapping event_type -> (topic, model, schema_version). Payload models forbid extra fields (`extra='forbid'`) and have no field for raw document text or raw prompts (payload minimisation, D13j). Export function `json_schema(event_type)` used later for Schema Registry. Out of scope: registration (E5-T5), Kafka I/O.",
+      "acceptance_criteria": [
+        "Given a valid envelope dict for each of the 16 event types, when parsed, then it validates (parametrised unit test over all types).",
+        "Given an envelope with an unknown payload field, when parsed, then validation fails (extra forbidden).",
+        "Given every payload model, when its fields are listed, then none is named raw_content, prompt or raw_text (unit test scanning model_fields).",
+        "Given the event-type registry, when each entry is looked up, then its topic matches the overview.md#6.4 catalogue (unit test with the catalogue encoded as a fixture) and `json_schema()` returns a dict with `$schema` for every type."
+      ],
+      "arch_refs": [
+        "overview.md#6.4",
+        "decisions.md#adr-013",
+        "stack.md"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E0"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T5",
+      "title": "Register schemas and gate breaking changes in CI",
+      "summary": "Register every topic's JSON Schema in Schema Registry and fail CI on a breaking change.",
+      "description": "Add `scripts/register_schemas` that registers, for each topic, a JSON Schema generated by E5-T4 under subject `<topic>-value` with the registry's default compatibility (overview.md#6.4; do not override it). A topic carrying several event types uses a oneOf schema over its event types' envelopes. Add a CI job (compose Schema Registry service) that (1) registers the current schemas into an empty registry, (2) runs the registry compatibility check API for the checked-in baseline vs. the working tree, and fails when incompatible. Check in the baseline snapshot of schemas under backend/schemas/. Settings use SCHEMA_REGISTRY_URL/_API_KEY/_API_SECRET. Out of scope: Confluent Cloud registration (done by the same script with cloud env in E5-T13). Per R56: one oneOf schema per topic under `<topic>-value`, and `dlq.v1-value` is registered as well (so subject count = 11 including dlq.v1).",
+      "acceptance_criteria": [
+        "Given an empty registry, when the script runs, then `GET /subjects` lists 11 subjects `<topic>-value`, one per catalogue topic (integration test).",
+        "Given a model change that removes a required field from a payload, when the CI compatibility step runs, then it exits non-zero and names the subject (test with a deliberately breaking fixture).",
+        "Given a backward-compatible change (optional field added), when the step runs, then it exits zero.",
+        "Given the script is run twice, when subjects are listed, then no new versions are created (idempotent)."
+      ],
+      "arch_refs": [
+        "overview.md#6.4",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T3",
+        "E5-T4"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T6",
+      "title": "Idempotent producer with traceparent and PUBLIC guard",
+      "summary": "Provide a producer wrapper that serialises with Schema Registry, sets headers and the tenant key.",
+      "description": "In `events/producer.py` wrap confluent-kafka 2.16.1 `Producer` with `enable.idempotence=true`, acks=all, JSON Schema serialisation via Schema Registry, key = tenant_id (utf-8), and the Kafka header `traceparent` taken from the envelope trace_context / current OTel span (overview.md#6.4). `produce(envelope)` validates the envelope against its E5-T4 model, resolves the topic from the registry, and returns after delivery callback (sync `flush` variant for the relay, because the relay must know delivery succeeded before marking published_at). Refuses envelopes whose `envelope.tenant_id` != key by construction (key is derived from tenant_id). Config from Settings: KAFKA_BOOTSTRAP, KAFKA_API_KEY, KAFKA_API_SECRET (SASL_SSL when a key is set, PLAINTEXT locally). chat-api must not import this module (import-linter contract; chat-api has no Kafka credentials). Out of scope: outbox reading, consumers.",
+      "acceptance_criteria": [
+        "Given the local broker, when an envelope is produced, then the consumed record has key == tenant_id, a `traceparent` header equal to the producing span's context, and a value that deserialises against the registered schema (integration test).",
+        "Given an envelope that fails its model validation, when produce is called, then it raises and nothing is written to the topic.",
+        "Given the producer config, when inspected, then `enable.idempotence` is true and `acks` is `all` (unit test on built config).",
+        "Given the import-linter configuration, when `lint-imports` runs, then a contract fails if the chat-api package imports `events.producer` (contract present and passing on main, failing in a test fixture that violates it)."
+      ],
+      "arch_refs": [
+        "overview.md#6.4",
+        "overview.md#4.7",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T7",
+      "title": "Consumer framework: dedupe, tenant transaction, envelope check",
+      "summary": "Provide a consumer base that dedupes on processed_events and rejects envelope/key mismatch and PUBLIC.",
+      "description": "In `events/consumer.py` build a base consumer (confluent-kafka Consumer, manual commit after the handler transaction, at-least-once). For each message: deserialise via Schema Registry; run the envelope check (overview.md#4.7 and #6.4 consumer rule): if `envelope.tenant_id` != message key or the tenant equals PUBLIC_TENANT_ID, the message is routed to the DLQ hook with reason `envelope_key_mismatch` or `public_tenant_rejected` and is not handled; `bq-sink` is exempt for PUBLIC analytics events via a constructor flag. Otherwise open a DB transaction as `fa_worker` with `app.tenant_id` set from the message key, check/insert `(tenant_id, consumer, event_id)` in `processed_events` (table and RLS exist from E1-T7/E1-T10, do not recreate), run the handler in the same transaction, commit, then commit the Kafka offset. A duplicate (already in processed_events) is skipped without calling the handler. Out of scope: retries and DLQ publishing (E5-T8).",
+      "acceptance_criteria": [
+        "Given the same event delivered twice, when the consumer handles both, then the handler ran once and the state it wrote is unchanged after the second delivery (integration test with Postgres and Kafka).",
+        "Given a message whose envelope.tenant_id differs from its key, when consumed, then the handler is not called and the DLQ hook receives reason `envelope_key_mismatch`.",
+        "Given a message for PUBLIC_TENANT_ID on a non-bq-sink consumer, when consumed, then the handler is not called and the hook receives `public_tenant_rejected`; the same message on a consumer with the bq-sink exemption is handled.",
+        "Given a handler that raises after writing, when consumed, then the handler's write and the processed_events row are both absent (rolled back together) and the offset is not committed.",
+        "Given the transaction, when the handler runs, then `current_setting('app.tenant_id')` equals the key (test inside the handler)."
+      ],
+      "arch_refs": [
+        "overview.md#4.7",
+        "overview.md#6.4",
+        "overview.md#5.2",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T6",
+        "E1-T7",
+        "E1-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T8",
+      "title": "Consumer retries and redacted DLQ publishing",
+      "summary": "Retry failing handlers, then publish the message to dlq.v1 with a redacted payload and a reason.",
+      "description": "Extend the E5-T7 consumer: on handler failure retry with exponential backoff (settings KAFKA_CONSUMER_MAX_ATTEMPTS default 5 and KAFKA_RETRY_BACKOFF_MS default 500, added to overview.md#6.6 per R53), then publish to `dlq.v1` with the original key and the original envelope plus `{source_topic, consumer, error_code, reason, attempts}` (overview.md#6.4). The DLQ payload is redacted (D13j): the `payload` of the original envelope is replaced by a redacted form that keeps only id-like fields (keys ending `_id`, `sha256`, hash fields) and drops text fields; reason must not contain payload content. Undeserialisable (poison) messages go to the DLQ with the raw bytes dropped and `error_code=deserialisation_failed`; the offset is then committed so the partition does not stall. Envelope-check rejections from E5-T7 use this path. Add a DLQ envelope model to E5-T4's registry entry for `dlq.v1` if not yet present. Out of scope: operator re-publish tooling.",
+      "acceptance_criteria": [
+        "Given a handler that always raises, when a message is consumed, then it is attempted KAFKA_CONSUMER_MAX_ATTEMPTS (5) times and exactly one record appears on dlq.v1 with attempts == that value and a non-empty reason (integration test).",
+        "Given a poison message of invalid bytes, when consumed, then one dlq.v1 record exists with error_code `deserialisation_failed` and the consumer then processes the next valid message on the same partition.",
+        "Given an event whose envelope tenant differs from its key, when consumed, then a dlq.v1 record exists with reason `envelope_key_mismatch` and the original key.",
+        "Given a failed event whose payload contains a text field `redacted_question`, when the DLQ record is read, then that text is absent and the id fields are preserved (unit test on the redactor).",
+        "Given a dlq.v1 record, when read, then it validates against the registered dlq.v1-value schema."
+      ],
+      "arch_refs": [
+        "overview.md#6.4",
+        "overview.md#4.7",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T7"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T9",
+      "title": "Worker entrypoint with WORKER_ROLES dispatch",
+      "summary": "Add the worker entrypoint that starts the roles named in WORKER_ROLES.",
+      "description": "overview.md#4.7: one image, entrypoint `worker`, roles selected by `WORKER_ROLES` (comma list of outbox-relay, silver, contextualizer, indexer, acl-applier, eval-judge, bq-sink), DB login role `fa_worker`. Implement the dispatcher in backend/src/worker/: parse and validate WORKER_ROLES (unknown role fails boot), run each role in its own task with graceful SIGTERM shutdown (finish the in-flight message, flush, commit), expose a role registry that E5-T10/E5-T11 and later epics plug into. Only outbox-relay and acl-applier are implemented in E5; the other roles register as 'not implemented' and fail boot with a clear error if selected. Out of scope: the roles themselves, Cloud Run config (E10).",
+      "acceptance_criteria": [
+        "Given WORKER_ROLES=`bogus`, when the worker boots, then it exits non-zero with a message naming `bogus` (unit test).",
+        "Given WORKER_ROLES=`outbox-relay,acl-applier`, when the worker boots, then both role tasks are running (test with stub roles).",
+        "Given a running stub role, when SIGTERM is sent, then the role's shutdown hook runs and the process exits 0 within 10 s (test).",
+        "Given WORKER_ROLES=`silver` in E5, when the worker boots, then it exits non-zero with 'role not implemented'."
+      ],
+      "arch_refs": [
+        "overview.md#4.7",
+        "overview.md#6.6"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T8"
+      ],
+      "size": "S",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T10",
+      "title": "outbox-relay worker role",
+      "summary": "Publish unpublished outbox rows per tenant in order with at-least-once delivery.",
+      "description": "Implement the `outbox-relay` role (overview.md#4.7; ADR-013; no Debezium). The `outbox` table (E1-T7: `topic, key, event_type, schema_version, payload jsonb, created_at, published_at, attempts`; `id` is the Kafka event_id; partial index on unpublished) and the fa_worker SELECT/INSERT/UPDATE grants (E1-T10) exist. Loop: for each tenant, in a transaction with `app.tenant_id` set, SELECT unpublished rows ORDER BY created_at, id FOR UPDATE SKIP LOCKED (OUTBOX_RELAY_BATCH default 100, OUTBOX_RELAY_POLL_MS default 500, added to overview.md#6.6 per R53), build the envelope (event_id = outbox id, event_type, schema_version, tenant_id, occurred_at = created_at, payload), produce with the E5-T6 idempotent producer and wait for delivery, then set published_at; on a delivery failure increment `attempts`, stop that tenant's batch (preserving order) and back off, do not skip rows. Emit `outbox_unpublished` (count of unpublished rows) as an OTel gauge now (R55; the metrics conventions module is E9). Several relay instances may run: SKIP LOCKED prevents double claim. Out of scope: writing outbox rows from chat-api/admin (E2-E4), the ACL applier.",
+      "acceptance_criteria": [
+        "Given 5 unpublished outbox rows for tenant A in order, when the relay runs, then 5 records appear on their topics with key = tenant A, in created_at order, and published_at is set on all 5.",
+        "Given the broker is stopped, when the relay runs, then no row gets published_at, `attempts` increments, the relay stays up, and after the broker restarts all rows are published in order.",
+        "Given the process is killed after produce but before the published_at commit, when the relay restarts, then the row is produced again with the same event_id (at-least-once) and a consumer using processed_events applies it once (integration test).",
+        "Given two relay instances and 100 rows, when both run, then every row is published (sink has all 100 event_ids) and the sink dedupes any duplicates to exactly 100.",
+        "Given rows for tenants A and B, when the relay runs under a connection with app.tenant_id = A, then tenant B's rows are not read in that transaction (RLS test).",
+        "Given 3 unpublished rows, when the relay has not yet run, then the `outbox_unpublished` gauge reads 3, and 0 after all are published (test with an in-memory OTel metric reader)."
+      ],
+      "arch_refs": [
+        "overview.md#4.7",
+        "overview.md#5.2",
+        "overview.md#6.4",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T9",
+        "E1-T7",
+        "E1-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T11",
+      "title": "acl-applier worker role",
+      "summary": "Consume AclChangeRequested and apply the ACL change, version bump and cache purge.",
+      "description": "Implement role `acl-applier` on the E5-T7/T8 consumer framework: group `cg.acl-applier`, topic `acl.changes.v1`, handling `AclChangeRequested {request_id, document_id, action, new ACL}` only (other event types on the topic are skipped and recorded in processed_events). Per overview.md#4.7 and ADR-022, in one transaction as `fa_worker` with app.tenant_id from the key: load the `acl_change_requests` row (E1-T7), then if action = update_acl, UPDATE only the ACL columns (`tier_required`, `jurisdiction`) on `documents` and `chunks` for that document_id (own-tenant WITH CHECK); if action = delete, DELETE the document and its chunks; set the request `status='applied'`, `applied_at`; UPDATE `tenants.acl_version` = acl_version + 1 on the own row; DELETE from `answer_cache` the rows whose `source_document_ids` contain the document (GIN index exists); insert an outbox row `AclChangeApplied {request_id, acl_version}` on `acl.changes.v1` for the relay. Idempotent on `request_id`: a request already `applied` is a no-op. A request that cannot be applied (document missing) is set `failed` with `error_code` and no version bump. No embedding call is made. Emit `acl_apply_lag_s` = applied_at - requested_at as an OTel histogram/metric (overview 09-observability.md). Out of scope: the admin endpoint that creates the request (E6), entitlement changes.",
+      "acceptance_criteria": [
+        "Given a pending update_acl request on document D, when the applier processes the event, then all `chunks` rows of D have the new tier_required/jurisdiction, the request is `applied` with applied_at set, and `tenants.acl_version` is previous + 1 (integration test).",
+        "Given answer_cache rows citing D and rows citing another document, when applied, then only the rows citing D are deleted.",
+        "Given the Voyage client is replaced by a mock that fails on any call, when a request is applied, then the mock was called 0 times.",
+        "Given the same AclChangeRequested delivered twice, when processed, then acl_version is bumped once, the second delivery changes no row, and exactly one AclChangeApplied outbox row exists with the new acl_version.",
+        "Given a request for a missing document, when processed, then status is `failed` with a non-null error_code and acl_version is unchanged.",
+        "Given an applied request, when metrics are read, then `acl_apply_lag_s` has one sample equal to applied_at - requested_at within 1 s."
+      ],
+      "arch_refs": [
+        "overview.md#4.7",
+        "overview.md#5.2",
+        "decisions.md#adr-022",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T9",
+        "E5-T10",
+        "E1-T7",
+        "E1-T10"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T12",
+      "title": "Integration test: chat survives a Kafka outage",
+      "summary": "Prove chat requests succeed with the broker stopped and audit rows are delivered once afterwards.",
+      "description": "Epic 'done when': with the broker stopped, a chat request still succeeds and its audit outbox rows are published after the broker returns, with no loss and no duplicates in the sink. Add an integration test suite (CI job with a Kafka service container and Postgres, using docker compose services from E5-T3) that: starts the API without Kafka credentials (chat-api has none), stops the broker, issues authenticated chat requests (whose audit rows are written through the outbox insert helper owned by E4-T21), asserts HTTP 200 and outbox rows with published_at NULL, starts the broker, runs the relay, and consumes chat.audit.v1 through a test sink using the E5-T7 consumer (processed_events dedupe). Also covers G-48's premise: the audit path is outbox + Kafka, not Kong logs. Out of scope: the BigQuery sink.",
+      "acceptance_criteria": [
+        "Given the broker is stopped, when 20 chat requests are sent, then all return 200 and 20 audit outbox rows exist with published_at NULL.",
+        "Given the broker is restarted and the relay runs, when the sink is read, then it holds exactly 20 distinct event_ids (no loss) and 0 duplicates, and all outbox rows have published_at set.",
+        "Given the relay is killed mid-batch and restarted, when the sink is read, then still 20 distinct event_ids (no duplicates after dedupe).",
+        "Given the API environment, when its env vars are listed, then no KAFKA_* variable is set and requests still succeed (test asserts the absence)."
+      ],
+      "arch_refs": [
+        "overview.md#6.4",
+        "overview.md#4.7",
+        "decisions.md#adr-013",
+        "plan.md#e5"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T10",
+        "E4-T21"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T13",
+      "title": "Terraform: Confluent cluster, accounts, keys, ACLs, topics",
+      "summary": "Provision the Confluent Basic cluster, Schema Registry, topics, and per-service accounts, API keys and ACLs.",
+      "description": "In terraform/ add a confluent module (Confluent provider; pin version at implementation per stack.md). Create: the Basic cluster in us-central1 FIRST (registry region follows, D13q) and Schema Registry Essentials; the 11 topics with the partitions and retention from the E5-T2 ADR; four service accounts `fa-worker`, `etl`, `etl-public`, `eval` each with its own Kafka API key and a Schema Registry API key, secrets written to Secret Manager entries (no secret in state output); Kafka ACLs per service account, least privilege from the catalogue: fa-worker produces/consumes silver, contextualizer, indexer, acl-applier, eval-judge, bq-sink and relay topics and consumer groups `cg.*`, and writes dlq.v1; etl produces docs.bronze.v1; etl-public produces ingest.analytics.v1 only; eval produces eval.events.v1. No ACL or key for chat-api. Provide a smoke script that registers the schemas (E5-T5) against the cloud registry. Counts must stay within 50 keys, 1,000 ACLs, 1,500 partitions. Out of scope: Cloud Run wiring (E10).",
+      "acceptance_criteria": [
+        "Given `terraform validate` and `terraform plan` on the module, when run in CI, then validate passes and the plan shows 4 service accounts, 4 distinct Kafka API keys, 11 topics and 0 resources for chat-api.",
+        "Given the plan, when a policy check script (conftest or a python test over `terraform show -json`) runs, then it fails if two service accounts share one API key or if any ACL uses principal `User:*`, and passes on the real plan.",
+        "Given the plan, when counted, then partitions <= 1,500, ACLs <= 1,000, API keys <= 50 (script asserts and prints the counts).",
+        "Given the applied cluster, when the `etl-public` key tries to produce to chat.audit.v1, then the broker returns TOPIC_AUTHORIZATION_FAILED (smoke test), and `fa-worker` can produce to chat.audit.v1.",
+        "Given the applied cluster, when the schema registration script runs with the cloud registry, then 11 subjects exist."
+      ],
+      "arch_refs": [
+        "decisions.md#adr-013",
+        "overview.md#6.4",
+        "overview.md#4.7",
+        "stack.md"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T1",
+        "E5-T2",
+        "E5-T5"
+      ],
+      "size": "M",
+      "status": "todo"
+    },
+    {
+      "key": "E5-T14",
+      "title": "bq-sink worker role",
+      "summary": "Consume the analytics-bound topics and write the fa_analytics BigQuery tables idempotently on event id.",
+      "description": "Implement role `bq-sink` (overview.md#4.7: 'consumes audit, usage, eval, ingest and ACL topics; writes BigQuery with event-id dedupe'; ADR-013; storage in overview.md#5.8). Group `cg.bq-sink` on the topics whose catalogue row (overview.md#6.4) lists it as consumer: acl.changes.v1 (all event types), chat.audit.v1, chat.usage.v1, eval.events.v1; the chunks.indexed.v1 and ingest.analytics.v1 rows go to `ingest_events` through the mapping owned by E6-T18 (plug-in point only here). Built on the E5-T7/T8 consumer framework with the PUBLIC exemption flag on (PUBLIC analytics events are accepted; envelope.tenant_id must still equal the key). Write each event as a row to the fa_analytics tables created by the dataset DDL in E6-T17 (do not create datasets or tables here), using BigQuery insert with `insertId`/MERGE on `event_id` so redelivery does not add a row; respect BQ_DATASET and BQ_MAX_BYTES_BILLED. Map event_type to table by a registry in code. Failed writes retry then go to dlq.v1 via E5-T8. Out of scope: the ingest_events mapping (E6-T18), dbt models, dataset DDL.",
+      "acceptance_criteria": [
+        "Given one event of each consumed event type and a BigQuery emulator or fake client, when consumed, then exactly one row per event lands in the table mapped for its event_type (unit/integration test test_bq_sink_routes_event_types).",
+        "Given the same event_id delivered twice, when consumed, then the target table holds one row for it (test_bq_sink_dedupes_event_id).",
+        "Given a PUBLIC-tenant ingest.analytics.v1 event, when consumed, then it is written and not sent to the DLQ; given a PUBLIC event on chat.audit.v1, then the envelope check still applies and mismatching tenant/key goes to dlq.v1 (test_bq_sink_public_exemption).",
+        "Given the BigQuery client raises on every write, when an event is consumed, then after KAFKA_CONSUMER_MAX_ATTEMPTS attempts one dlq.v1 record exists and the offset is committed (test_bq_sink_failure_dlq).",
+        "Given WORKER_ROLES=`bq-sink`, when the worker boots, then the role starts (the not-implemented stub from E5-T9 is replaced; test_worker_boots_bq_sink)."
+      ],
+      "arch_refs": [
+        "overview.md#4.7",
+        "overview.md#5.8",
+        "overview.md#6.4",
+        "decisions.md#adr-013"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E5-T7",
+        "E5-T8",
+        "E5-T9",
+        "E6-T17"
+      ],
+      "size": "M",
+      "status": "todo"
+    }
+  ],
+  "questions": []
+}

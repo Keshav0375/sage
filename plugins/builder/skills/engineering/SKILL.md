@@ -40,7 +40,7 @@ not say. A violation is a finding like any other.
 - Check authorization on every request path. Deny by default. Respect the tenant and role rules
   of the arch (for example, row-level security).
 - Never log personal or financial data in clear text. Mask it.
-- Pin new dependencies to an exact version, and only add a dependency that `stack.md` lists.
+- Pin new dependencies to an exact version, and only add a dependency that the tech stack file (`arch/deep-dive/<nn>-tech-stack.md`) lists.
 
 ## 5. Testing protocol
 - Tests first: each acceptance criterion has a named test that fails before the change.

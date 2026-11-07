@@ -32,7 +32,7 @@ test('the card lists repos and marks missing ones', () => {
   expect(card).toContain('web: /Users/k/Projects/shop-web  (MISSING on disk)')
 })
 
-test('STATE.md highlights keep only open decisions and blockers', () => {
+test('state.md highlights keep only open decisions and blockers', () => {
   const state = '# S\n## Now\nworking\n## Open decisions\n- pick db\n## Done\n- x\n## Blockers\n- none'
   expect(stateHighlights(state)).toEqual(['## Open decisions', '- pick db', '## Blockers', '- none'])
 })
@@ -70,7 +70,7 @@ test('tracker summary shows epic progress and ready tickets', () => {
     }],
   })
   expect(trackerSummary(tracker)).toEqual([
-    'Tracker:',
+    'Epics:',
     'GitHub project: https://github.com/users/k/projects/3',
     '- E1 Auth [1/3 done]',
     'Ready: E1-T2 Login API',

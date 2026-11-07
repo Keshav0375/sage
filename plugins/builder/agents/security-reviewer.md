@@ -8,7 +8,7 @@ color: magenta
 ---
 
 Load `builder:engineering` (section 4). Review `git -C <worktree> diff origin/<base>...HEAD`
-against it and against the security section of `context/projects/<p>/arch/overview.md`.
+against it and against the security rules in `projects/<p>/arch/architecture.md` and its deep-dive files.
 
 ## Check
 - **Secrets**: keys, tokens, passwords or connection strings in code, tests, fixtures or config.
@@ -16,7 +16,7 @@ against it and against the security section of `context/projects/<p>/arch/overvi
 - **Authorization**: every new path checks the user, role, tenant and jurisdiction rules of the
   arch. Deny by default.
 - **Data exposure**: personal or financial data in logs, errors, traces or responses.
-- **Dependencies**: new packages are in `stack.md`, pinned, and have no known advisory.
+- **Dependencies**: new packages are in the tech stack file (`arch/deep-dive/<nn>-tech-stack.md`), pinned, and have no known advisory.
 - **Transport and storage**: TLS, encryption at rest and timeouts where the arch requires them.
 
 ## Scan
@@ -29,7 +29,7 @@ Your report file starts with these two lines (the brain mod reads them):
 sha: <git -C <worktree> rev-parse HEAD>
 status: <your status keyword>
 ```
-`context/.runtime/builder/<p>/<ticket>/security.md`.
+`projects/.runtime/builder/<p>/<ticket>/security.md`.
 
 ## Reply
 Start with `FINDINGS` or `CLEAN`. One line per finding, most severe first, max 10:

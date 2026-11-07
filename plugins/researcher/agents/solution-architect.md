@@ -33,7 +33,7 @@ Start with `OPTIONS`. Then: lens, assumptions, diagram, components, key choices 
 estimates, failure modes, cost, risks, what it makes harder later.
 
 ## Report to a file (token rule)
-Write your full report to the output path the orchestrator gave you (under `context/.runtime/`;
-if none, `context/.runtime/research/<p>/<your-agent-name>-<topic>.md`). Your reply is the status
+Write your full report to the output path the orchestrator gave you (under `projects/<p>/library/research/<round>/`;
+if none, `projects/<p>/library/research/<round>/<your-agent-name>-<topic>.md`). Your reply is the status
 keyword, the path, and a summary of at most 8 lines with the load-bearing findings. The
 orchestrator reads the file only when it needs the details.

@@ -13,7 +13,7 @@ description: The orchestration protocol for the researcher and builder agents �
 | 1 | Mechanical agents | Haiku | web-scout, brancher, runner, publisher, Explore. |
 | 2 | Leaves (spawned by a depth-1 agent) | Haiku, forced | `researcher:page-reader` (read one source, quote), `Explore` (find code). Nothing else may be spawned at depth 2; leaves spawn nothing. |
 
-The tier lives in each agent's frontmatter and in `context/routing.json`; the brain mod enforces depth 2.
+The tier lives in each agent's frontmatter and in `projects/routing.json`; the brain mod enforces depth 2.
 Move an agent to a cheaper tier only when its output is checked by a higher-tier agent (a skeptic,
 verifier, or the orchestrator). Never put a step that decides or declares on Haiku.
 
@@ -40,31 +40,31 @@ verifier, or the orchestrator). Never put a step that decides or declares on Hai
 - Loop until the verifier says `GREEN`, or stop after three loops and report.
 
 ## Token rules
-1. **Files, not replies.** Every agent writes its full output to a file under `context/.runtime/`
+1. **Files, not replies.** Every agent writes its full output to a file (research output in `projects/<p>/library/research/<round>/`, transient scratch under `projects/.runtime/`)
    and replies with the status keyword, the path and ≤ 8 lines. The orchestrator reads a file only
    for the part it needs (Grep, Read with offset/limit). Never paste an agent's long report back
    into another prompt: pass the path.
 2. **Slices, not whole documents.** Give each agent the exact sections it needs
-   (`overview.md §5.3-§5.4, ADR-004`), not "read the arch". Agents read by heading (Grep `^## `,
-   then Read with offset/limit). Split any binding doc over ~400 lines into section files.
+   (`deep-dive/05-data-model.md#tables`, `decision-logs.md#adr-004`), not "read the arch". Agents read by heading (Grep `^## `,
+   then Read with offset/limit). Keep each deep-dive file under 250 lines.
 3. **Resume, do not respawn.** A follow-up for an agent that already holds the context goes by
    SendMessage to that agent, not to a new one.
-4. **Fresh session per stage.** Progress lives in files (`arch/*`, `tracker.json`, `STATE.md`,
-   `context/.runtime/`). Between big stages (research → architecture → plan → build), update
-   `STATE.md`, then let Keshav `/clear` or start a new session; the next stage resumes from files.
+4. **Fresh session per stage.** Progress lives in files (`arch/*`, `epic/`, `state.md`,
+   `projects/.runtime/`). Between big stages (research → architecture → plan → build), update
+   `state.md`, then let Keshav `/clear` or start a new session; the next stage resumes from files.
    The orchestrator's own context is the most expensive context in the system.
 5. **Write by section.** Writers create or replace a whole section file in one write; they do not
    make many small edits to one large file (each call re-reads it).
 6. **Hard stop per stage.** The orchestrator finishes ONE stage per session: when the stage's
-   files are written, it updates `STATE.md` with the exact resume command and stops, even if Keshav
+   files are written, it updates `state.md` with the exact resume command and stops, even if Keshav
    says "continue". The brain mod's `budget-guard` block (main-loop context ≥ 50% or usage window
    ≥ 75%) is an order: save progress and hand off, or drop to one agent at a time.
 7. **Write early.** Every agent writes its output file in its first turns and extends it, so a
    usage-limit stop loses nothing; a stopped agent is resumed by SendMessage, never respawned.
-8. **Tiers are enforced.** `context/routing.json` `tiers` sets model and effort per agent type and
+8. **Tiers are enforced.** `projects/routing.json` `tiers` sets model and effort per agent type and
    the brain mod applies them on every model request. Do not pass `model` on an Agent call unless
    you mean to override the tier for that one run.
-9. **Measure.** After each stage, run `/observe:traces` and note tokens by agent type in `STATE.md`.
+9. **Measure.** After each stage, run `/observe:traces` and note tokens by agent type in `state.md`.
 
 ## How to spawn
 - Give each subagent everything it needs in the prompt: the goal, the input paths and sections,
@@ -74,7 +74,7 @@ verifier, or the orchestrator). Never put a step that decides or declares on Hai
 
 ## The two agents
 - **researcher** (`/researcher:run`): research → architecture with diagrams in
-  `context/projects/<p>/arch/` → validation → epics and tickets in `tracker.json` → GitHub Project.
-- **builder** (`/builder:build`): one epic from `tracker.json` → fetch → branch → edit →
+  `projects/<p>/arch/` → validation → epics and ticket files in `projects/<p>/epic/` → GitHub Project.
+- **builder** (`/builder:build`): one epic from its ticket files → fetch → branch → edit →
   code review, security review, tests and arch check in parallel → verify → loop → PR → CI
   green. Keshav merges.

@@ -1,0 +1,623 @@
+{
+ "epic": "E10",
+ "tickets": [
+  {
+   "key": "E10-T1",
+   "title": "Spike: measure Cloud SQL start time and stopped billing",
+   "summary": "Measure stopped-to-RUNNABLE time and confirm a stopped instance bills storage only, recorded as an ADR.",
+   "description": "Overview section 10 item 6: the stopped-to-RUNNABLE time of Cloud SQL is undocumented; measure it. Also confirm stopped-instance billing is storage only (ADR-020: 'The idle estimate assumes a stopped instance bills storage only; unverified').\n\nBuild: scripts/spikes/cloudsql_start_time.sh that, against a throwaway Cloud SQL PostgreSQL 16 Enterprise 2 vCPU / 8 GiB instance created with gcloud (not Terraform, same size as ADR-020, with ~10 GB of data and private IP via PSC if the E2 VPC exists, otherwise public IP for the throwaway only), runs N=5 cycles of: patch --activation-policy=NEVER, wait STOPPED, patch --activation-policy=ALWAYS, record seconds until state RUNNABLE and until a psql SELECT 1 succeeds. Then leave the instance stopped for >= 24 h and read the Cloud Billing export / SKU lines for that instance to confirm only storage (and reserved IP, if any) is billed. Delete the throwaway instance.\n\nOutput: docs/adr/cloud-sql-start-time.md with the measured table (per cycle: seconds to RUNNABLE, seconds to first query), min/median/max, the billing finding, and a recommendation for the demo-up wait timeout (used by E10-T18). Context for the researcher: the file is copied into decisions.md later.\nOut of scope: the demo-up script itself (E10-T17), Terraform for Cloud SQL (E10-T6).",
+   "acceptance_criteria": [
+    "docs/adr/cloud-sql-start-time.md exists and contains a table with 5 measured cycles (seconds to RUNNABLE and to first SELECT 1), plus min, median and max; a file with fewer than 5 rows fails the check `grep -c '^| [0-9]' docs/adr/cloud-sql-start-time.md` >= 5",
+    "The ADR states, with a billing-export SKU list or screenshot reference, whether a stopped instance bills storage only; if any other SKU is billed the ADR gives its monthly amount and the idle estimate delta against the 40-55 USD range",
+    "The ADR gives a recommended demo-up wait timeout equal to the max measured start time plus a stated margin",
+    "After the spike `gcloud sql instances list` shows no throwaway instance (command output attached in the PR)"
+   ],
+   "arch_refs": [
+    "overview.md#10 item 6",
+    "ADR-020",
+    "overview.md#2.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T2",
+   "title": "Spike: worker pool scale to 0 and Terraform support",
+   "summary": "Verify a Cloud Run worker pool can be set to 0 instances and managed by Terraform with ignore_changes, as an ADR.",
+   "description": "ADR-019 and ADR-020 list 'worker pool scale to 0 and its Terraform support' as unverified. Verify with a minimal worker pool using the chosen Google provider version from stack.md.\n\nBuild: a throwaway Terraform config under scripts/spikes/worker_pool/ that creates a Cloud Run worker pool (google_cloud_run_v2_worker_pool) from a hello-world image with manual_instance_count = 1 and lifecycle.ignore_changes = [scaling[0].manual_instance_count] (check the real attribute path), then: (a) set count to 0 with `gcloud run worker-pools update --scaling` or the documented equivalent and confirm 0 instances run and no billing for idle; (b) run `terraform plan` and confirm no diff; (c) scale back to 2 and plan again; (d) record the exact gcloud command the demo scripts must use.\n\nOutput: docs/adr/worker-pool-scale-to-zero.md with commands, provider version, plan outputs, and the result. If scale to 0 or the Terraform resource is not supported, the ADR states the fallback (for example min instance count semantics or deleting/recreating the pool) and that the fallback must be raised as a question before E10-T9.\nOut of scope: the real fa-worker pool (E10-T9).",
+   "acceptance_criteria": [
+    "docs/adr/worker-pool-scale-to-zero.md records the provider version and the exact gcloud command that sets instance count to 0 and to N",
+    "After scaling to 0 `gcloud run worker-pools describe` shows instance count 0, and `terraform plan -detailed-exitcode` returns exit code 0 (no drift) with ignore_changes set; both outputs are in the ADR",
+    "After scaling to 2 `terraform plan -detailed-exitcode` still returns 0",
+    "The throwaway worker pool and its Terraform state are destroyed; `gcloud run worker-pools list` is empty"
+   ],
+   "arch_refs": [
+    "ADR-019",
+    "ADR-020",
+    "overview.md#4.12"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T3",
+   "title": "Spike: confirm ALB and Cloud Armor idle prices and Confluent Basic cost",
+   "summary": "Confirm the unverified idle cost items (ALB forwarding rule, Cloud Armor policy, Confluent Basic) against pricing and billing, as an ADR.",
+   "description": "Overview section 2.5 and section 10 item 9: ALB 18.25 USD/month is a list-price figure, Cloud Armor ~6-10 USD and Confluent Basic ~0-5 USD are UNVERIFIED. ADR-012 trigger to revisit: 'Cloud Armor cost verification fails the idle budget'.\n\nBuild: docs/adr/idle-cost-confirmation.md containing, for us-central1: the external Application Load Balancer forwarding-rule hourly SKU x 730 h, the Cloud Armor policy and rule fees (count the actual rules in terraform/edge/ from E2) and per-request charge at the 2,000-chat demo month, the Confluent Basic cluster hourly/base cost plus ingress/egress/storage for the demo month, and Cloud SQL stopped storage (from E10-T1). Take SKUs from the Cloud Billing catalog (`gcloud billing` / Cloud Billing Catalog API) and the Confluent pricing page, and where the E2 edge and E5 Confluent resources already exist, cross-check against the real billing export lines of the last full day. Sum to an idle total.\n\nOut of scope: changing the architecture; if the total exceeds 55 USD/month the ADR says so and the finding goes to the researcher.",
+   "acceptance_criteria": [
+    "docs/adr/idle-cost-confirmation.md lists each idle line item with SKU id or pricing URL, unit price, quantity and monthly amount for ALB, Cloud Armor, Confluent Basic, Cloud SQL storage, Artifact Registry/Secrets/GCS/logs",
+    "The ADR gives a summed idle monthly total and states pass or fail against the 40-55 USD idle range of overview 2.5; a missing total or missing verdict fails review",
+    "Each previously UNVERIFIED value (Cloud Armor, Confluent Basic) is replaced by a number with its source, or is marked still unverified with the reason"
+   ],
+   "arch_refs": [
+    "overview.md#2.5",
+    "overview.md#10 item 9",
+    "ADR-012"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T4",
+   "title": "Terraform v2 root: state, profiles, Artifact Registry, per-service SAs",
+   "summary": "Create the Terraform v2 root module with per-env state, demo/prod profile variables, Artifact Registry and one least-privilege service account per service and job.",
+   "description": "Implements overview 4.12 ('Terraform ... owns every resource in this view ... with state per env prefix') and 8.3 ('Service identity: one service account per service ... least privilege; no project-wide secretAccessor (G-50)'). E0-T7 has already removed the MVP LiteLLM/Kong resources; E2 owns terraform/edge/ (VPC, Private Google Access, private run.app zone, fa-gateway, ALB, Cloud Armor, log sink). Reuse those modules; do not recreate them.\n\nBuild under terraform/: backend config with a GCS state bucket and prefix per env (demo, prod); variables.tf with `env_profile` in {demo, prod} that selects the Cloud SQL HA flag and min instances (consumed by later tickets); Artifact Registry repo (images referenced by digest only; a variable `image_digest` with no default and a validation that rejects values not matching ^sha256:[a-f0-9]{64}$ so tags and `latest` are refused); service accounts: gateway (E2 may already create it, reuse), chat-api, worker, and one per job (migrate, maintenance, etl, etl-public, dbt, eval, redteam, demo-prewarm, demo-ttl); required API enablement. IAM bindings are per resource (for example secretAccessor on individual secrets in E10-T7/T9), never project-level secretAccessor.\n\nOut of scope: the resources that use the SAs (later tickets).",
+   "acceptance_criteria": [
+    "`terraform init` with the demo and prod backend prefixes and `terraform validate` pass in CI (named job terraform-validate)",
+    "`terraform plan -var image_digest=latest` fails with the validation error; with a valid sha256 digest it passes",
+    "A script check (`scripts/check_iam.sh` or a terraform test) fails if any google_project_iam_* resource or member grants roles/secretmanager.secretAccessor at project level; it passes on the tree",
+    "`terraform plan` lists one service account for each of chat-api, worker and the 9 jobs and no `google_project_iam_member` for secretAccessor"
+   ],
+   "arch_refs": [
+    "overview.md#4.12",
+    "overview.md#8.3",
+    "ADR-019",
+    "ADR-021"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E0-T7",
+    "E2"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T5",
+   "title": "Add org policy check for requireInvokerIam on fa-gateway",
+   "summary": "Verify the org policy allows the invoker-check exception on fa-gateway only, and fail loudly if not.",
+   "description": "8.3: `fa-gateway`: 'invoker check disabled (the only service where it is) ... E10 checks the org policy constraints/run.managed.requireInvokerIam.' ADR-012: 'the invoker-check exception on fa-gateway depends on the org policy allowing it (checked in E10)'.\n\nBuild scripts/check_org_policy.sh: runs `gcloud org-policies describe run.managed.requireInvokerIam --project=$PROJECT --effective` (and the folder/org if the project has none), parses the effective policy, and exits non-zero with a message that says which scope enforces it if enforcement is TRUE for the project. Add it as a pre-apply step in the Terraform apply workflow (E10-T15) and as a precondition `check` block or documented make target `make check-org-policy`.\nIf the project is not in an organization (no policy possible) the script reports 'no org policy; invoker check can be disabled' and exits 0.\n\nOut of scope: changing the org policy; if enforced, record it in questions of the PR and stop.",
+   "acceptance_criteria": [
+    "With a stubbed gcloud returning enforce: true, `scripts/check_org_policy.sh` exits 1 and prints the scope (unit test in tests/scripts or bats)",
+    "With a stubbed gcloud returning enforce: false or a not-found for a project without an organization, it exits 0 (unit test)",
+    "`make check-org-policy` against the real project exits 0, output attached to the PR"
+   ],
+   "arch_refs": [
+    "overview.md#8.3",
+    "ADR-012"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T6",
+   "title": "Terraform Cloud SQL (PG16, PSC, no public IP, profile HA flag)",
+   "summary": "Provision Cloud SQL PostgreSQL 16 via PSC with private-only access, the connection limit flag and ignore_changes on activation_policy.",
+   "description": "Implements 4.9 and 8.3 ('Cloud SQL: Private IP via PSC; no public IPv4 (fixes G-26)') and ADR-020 ('Cloud SQL Enterprise 2 vCPU / 8 GiB ~101 USD while running (HA ~202)'; 'HA is a Terraform flag for load tests'). Read stack.md for the exact PostgreSQL version (16) and the pgvector 0.8.5 note: the extension is created by the migrate job (E1), not here.\n\nBuild terraform/cloud_sql.tf (replace the MVP file): google_sql_database_instance, database_version POSTGRES_16, edition ENTERPRISE, tier for 2 vCPU / 8 GiB (db-custom-2-8192), ip_configuration with ipv4_enabled = false and psc_config enabled with allowed consumer project, PSC endpoint (forwarding rule + address) in the E2 VPC subnet and a DNS record or hostname output used for DB_HOST; database_flags max_connections=400; availability_type = REGIONAL when env_profile = prod else ZONAL; deletion_protection true in prod; lifecycle { ignore_changes = [settings[0].activation_policy] }; initial activation_policy ALWAYS at first apply (the demo scripts flip it afterwards). Outputs: instance name, PSC endpoint address. Backups/PITR: see questions.\n\nOut of scope: roles and databases (E10-T7).",
+   "acceptance_criteria": [
+    "`terraform plan` (checked by a policy test, conftest or terraform test) fails if ip_configuration.ipv4_enabled is true; it passes on the tree",
+    "Plan output for env_profile=demo shows availability_type ZONAL and for prod shows REGIONAL (two terraform test cases)",
+    "After applying, `gcloud sql instances describe` shows databaseFlags max_connections=400 and no PUBLIC address in ipAddresses",
+    "After `gcloud sql instances patch --activation-policy=NEVER`, `terraform plan -detailed-exitcode` returns 0 (ignore_changes works)"
+   ],
+   "arch_refs": [
+    "overview.md#4.9",
+    "overview.md#8.3",
+    "ADR-020",
+    "ADR-024"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4",
+    "E2"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T7",
+   "title": "Create DB roles, passwords and the dagster database in Cloud SQL",
+   "summary": "Create every runtime login role with a Secret Manager password and the dagster database in Cloud SQL without secret values in Terraform state.",
+   "description": "Boundary: E1-T3 bootstraps roles and the dagster database for local/CI only; E10 owns creating the roles, passwords and the dagster database in Cloud SQL. Overview 8.4: Secret Manager holds 'DB password per role'; 'Terraform never stores secret values in state in plaintext (G-27)'. 4.8 job table gives the roles: fa_owner, fa_app, fa_worker, fa_maint, fa_etl, fa_etl_public, fa_dbt, fa_eval, and fa_dagster (owns database `dagster`, no access to app schemas; config keys DAGSTER_PG_DB=dagster, DAGSTER_PG_USER=fa_dagster).\n\nBuild: (1) Terraform creates empty google_secret_manager_secret resources (no versions) `db-password-<role>` for each role, with secretAccessor granted per secret only to the SA that uses that role. (2) scripts/db_bootstrap.py (run as a Cloud Run job `db-bootstrap` in the VPC, using the Cloud SQL built-in admin user whose password is created/rotated by the script and stored in Secret Manager version, never in Terraform) generates a random password per role, writes a new secret version, then runs the E1-T3 role SQL (reuse the same SQL file, do not fork it) with those passwords and creates database dagster owned by fa_dagster. Idempotent: re-running does not rotate existing passwords unless --rotate is given.\n\nOut of scope: grants on app tables (migrate job, E1), Kafka keys (E5-T13).",
+   "acceptance_criteria": [
+    "`grep -r 'password' terraform.tfstate`-style check: after apply, `terraform show -json | jq` finds no google_secret_manager_secret_version and no random_password resource (test script fails if any is found)",
+    "Integration test against a Postgres container: running db_bootstrap twice leaves password secret versions unchanged on the second run (mock Secret Manager client records one version per role) and creates all 9 roles plus database dagster owned by fa_dagster",
+    "Against the real instance, `psql` as fa_dagster to database dagster succeeds and `\\dn` on the app database as fa_dagster is denied (connect refused or no schema usage); output attached",
+    "Each of the 9 secrets is readable only by its owning SA: `gcloud secrets get-iam-policy` for each shows exactly one secretAccessor member (test script)"
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "overview.md#8.4",
+    "overview.md#6.6 DAGSTER_PG_*, DB_*",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T6",
+    "E1-T3"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T8",
+   "title": "Terraform chat-api Cloud Run service on the VPC",
+   "summary": "Deploy chat-api as an internal-ingress Cloud Run service with Direct VPC egress, startup probe and invoker restricted to the Kong SA.",
+   "description": "Implements 4.5, 8.3 and ADR-019: Cloud Run service `chat-api`, ingress internal, `run.invoker` only for the Kong (fa-gateway) service account via X-Serverless-Authorization, timeout 3600, explicit concurrency, one Uvicorn process per container, Direct VPC egress `private-ranges-only` with a startup probe (ADR-024), secrets mounted per service account from Secret Manager, no secret defaults in code (missing config fails boot). Config keys from 6.6: ENV_PROFILE, DB_HOST (PSC endpoint), DB_NAME, DB_USER=fa_app, DB_PASSWORD (secret), DB_POOL_SIZE, DB_STATEMENT_TIMEOUT_MS, IDP_PROJECT_ID, ANTHROPIC_BASE_URL, ANTHROPIC_API_KEY / KONG_EGRESS_KEY, VOYAGE_API_KEY, MODEL_ARMOR_*, LANGFUSE_*, OTEL_*. chat-api has no Kafka client, so no Kafka variables.\n\nBuild terraform/chat_api.tf: google_cloud_run_v2_service from the image digest (variable from E10-T4), min_instance_count 0 in demo and >=1 in prod, max_instance_count variable (default per the pool budget in E10-T20), concurrency variable, startup_probe on the health path from E1/E4, vpc_access with network_interfaces and egress PRIVATE_RANGES_ONLY, google_cloud_run_v2_service_iam_member run.invoker only for the gateway SA, no allUsers. lifecycle.ignore_changes on min_instance_count. Also confirm the fa-gateway module from E2 has ignore_changes on min_instance_count and add it there only if missing.\n\nOut of scope: fa-gateway definition (E2).",
+   "acceptance_criteria": [
+    "`terraform plan` has chat-api with ingress INGRESS_TRAFFIC_INTERNAL_ONLY, egress PRIVATE_RANGES_ONLY and a startup_probe block (terraform test asserting the three attributes)",
+    "`gcloud run services get-iam-policy chat-api` lists exactly one binding: roles/run.invoker for the gateway SA; no allUsers or allAuthenticatedUsers (test script)",
+    "A request with no ID token from outside the VPC to the chat-api run.app URL returns 403 or 404 (curl in the smoke script, status asserted)",
+    "After `gcloud run services update chat-api --min-instances=1`, `terraform plan -detailed-exitcode` returns 0"
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#8.3",
+    "overview.md#4.12",
+    "ADR-019",
+    "ADR-024"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4",
+    "E10-T7",
+    "E2",
+    "E4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T9",
+   "title": "Terraform fa-worker Cloud Run worker pool",
+   "summary": "Deploy the fa-worker worker pool with its roles, Confluent secrets and ignore_changes on manual_instance_count.",
+   "description": "Implements 4.7 and ADR-019: Cloud Run worker pool `fa-worker`, entrypoint `worker`, `WORKER_ROLES` = outbox-relay,silver,contextualizer,indexer,acl-applier,eval-judge,bq-sink, DB login role `fa_worker`, one Confluent service account and API key per service (KAFKA_BOOTSTRAP, KAFKA_API_KEY, KAFKA_API_SECRET, SCHEMA_REGISTRY_URL, SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET read from Secret Manager secrets created by E5-T13 for fa-worker), GCS_DATA_BUCKET, BQ_DATASET, BQ_MAX_BYTES_BILLED, VOYAGE_API_KEY, ANTHROPIC_API_KEY or Kong URL, DB_POOL_SIZE. Instance count 0 when the demo is down; worker pool autoscaling is manual. Use the command and resource attributes recorded by E10-T2 (docs/adr/worker-pool-scale-to-zero.md).\n\nBuild terraform/worker_pool.tf with Direct VPC egress private-ranges-only, startup probe where supported, manual_instance_count = 0 initially in demo, lifecycle.ignore_changes = [the manual instance count attribute found in E10-T2]. Per-secret accessor grants for fa_worker only.\n\nOut of scope: Confluent resources (E5-T13).",
+   "acceptance_criteria": [
+    "`terraform plan` shows the worker pool with WORKER_ROLES containing exactly the 7 roles and egress PRIVATE_RANGES_ONLY (terraform test)",
+    "After `gcloud run worker-pools update ... --scaling=2` (command from E10-T2), `terraform plan -detailed-exitcode` returns 0",
+    "With count 1, a log query shows the worker booted and logs each of the 7 roles started (command and output attached); with a missing required secret the revision fails to start with a config error (negative test)",
+    "No project-level secretAccessor was added; the worker SA appears only on its own per-secret bindings (check_iam.sh from E10-T4 passes)"
+   ],
+   "arch_refs": [
+    "overview.md#4.7",
+    "overview.md#4.12",
+    "ADR-019",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T2",
+    "E10-T4",
+    "E10-T7",
+    "E5-T13",
+    "E10-T6"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T10",
+   "title": "Terraform Cloud Run jobs with per-job SAs and DB roles",
+   "summary": "Define the nine Cloud Run jobs on the single image with per-job SA, DB role and VPC egress.",
+   "description": "Implements 4.8 job table and ADR-019. One image, `jobs` entrypoint. Jobs and DB roles: migrate=fa_owner, maintenance=fa_maint, etl=fa_etl (plus fa_dagster for Dagster storage via DAGSTER_PG_*), etl-public=fa_etl_public, dbt=fa_dbt, eval=fa_eval, redteam=fa_eval, demo-prewarm=none (no DB), demo-ttl=fa_maint. Each job: its own SA (E10-T4), Direct VPC egress private-ranges-only, startup probe where applicable, only the secrets it needs (DB password of its role; Kafka keys for etl, etl-public, eval, per config 6.6 one key per service fa-worker, etl, etl-public, eval). EVAL_TENANT_ID and PUBLIC_TENANT_ID passed to migrate and eval jobs. demo-ttl SA needs Cloud Run admin rights (4.8) limited to this project's services, worker pool and Cloud SQL instance patch, and Cloud Scheduler pause/resume, and Memorystore delete for the demo instance; nothing else. The job code (maintenance E1-T12; others in their epics) is not written here, only the job definitions with args placeholders from those epics.\n\nBuild terraform/jobs.tf with a for_each over a local map of job name -> {sa, db_role, args, secrets}. Jobs reference the image digest. Set DEMO_TTL_HOURS (decide value 4 as default variable, see questions) and OUTBOX_DRAIN_TIMEOUT_MIN=10 as env on demo-ttl.\n\nOut of scope: Scheduler triggers (E10-T12).",
+   "acceptance_criteria": [
+    "`terraform plan` lists exactly 9 google_cloud_run_v2_job resources named migrate, maintenance, etl, etl-public, dbt, eval, redteam, demo-prewarm, demo-ttl (terraform test counts and names)",
+    "A test script parses the plan JSON and asserts each job's DB_USER matches the table in 4.8 (for example etl-public -> fa_etl_public) and that demo-prewarm has no DB_* variables",
+    "`gcloud run jobs execute migrate --wait` (after the E1 migration exists) exits 0 under the fa_owner role against the real instance; output attached",
+    "demo-ttl SA role list is printed by `gcloud projects get-iam-policy --filter` and contains no roles/owner or roles/editor (test script)"
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "overview.md#6.6",
+    "ADR-019",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4",
+    "E10-T7",
+    "E10-T6"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T11",
+   "title": "Terraform SPA bucket and ALB backend bucket wiring",
+   "summary": "Create the private SPA GCS bucket and attach it to the E2 ALB url map as the /* backend with CDN.",
+   "description": "4.12/ADR-012: '`/*` to a GCS backend bucket (SPA, CDN), `/v1/*` to the gateway'. E2 owns the ALB, url map and Cloud Armor; E10 owns the SPA bucket (4.12 lists GCS buckets spa, data). Check what terraform/edge/ exposes (expected input for a backend bucket); if E2 already declares the backend bucket resource, only add the bucket and reference it.\n\nBuild terraform/spa_bucket.tf: bucket `<project>-spa` with uniform bucket-level access, public access prevention not enforced only as needed for the CDN: serve through the backend bucket (google_compute_backend_bucket enable_cdn = true) with no allUsers on the bucket itself (use the load balancer service agent or the documented backend bucket access pattern; if the pattern requires allUsers objectViewer on the SPA bucket, put that into questions rather than adding it). The data bucket (GCS_DATA_BUCKET) is owned by E6/E5 or the MVP cloud_storage.tf; do not duplicate it.\nAlso add the deploy-pipeline step contract: the SPA is uploaded with `gcloud storage rsync` by E10-T16.\n\nOut of scope: the SPA build (E8).",
+   "acceptance_criteria": [
+    "`terraform plan` shows the backend bucket attached to the url map default service with enable_cdn true (terraform test)",
+    "`curl -s -o /dev/null -w '%{http_code}' https://<alb-host>/` returns 200 for index.html after a manual upload of a placeholder file; the same object URL directly on storage.googleapis.com returns 403",
+    "No `allUsers` or `allAuthenticatedUsers` member in `gcloud storage buckets get-iam-policy gs://<project>-spa` (test script), or the exception is documented under questions"
+   ],
+   "arch_refs": [
+    "overview.md#4.4",
+    "overview.md#4.12",
+    "ADR-012"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4",
+    "E2"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T12",
+   "title": "Terraform Cloud Scheduler triggers and paused-state drift",
+   "summary": "Create the seven Scheduler triggers for the jobs with ignore_changes so demo scripts can pause and resume them.",
+   "description": "4.12: 'Cloud Scheduler: triggers etl, etl-public, dbt, maintenance, eval, redteam and demo-ttl. demo-down pauses all except demo-ttl.' 4.8: maintenance runs hourly while the demo is up; demo-ttl hourly. Schedule expressions for etl, etl-public, dbt, eval, redteam are not given in the arch (see questions); use variables with the defaults documented in the PR and keep the paused state controlled by the scripts.\n\nBuild terraform/scheduler.tf: google_cloud_scheduler_job for each of the 7, each calling the Cloud Run Admin API run endpoint for its job with an OAuth token of a dedicated scheduler SA that has run.invoker/run.jobs.run on those jobs only. maintenance cron `0 * * * *`, demo-ttl `0 * * * *`. Initial state: all paused except demo-ttl. lifecycle.ignore_changes covering the pause state attribute so `terraform apply` does not fight the scripts (see questions: the arch lists activation_policy, min_instance_count and manual_instance_count only; this ticket adds the Scheduler state because the demo scripts change it).\n\nOut of scope: job code and the pause/resume calls themselves (E10-T18, E10-T17).",
+   "acceptance_criteria": [
+    "`terraform plan` lists 7 google_cloud_scheduler_job resources named after the jobs; demo-ttl and maintenance have schedule `0 * * * *` (terraform test)",
+    "After `gcloud scheduler jobs resume etl` then `terraform plan -detailed-exitcode` returns 0",
+    "Triggering `gcloud scheduler jobs run demo-ttl` starts an execution of the demo-ttl Cloud Run job (execution count +1 in `gcloud run jobs executions list`)"
+   ],
+   "arch_refs": [
+    "overview.md#4.12",
+    "overview.md#4.8",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T10"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T13",
+   "title": "Terraform Identity Platform tenant provisioning",
+   "summary": "Provision Identity Platform and one IdP tenant per firm from Terraform with email/password sign-in.",
+   "description": "4.13 and 4.12: Identity Platform multi-tenancy, one IdP tenant per firm, billing enabled for > 2 tenants, email/password free to 50k MAU; overview 4.8 migrate row: 'the IdP tenant itself is provisioned by an onboarding script in E1 and Terraform in E10'. ADR-010 (tenant-aware verification, IDP_PROJECT_ID used for aud/iss).\n\nBuild terraform/identity.tf: google_identity_platform_config with multi_tenant { allow_tenants = true }, authorized domains for the ALB host, and google_identity_platform_tenant for each entry in a variable `idp_tenants` (map slug -> display name; at minimum the demo firms and the eval tenant slug) with allow_password_signup = true. Output the tenant IDs as a map so the migrate job `--onboard-tenant <slug>` mapping can read them (do not change the E1 script). Do not create users.\n\nOut of scope: the E1 onboarding script, the SPA sign-in UI (E8).",
+   "acceptance_criteria": [
+    "`terraform plan` creates one google_identity_platform_tenant per entry of idp_tenants (terraform test with a 3-entry map expects 3 resources)",
+    "`gcloud identity-platform tenants list` (or the REST list) shows each tenant with email/password sign-in enabled after apply; output attached",
+    "The output `idp_tenant_ids` maps every slug to a tenant ID and `terraform output -json` contains no secret values"
+   ],
+   "arch_refs": [
+    "overview.md#4.13",
+    "overview.md#4.8",
+    "ADR-010",
+    "ADR-012"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T14",
+   "title": "WIF and Terraform plan/apply pipeline",
+   "summary": "Create Workload Identity Federation for GitHub and the Terraform plan-on-PR and gated apply workflows.",
+   "description": "ADR-021 and 8.3: keyless CI to GCP via Workload Identity Federation, no JSON keys; 4.12: Terraform 'applied from GitHub Actions through WIF (plan on PR)'. E0-T13/E0-T14 already build PR CI (lint, tests, terraform fmt/validate); do not redo them.\n\nBuild: terraform/wif.tf (google_iam_workload_identity_pool + GitHub OIDC provider with attribute_condition restricting to the repository and, for the apply/deploy SA, to ref refs/heads/main or an environment), two SAs: `tf-plan` (read-only roles, usable on PRs) and `deployer` (roles needed for apply, Artifact Registry writer, run.admin on services/jobs/pools, scoped as tightly as practical). Workflows: .github/workflows/terraform-plan.yml (on PR touching terraform/, uses google-github-actions/auth with WIF, runs `terraform plan`, posts it) and terraform-apply.yml (workflow_dispatch / main with a GitHub environment requiring approval, runs check-org-policy from E10-T5 first, then apply). Pin action versions by SHA or exact version. The bootstrap of the WIF resources themselves is a one-time local apply documented in docs/runbook-bootstrap.md.\n\nOut of scope: the service deploy workflow (E10-T16).",
+   "acceptance_criteria": [
+    "`.github/workflows/terraform-plan.yml` run on a PR that touches terraform/ authenticates via WIF and prints a plan; gitleaks and a grep for `credentials_json` / `GOOGLE_CREDENTIALS` in .github/ finds none (CI step fails otherwise)",
+    "A run triggered from a fork or from a non-main ref requesting the deployer SA is rejected by the attribute condition (negative test: `gcloud iam workload-identity-pools` condition test or a documented failed run)",
+    "The apply workflow does not proceed when `make check-org-policy` exits non-zero (workflow-level test with stubbed script)",
+    "`terraform plan` on the merged tree has exit code 0 after apply (no drift)"
+   ],
+   "arch_refs": [
+    "overview.md#4.12",
+    "overview.md#8.3",
+    "ADR-021"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T4",
+    "E10-T5",
+    "E0-T14"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T15",
+   "title": "Add deploy workflow: migrate, tagged revision, smoke test, shift",
+   "summary": "Deploy images by digest with the migrate job first, a tagged no-traffic revision, a smoke test and a traffic shift.",
+   "description": "ADR-021 deploy order: 'migrate Cloud Run job before traffic, then a tagged no-traffic revision, smoke test, then traffic shift', images by digest only; 7.1: Migration failure -> 'deploy halts before traffic shift'; Bad deploy -> 'smoke test on tagged no-traffic revision: traffic not shifted'; 7.3: 'rollback is a traffic shift to the previous revision'. Boundary: E0 builds PR CI; this is the CD workflow.\n\nBuild .github/workflows/deploy.yml (WIF via E10-T14, environment gated), triggered on main after CI: (1) build and push the image to Artifact Registry and capture the digest; (2) update job `migrate` to the digest and `gcloud run jobs execute migrate --wait`; stop on non-zero; (3) update the other jobs and worker pool to the digest; (4) deploy chat-api and fa-gateway with `--no-traffic --tag=cand-<sha>` using digest references; (5) run scripts/smoke_test.py against the tagged revision URL from inside the VPC via a Cloud Run job execution (the services are internal; do not hit them from the runner), checking /readyz and one authenticated SSE-free read endpoint defined in E4; (6) on pass `gcloud run services update-traffic --to-tags cand-<sha>=100`; on fail leave traffic unchanged and exit 1; (7) sync the SPA build to the SPA bucket. Also add `make rollback SERVICE=<name>` that shifts traffic to the previous revision. If Cloud SQL is stopped (demo down) the workflow must refuse to run migrate and exit with a clear message rather than start the instance.\n\nOut of scope: demo-up/down.",
+   "acceptance_criteria": [
+    "Workflow test with a failing migrate (bad migration in a test branch against a throwaway DB or a stubbed `gcloud run jobs execute` exiting 1) ends with no `update-traffic` call (assert in a bats/pytest wrapper around the deploy script)",
+    "Smoke test failure on the tagged revision leaves 100% traffic on the previous revision: `gcloud run services describe chat-api --format='value(status.traffic)'` unchanged (verified in a staged run, output attached)",
+    "The workflow rejects an image reference that is a tag instead of a sha256 digest (unit test of the script)",
+    "`make rollback SERVICE=chat-api` moves 100% traffic to the previous revision; asserted by describe output",
+    "With Cloud SQL in activation policy NEVER the workflow exits non-zero before running migrate with a message containing 'demo is down'"
+   ],
+   "arch_refs": [
+    "overview.md#4.12",
+    "overview.md#7.1",
+    "overview.md#7.3",
+    "ADR-021"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T8",
+    "E10-T9",
+    "E10-T10",
+    "E10-T14",
+    "E0-T14"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T16",
+   "title": "Implement demo-down script and make demo-down",
+   "summary": "Stop the demo in the exact documented order with a 10-minute outbox drain and forced remainder log.",
+   "description": "Flow 6 and ADR-020 down order: (1) pause Scheduler triggers except hourly demo-ttl, (2) drain: wait for outbox empty and consumer lag 0 with `OUTBOX_DRAIN_TIMEOUT_MIN` = 10 then force (remaining outbox rows are logged and delivered on the next demo-up), (3) worker pool to 0, (4) fa-gateway and chat-api min instances 0, (5) delete the Valkey instance named `VALKEY_INSTANCE_NAME` (outside Terraform state), (6) Cloud SQL activation policy NEVER. The ALB, Cloud Armor, Confluent cluster and storage stay.\n\nBuild scripts/demo/demo_down.py (typed Python, shared helpers in scripts/demo/common.py with a thin wrapper around gcloud/Google client libraries and a dry-run mode) and `make demo-down`. The outbox count is read from Postgres via a read-only query run in the VPC by the demo-ttl/ `fa_maint` job path or by a small `demo-down` execution mode of the demo-ttl job image (the script must not need direct DB access from the laptop since Cloud SQL is private); consumer lag is read from Confluent API/consumer-group lag (use the credentials of the E5-T13 admin key held in Secret Manager). Each step is logged with timestamp and is idempotent (rerun after a partial failure continues). Exit non-zero if any step fails; steps never run out of order. After the timeout, log the number of remaining outbox rows and proceed.\n\nOut of scope: demo-up (E10-T18); demo-ttl job (E10-T19).",
+   "acceptance_criteria": [
+    "Unit test with fake clients: the recorded call order is exactly pause-scheduler, drain, worker=0, min=0, delete-valkey, sql=NEVER; an out-of-order call fails the test",
+    "Unit test: with an outbox that never empties and a fake clock, the script waits 10 minutes (OUTBOX_DRAIN_TIMEOUT_MIN), logs 'forced remainder: N outbox rows', then continues with the remaining steps",
+    "Unit test: if the Valkey instance is already absent, the step succeeds (idempotent) and the script continues",
+    "On the real project `make demo-down` ends with `gcloud sql instances describe` activation policy NEVER, worker pool count 0, API and Kong min 0, Memorystore instance not found, and Scheduler jobs paused except demo-ttl; output attached",
+    "`terraform plan -detailed-exitcode` returns 0 after demo-down"
+   ],
+   "arch_refs": [
+    "overview.md#4.14 Flow 6",
+    "overview.md#6.6 OUTBOX_DRAIN_TIMEOUT_MIN, VALKEY_INSTANCE_NAME",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T6",
+    "E10-T8",
+    "E10-T9",
+    "E10-T12",
+    "E1-T12",
+    "E5-T13"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T17",
+   "title": "Implement demo-prewarm Cloud Run job",
+   "summary": "Add the in-VPC demo-prewarm job code that calls /readyz and warms pools, since it cannot run from the laptop.",
+   "description": "4.8: `demo-prewarm`, DB role none: 'Runs inside the VPC after demo-up: calls /readyz and warms pools and caches (not run from the operator laptop)'. Job entrypoint `jobs` in the one image. Look at the existing jobs entrypoint dispatcher from E1 to add the subcommand `demo-prewarm`.\n\nBuild backend/src/.../jobs/demo_prewarm.py: reads the internal chat-api URL, gets an ID token from the metadata server (audience = chat-api URL), polls /readyz up to a configured timeout (default 120 s, interval 5 s), then issues a small number of warm requests to bring connection pools up (use the readiness endpoint repeatedly with the concurrency equal to a fraction of DB_POOL_SIZE; no LLM calls, no data writes). Exit 0 only when /readyz returns 200; exit non-zero with the last response body otherwise. No DB credentials.\n\nOut of scope: demo-up (E10-T18).",
+   "acceptance_criteria": [
+    "Unit test with a fake HTTP server: returns 503 twice then 200 -> job exits 0 after 3 polls; always 503 -> exits non-zero after the timeout (fake clock)",
+    "Unit test: the job never reads DB_* variables and never calls an endpoint other than /readyz (assert on recorded requests)",
+    "`gcloud run jobs execute demo-prewarm --wait` after demo-up exits 0 and its logs show the poll count; output attached"
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "overview.md#4.14 Flow 5",
+    "ADR-019"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T10",
+    "E4"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T18",
+   "title": "Implement demo-up script, Valkey lifecycle and make demo-up",
+   "summary": "Start the demo in the exact reverse order, create Valkey, redeploy Kong with its endpoint and print the measured start time.",
+   "description": "Flow 5 and ADR-020 (up is exactly the reverse, D16.13): (1) Cloud SQL activation policy ALWAYS and wait RUNNABLE (record elapsed seconds; wait timeout from docs/adr/cloud-sql-start-time.md of E10-T1), (2) create the Memorystore Valkey instance (shared-core-nano, fixed name from `VALKEY_INSTANCE_NAME`, in the E2 VPC, outside Terraform state; 4.6), (3) deploy a new fa-gateway (Kong) revision with the Valkey endpoint in an environment variable and raise chat-api and fa-gateway min instances (fa-gateway max 2 per 7.2), (4) worker pool manual instance count up (command from E10-T2), (5) resume Scheduler triggers, (6) run `maintenance` then `demo-prewarm` jobs (inside the VPC) and wait for success, (7) print the URL and the measured Cloud SQL start time. Remaining outbox rows from a forced down are delivered by the relay automatically after step 4; log the count at start.\n\nBuild scripts/demo/demo_up.py reusing scripts/demo/common.py (E10-T16) and `make demo-up`. Which env var name Kong reads for the Valkey endpoint comes from the E2 Kong config (check kong/ and the E2 fa-gateway module; if not defined, add to questions). Idempotent and rerunnable; the Valkey step succeeds if the instance already exists and is READY.\n\nOut of scope: demo-prewarm job code (E10-T17), demo-ttl (E10-T19).",
+   "acceptance_criteria": [
+    "Unit test with fake clients: the call order is exactly sql=ALWAYS, valkey create, gateway revision with the Valkey endpoint env, min instances up, worker up, scheduler resume, run maintenance, run demo-prewarm; a reversed order fails the test",
+    "Unit test: the script exits non-zero and skips the later steps if Cloud SQL is not RUNNABLE within the timeout",
+    "On the real project after `make demo-down` then `make demo-up`: `/readyz` through the ALB returns 200 and the script's last output line contains `cloud_sql_start_seconds=<number>`; output attached",
+    "The Kong revision created by demo-up has the Valkey host in its env (`gcloud run services describe fa-gateway` shows it) and a request burst over RATE_LIMIT_CHAT_PER_MIN gets 429 (counter stored in Valkey)",
+    "`terraform plan -detailed-exitcode` returns 0 after demo-up"
+   ],
+   "arch_refs": [
+    "overview.md#4.14 Flow 5",
+    "overview.md#4.6",
+    "overview.md#6.6 VALKEY_INSTANCE_NAME",
+    "ADR-020",
+    "ADR-024"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T1",
+    "E10-T2",
+    "E10-T16",
+    "E10-T17"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T19",
+   "title": "Implement demo-ttl job to bring a forgotten demo down",
+   "summary": "Add the hourly demo-ttl job that runs demo-down when the demo has been up longer than DEMO_TTL_HOURS.",
+   "description": "4.8: `demo-ttl`, role `fa_maint`: 'Hourly safety net: reads the outbox count and runs demo-down if the demo has been up longer than DEMO_TTL_HOURS (Cloud Run admin SA rights)'. ADR-020: 'An hourly demo-ttl job auto-downs the demo as a safety net.' The job must run the same logic as scripts/demo/demo_down.py (E10-T16), so package the demo scripts into the image under the jobs entrypoint rather than duplicating them.\n\nBuild jobs subcommand `demo-ttl`: determine 'up since' from the Cloud SQL activation transition (the time of the last operation START/patch ALWAYS from the Cloud SQL operations API) and from a label `demo_up_at` that demo-up sets on the Cloud SQL instance (add the label write to demo_up.py as part of this ticket's PR); if Cloud SQL is stopped do nothing (exit 0, log 'already down'); if now - up_since > DEMO_TTL_HOURS, read the outbox count (query as fa_maint, count of rows with published_at is null) and call the demo-down routine with the 10-minute drain; log the outbox count read. Value of DEMO_TTL_HOURS is set by this ticket via the Terraform variable default (4; see questions).\n\nOut of scope: changing the drain order.",
+   "acceptance_criteria": [
+    "Unit test with fake clients: up for 5 h and DEMO_TTL_HOURS=4 -> demo-down routine called once; up for 1 h -> not called; stopped instance -> not called and exit 0",
+    "Integration test against a Postgres container: the outbox count query runs as fa_maint and returns the number of unpublished rows seeded (3)",
+    "On the real project, after demo-up and temporarily setting DEMO_TTL_HOURS=0, `gcloud scheduler jobs run demo-ttl` results in Cloud SQL activation policy NEVER within 15 minutes (drain included); output attached",
+    "The job fails the check if its SA has roles/owner or roles/editor (E10-T10 IAM test still passes)"
+   ],
+   "arch_refs": [
+    "overview.md#4.8",
+    "overview.md#4.14 Flow 6",
+    "overview.md#6.6 DEMO_TTL_HOURS",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T10",
+    "E10-T16",
+    "E10-T18",
+    "E1-T12"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T20",
+   "title": "Add security and connection budget invariant checks",
+   "summary": "Add a scripted check for no allUsers, invoker exception only on fa-gateway, no public Cloud SQL IP, no secret in state and pool sizes <= 300.",
+   "description": "Epic done-when: 'No allUsers binding on any service; the invoker check is disabled only on fa-gateway; Cloud SQL has no public IP; no secret value in Terraform state; the sum of pool sizes over max instances is <= 300.' Sources: 6.6 DB_POOL_SIZE ('pool per instance x max instances over all services must stay <= 300 of Cloud SQL max_connections 400'), 7.2 connection budget (`max_connections` 400, headroom for migrations, dbt and Dagster; fa-gateway max 2), 8.3, 8.4 (G-27), ADR-012.\n\nBuild scripts/check_invariants.py with two modes: `--plan plan.json` (static, from `terraform show -json`) and `--live` (gcloud). Checks: (1) no allUsers/allAuthenticatedUsers in any run service, job, worker pool or bucket policy; (2) invoker check disabled (`invokerIamDisabled`) on fa-gateway only, enabled on every other service; (3) Cloud SQL ipv4_enabled false and no PRIMARY/PUBLIC address; (4) state/plan values: no sensitive attribute from google_secret_manager_secret_version or any value matching a configured secret-name list; (5) budget: sum over services/pools of DB_POOL_SIZE x max_instance_count (chat-api, worker pool count, jobs max parallelism x pool) <= 300, printing the table and failing above. Run in CI (terraform-plan workflow) and by `make check-invariants`.\n\nOut of scope: runtime load.",
+   "acceptance_criteria": [
+    "Unit tests with fixture plan JSON: one with allUsers on chat-api fails (exit 1); one with invokerIamDisabled on chat-api fails; one with ipv4_enabled true fails; clean fixture passes",
+    "Unit test: DB_POOL_SIZE=10, chat-api max 20, worker 2 x 10 = 220 passes; chat-api max 40 (total 420) fails with the table printed",
+    "Unit test: a fixture plan containing a google_secret_manager_secret_version with secret_data fails",
+    "`make check-invariants --live` on the real project exits 0 with the printed budget total <= 300; output attached",
+    "The terraform-plan workflow runs the check on PRs and fails when a fixture violation is introduced on a test branch"
+   ],
+   "arch_refs": [
+    "overview.md#8.3",
+    "overview.md#8.4",
+    "overview.md#7.2",
+    "overview.md#6.6",
+    "ADR-012",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T8",
+    "E10-T9",
+    "E10-T10",
+    "E10-T14"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T21",
+   "title": "Verify no Terraform drift across a down and up cycle",
+   "summary": "Run demo-down then demo-up and assert terraform plan is clean at every stage.",
+   "description": "Epic done-when: '`terraform plan` is clean (no drift) after a down / up cycle thanks to `ignore_changes`.' 4.14: Terraform uses lifecycle.ignore_changes on activation_policy, min_instance_count and manual_instance_count. Add scripts/demo/drift_check.sh and a make target `make demo-cycle-test`: apply, `terraform plan -detailed-exitcode`, demo-down, plan, demo-up, plan, each must return exit code 0; also confirm the end state of demo-down (SQL NEVER, worker 0, min 0, Valkey absent) and demo-up (`/readyz` 200).\n\nIf a plan shows drift on an attribute (for example the Scheduler paused state, a Cloud Run revision template field, or the Kong environment variable set by demo-up), fix it by adding a narrowly scoped ignore_changes in the owning Terraform file and list it in the PR; record each added attribute in questions if it is not one of the three the arch names. The Kong Valkey env var set by demo-up is the most likely candidate (E2 owns the module; make the minimal change there).",
+   "acceptance_criteria": [
+    "`make demo-cycle-test` exits 0; the log shows three `terraform plan -detailed-exitcode` results all equal to 0 (after apply, after demo-down, after demo-up)",
+    "The test asserts the post-down state: Cloud SQL activation policy NEVER, worker pool count 0, chat-api and fa-gateway min 0, `gcloud redis`/memorystore instance absent; it fails if any is wrong (negative run with a stubbed non-zero worker count fails)",
+    "The test asserts the post-up state: `/readyz` through the ALB returns 200; and the job logs the measured start time"
+   ],
+   "arch_refs": [
+    "overview.md#4.14 Flow 5 and Flow 6",
+    "overview.md#4.12",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T16",
+    "E10-T18",
+    "E10-T12"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T22",
+   "title": "Add prod profile (HA flag, min instances) and plan test",
+   "summary": "Make the prod profile switch Cloud SQL to HA and set min instances >= 1 through env_profile.",
+   "description": "7.2: 'Always-on availability required: Switch to the prod profile: HA Cloud SQL flag, min instances >= 1 (~300+ USD/month)'; 6.6 ENV_PROFILE selects 'HA flag, min instances'; ADR-020: 'HA is a Terraform flag for load tests'; the 99.5% SLO applies to the prod profile only. 7.3: backups, PITR and RPO/RTO 'are set in E10 when the prod profile is built' but the arch gives no values (see questions; implement only the toggle for backup_configuration.enabled and point_in_time_recovery_enabled as variables defaulting to enabled in prod, no RPO/RTO claims).\n\nBuild: env_profile = prod sets Cloud SQL availability_type REGIONAL (already wired in E10-T6), chat-api and fa-gateway min_instance_count >= 1 (variable default 1) and worker pool count >= 1; demo_down.py and demo_up.py refuse to run when ENV_PROFILE=prod unless `--force-prod` is passed (prod must not be stopped by accident); demo-ttl is not created in prod (count = 0). Provide an example terraform/envs/prod.tfvars and docs/runbook-profiles.md with the cost note (~300+ USD).\n\nOut of scope: running prod; the load test (E10-T23).",
+   "acceptance_criteria": [
+    "Terraform test: env_profile=prod plan shows REGIONAL availability, min_instance_count >= 1 for chat-api and fa-gateway, and no demo-ttl job/scheduler; env_profile=demo shows ZONAL, min 0, demo-ttl present",
+    "Unit test: `demo_down.py` with ENV_PROFILE=prod exits non-zero with a message and makes no client calls; with --force-prod it proceeds",
+    "In prod profile the `ignore_changes` does not hide min_instance_count drift of 0 (documented decision; checked: test asserts the plan for prod uses a separate resource or variable path or the runbook states how prod min instances are managed)"
+   ],
+   "arch_refs": [
+    "overview.md#7.2",
+    "overview.md#7.3",
+    "overview.md#6.6 ENV_PROFILE",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T6",
+    "E10-T8",
+    "E10-T9",
+    "E10-T16"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T23",
+   "title": "Load test with stub LLM at 10 QPS against synthetic corpus",
+   "summary": "Run a 10 QPS peak load test with a stub LLM and report p95 against the overview 2.1 targets excluding LLM time.",
+   "description": "Epic done-when: 'A load test with a stub LLM runs at ~10 QPS peak and reports the p95 targets of overview 2.1 (excluding LLM time) against the 10k-chunk synthetic corpus numbers (fail if above).' Targets (2.1): retrieval first stage (embed + hybrid SQL) p95 < 300 ms, rerank p95 < 700 ms, TTFT p50 < 2.0 s / p95 < 3.5 s, full answer p95 < 8 s, all excluding LLM time (the stub returns a fixed streamed answer after a configured delay that is subtracted from the report). 7.2 and 4.6/rerank notes: Voyage Tier 1 allows ~5 QPS of rerank, so request the tier upgrade before the run (record in the PR) or run with the rerank step stubbed and state which was used.\n\nBuild load/ (k6 or Locust; pick the one already in stack.md, else k6) with a scenario that ramps to 10 QPS against the real ALB URL with a test tenant token, a stub LLM selected by a config setting on the deployed revision (ANTHROPIC_BASE_URL pointing at a stub Cloud Run service or the Kong egress route replaced by the stub; the stub service is deployed only for the test, internal, not allUsers), reads per-stage timings from the metrics/traces defined in section 9, and writes docs/adr/load-test-results.md with p50/p95 for each metric, DB connection count peak (must stay below the budget of E10-T20), error rate, and pass/fail per target. Corpus: the 10k-chunk synthetic corpus from E3/E6 numbers. Use the `prod`-profile HA flag only if the report states it. Out of scope: tuning (record findings only).",
+   "acceptance_criteria": [
+    "`make load-test` runs 10 QPS at peak for at least 5 minutes against the demo environment and exits non-zero if any p95 target of 2.1 (retrieval 300 ms, rerank 700 ms, TTFT p95 3.5 s, full answer p95 8 s, LLM time excluded) is exceeded",
+    "docs/adr/load-test-results.md contains the measured p50/p95 for each target, the peak Cloud SQL connection count and the error rate; peak connections < 300 asserted in the script",
+    "Rerank 429 counter (`rerank_429_total`) and `rerank_fallback_total` are reported; the run fails if degraded turns exceed 5% of turns",
+    "The stub LLM service has no allUsers binding and is removed after the test (`gcloud run services list` has no stub)"
+   ],
+   "arch_refs": [
+    "overview.md#2.1",
+    "overview.md#2.3",
+    "overview.md#7.1 rerank 429",
+    "overview.md#7.2",
+    "ADR-020"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T18",
+    "E10-T20",
+    "E3",
+    "E4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E10-T24",
+   "title": "Confirm demo month cost from the billing export",
+   "summary": "Read a demo month from the BigQuery billing export and check it is within 100-200 USD.",
+   "description": "Epic done-when: 'Monthly cost for a demo month read from the billing export is within 100-200 USD (expected 110-160).' Budget table in 2.5: idle 40-55, demo month (~40 h up, ~2,000 chats) 110-160. Uses E10-T3 for idle line items and E10-T1 for Cloud SQL hours. E9 owns dashboards/alerts; this ticket produces a one-off report only.\n\nBuild: Terraform for the Cloud Billing export to BigQuery dataset if not present (enable detailed usage export, in the existing BigQuery dataset project), scripts/cost_report.py running a parameterised query for a month, grouped by service and SKU, with labels for Cloud SQL, Cloud Run, ALB, Cloud Armor, Memorystore, Confluent (via Marketplace/direct if visible), and summing. Compare against the 2.5 rows and BQ_MAX_BYTES_BILLED for the query itself. Write docs/adr/demo-month-cost.md with the table, hours up from the demo-up/demo-down logs (from Cloud Logging), chats count (from Langfuse or turns table) and verdict.\n\nPrecondition: a month of operation, or at least a ~40 h up window with ~2,000 chats; if not available the report extrapolates and says so.",
+   "acceptance_criteria": [
+    "scripts/cost_report.py --month YYYY-MM prints per-service cost and a total and exits non-zero if total is outside 100-200 USD",
+    "docs/adr/demo-month-cost.md lists Cloud SQL, Cloud Run, ALB, Cloud Armor, Memorystore, Confluent, LLM costs with amounts and the hours up taken from logs, plus a verdict against the 110-160 expected range",
+    "The query runs with maximum_bytes_billed set to BQ_MAX_BYTES_BILLED (unit test asserts the job config)"
+   ],
+   "arch_refs": [
+    "overview.md#2.5",
+    "ADR-020",
+    "ADR-012"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E10-T21",
+    "E10-T23",
+    "E10-T3"
+   ],
+   "size": "S",
+   "status": "todo"
+  }
+ ],
+ "questions": [
+  "E10-T6/T22: arch 7.3 says backups, point-in-time recovery and RPO/RTO are set in E10 when the prod profile is built, but gives no values. Which backup window, retention and PITR setting for the demo and prod profiles?",
+  "E10-T7: arch says E10 creates roles, passwords and the dagster database in Cloud SQL and that Terraform must not store secrets in state, but gives no mechanism. This plan uses a db-bootstrap Cloud Run job that writes Secret Manager versions; confirm or specify an alternative.",
+  "E10-T12: arch ignore_changes list covers activation_policy, min_instance_count, manual_instance_count only; demo-down pauses Scheduler jobs, which would otherwise show as drift. Confirm adding the Scheduler pause state to ignore_changes. Also the cron schedules for etl, etl-public, dbt, eval and redteam are not specified.",
+  "E10-T19: DEMO_TTL_HOURS is marked required 'set in E10' with no value; the ticket proposes 4. Confirm the value.",
+  "E10-T18/T21: the arch says demo-up passes the Valkey endpoint to Kong by deploying a new revision with an env var, but does not name the variable or whether fa-gateway Terraform ignores it; the name must come from E2's Kong config.",
+  "E10-T11: ALB backend bucket access to a private GCS bucket may need a public-read pattern; the arch says no allUsers on any service but is silent on buckets. Confirm how the SPA bucket is exposed.",
+  "E10-T16: arch does not say how demo-down reads outbox count and consumer lag from outside the VPC (Cloud SQL is private, laptop cannot reach it). This plan runs the read inside a job; confirm.",
+  "E10-T14: arch does not specify the approval gate for Terraform apply or deploy (GitHub environment with required reviewer assumed)."
+ ]
+}

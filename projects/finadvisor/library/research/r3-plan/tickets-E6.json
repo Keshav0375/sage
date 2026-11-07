@@ -1,0 +1,531 @@
+{
+  "epic": "E6",
+  "tickets": [
+    {
+      "key": "E6-T1",
+      "title": "Spike: Docling on EDGAR 497K HTML and inline XBRL",
+      "summary": "Measure Docling parse quality and Voyage token sizes on 497K filings and record the result as an ADR.",
+      "description": "Arch (overview.md 4.14, Flow 2 notes): 'Docling on 497K and inline-XBRL tables is a spike (section 10).' Plan E6: 'Spikes first. Docling on the 497K HTML and inline-XBRL tables (chunk sizes measured with Voyage count_tokens).' Take a sample of at least 30 real EDGAR 497K filings (include some with inline-XBRL tables), parse each with Docling, chunk structure-aware (children 256-512 tokens, parents ~1k tokens per 4.7), and count tokens with the Voyage `count_tokens` API (EMBED_MODEL voyage-4). Measure per filing: parse seconds, peak memory, table fidelity (rows/cols preserved, hand-checked on 5), and the distribution (p50/p95/max) of child and parent token counts. Decide whether Docling is usable in-process in `etl-public` and what fallback is needed for tables (the arch names Document AI only as an OCR fallback). Write the result to `docs/adr/docling-497k.md` in the FinAdvisor repo with the measurements, the sample list (accession numbers), the decision and the pinned Docling version. The researcher copies it into decisions.md later. Out of scope: building the pipeline; fetching more than the sample (respect SEC access rules, declared User-Agent, rate limit under 10 req/s).",
+      "acceptance_criteria": [
+        "`docs/adr/docling-497k.md` exists and contains a table of >=30 filings with parse time, peak memory and child/parent token p50/p95/max",
+        "The ADR states a keep/change decision for Docling and lists the pinned version; `grep -c 'Decision' docs/adr/docling-497k.md` >= 1",
+        "Child chunk token p95 is reported against the 512 limit and parent p95 against ~1k; any filing type exceeding them is listed",
+        "Spike script is committed under `backend/scripts/spikes/` and reruns with one command documented in the ADR"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.14",
+        "overview/04-components-and-responsibilities.md#4.7",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T2",
+      "title": "Scaffold the ETL package and daemon-less Dagster",
+      "summary": "Create the etl package with a Dagster definitions module that materializes in a Cloud Run job and runs locally with dagster dev.",
+      "description": "Arch (4.8, `etl` job): 'Daemon-less: `dagster asset materialize` in a Cloud Run job; run and event storage in Postgres (`dagster-postgres`, database `dagster` on the same Cloud SQL instance, owned by role `fa_dagster`, no access to app schemas); `dagster dev` locally.' Build: package `backend/src/etl/` with `definitions.py` (Dagster `Definitions`), `dagster.yaml` selecting `dagster-postgres` storage from config `DAGSTER_PG_DB`, `DAGSTER_PG_USER`, `DAGSTER_PG_PASSWORD` (defaults `dagster`, `fa_dagster`), a `jobs` entrypoint subcommand `etl` that runs `dagster asset materialize --select <assets> --partition <tenant|dt>`, and a multi-dimensional partition def (tenant x date). Pin dagster, dagster-postgres, docling, pandera, presidio versions in pyproject. Local: `dagster dev` uses SQLite/in-memory run storage from a dev config. Out of scope: any real asset logic (later tickets), the Cloud Run job resource and Scheduler (infra epic).",
+      "acceptance_criteria": [
+        "Given a Postgres with the `dagster` database from E1-T3, when `jobs etl --select noop_asset --partition tenant=a|dt=2026-01-01` runs, then the run record exists in the `dagster` DB and exit code is 0 (integration test)",
+        "Given role `fa_dagster`, when it queries any app-schema table, then permission is denied (test)",
+        "`dagster dev` starts locally with `docker compose` Postgres absent (smoke test with the dev config)",
+        "No dagster-daemon or sensor process is required: `grep -r 'dagster-daemon' backend/ terraform/` returns nothing"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.8",
+        "stack.md#orchestration",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T3"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T3",
+      "title": "Synthetic per-tenant corpus generator",
+      "summary": "Generate a deterministic synthetic document corpus for each tenant, including suitability-rule documents.",
+      "description": "Plan E6: 'Synthetic per-tenant corpus.' ADR-014 data input: synthetic per-tenant corpus plus a real public source. Existing seed data lives in `data/corpus/` (compliance_memos, jurisdiction_disclosures, product_factsheets, suitability_rules). Build `backend/src/etl/synthetic/` with a seeded generator `generate(tenant_slug, seed, n_docs)` writing documents to a local dir (HTML or Markdown) with fields: title, doc_type, jurisdiction, tier_required (1..4), regulatory_ref, last_reviewed_at, product_category, risk_level. Per tenant, include at least 3 suitability-rule documents covering the 3 client risk profiles (conservative, moderate, aggressive) and documents containing synthetic PII (names, emails, SSN-like strings) so the Presidio stage has something to scrub. Documents differ per tenant (tenant-specific names and thresholds) so cross-tenant leakage is detectable. Out of scope: uploading to GCS (E6-T4), real EDGAR data (E6-T13).",
+      "acceptance_criteria": [
+        "Given the same seed twice, when the generator runs, then the output files have identical sha256 (test)",
+        "Given two tenants, when generated, then no document sha256 appears in both (test)",
+        "Each tenant corpus contains >=3 suitability-rule docs spanning conservative, moderate, aggressive (test counts by profile)",
+        "Each tenant corpus contains planted PII strings recorded in a sidecar manifest file used by E6-T5/T14 tests"
+      ],
+      "arch_refs": [
+        "overview.md#4.14",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T2"
+      ],
+      "size": "S",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T4",
+      "title": "Bronze asset: GCS by sha256, register documents, publish",
+      "summary": "Fetch source documents into immutable GCS bronze, register a documents row and publish docs.bronze.v1.",
+      "description": "Arch (4.8 `etl`; 4.10; Flow 2): 'Dagster run of tenant bronze assets (fetch, GCS by sha256, register `documents`, publish `docs.bronze.v1`)'. Bucket `GCS_DATA_BUCKET`, object `bronze/{tenant_id}/{sha256}` holding raw immutable bytes plus source URL and fetch time (object metadata); skip upload if the object exists. Register `documents` (5.2): `title, doc_type, jurisdiction, tier_required, regulatory_ref, last_reviewed_at, product_category, risk_level, source ('synthetic'|'edgar'), source_uri, bronze_uri, bronze_sha256, parser_version NULL, status 'active'`; unique `(tenant_id, bronze_sha256)` so re-registering is a no-op (INSERT ... ON CONFLICT DO NOTHING). No `raw_content` anywhere. Publish `docs.bronze.v1` keyed by tenant_id with the E5 envelope via the E5 idempotent producer; payload carries ids and bronze_uri only, never text. Runs as DB role `fa_etl` with `app.tenant_id` set. Asset is partitioned tenant x dt. Source adapter for synthetic corpus from E6-T3. Out of scope: EDGAR source (E6-T13).",
+      "acceptance_criteria": [
+        "Given a doc already in bronze, when the asset reruns, then no GCS write occurs and no new `documents` row (asserted by counting GCS puts and rows, integration with fake-gcs)",
+        "Given a new doc, when materialized, then exactly one `docs.bronze.v1` message with key == envelope.tenant_id and no content field is produced (test on payload schema)",
+        "Given `fa_etl` and tenant A context, when inserting a documents row for tenant B, then RLS denies it (test)",
+        "`documents` has no column named raw_content/content (reuse E1-T17 assertion passes)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.8",
+        "overview/04-components-and-responsibilities.md#4.10",
+        "overview/05-data-model-and-storage.md#5.2",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T2",
+        "E6-T3",
+        "E1-T5",
+        "E1-T8",
+        "E5"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T5",
+      "title": "Silver transform: Docling parse, Presidio scrub, chunking",
+      "summary": "Implement the pure silver transform that turns a bronze document into redacted structure-aware chunks with token counts.",
+      "description": "Arch (4.7 `silver`): 'Docling parse, Presidio scrub, structure-aware chunking (256-512-token children, ~1k-token parents, token counts from Voyage `count_tokens`)'. Build `etl/silver/transform.py`: `transform(doc_bytes, doc_meta) -> list[Chunk]` where Chunk has `kind` (child|parent), `chunk_index`, `parent_ref`, `content` (redacted), `section_path`, `token_count`, `chunk_hash` (sha256 of the redacted content plus section_path, stable across runs), plus ACL fields copied from the document (`tier_required, jurisdiction, regulatory_ref, last_reviewed_at, source_title`). Scrub with Presidio before anything is written (reuse `backend/src/pii/redactor.py` where it fits; pseudonymization is in-process, ADR-009). Use the chunk-size findings and Docling version from docs/adr/docling-497k.md. Voyage `count_tokens` is called through a thin injectable client so tests can fake it. Out of scope: Pandera, Parquet and Kafka (E6-T6/T7), headers (E6-T8).",
+      "acceptance_criteria": [
+        "Given the planted-PII manifest from E6-T3, when a document is transformed, then no planted PII string appears in any chunk content (test)",
+        "Given a doc, when transformed twice, then the chunk_hash list is identical (test)",
+        "Child chunks have token_count in 256..512 except a final short chunk per section; parents <= 1100 (property test over the synthetic corpus)",
+        "Each child references a parent present in the output (test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.7",
+        "decisions.md#adr-014",
+        "decisions.md#adr-009"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T1",
+        "E6-T3"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T6",
+      "title": "Pandera validation, ingest_rejects and silver Parquet",
+      "summary": "Validate chunks with Pandera, route failures to ingest_rejects and write redacted silver Parquet partitioned by tenant and date.",
+      "description": "Arch (4.7 `silver`, 5.2 `ingest_rejects`, 5.8): 'Pandera validation, rejects to `ingest_rejects`, writes silver Parquet to the data bucket under `silver/tenant_id=<id>/dt=<date>/`'. `ingest_rejects` columns: `(tenant_id, id)`, `document_id`, `bronze_sha256`, `stage`, `rule` (Pandera check), `detail` (redacted), `created_at`. Define a Pandera schema `ChunkSchema` (non-empty content, token_count within bounds, tier_required 1..4, jurisdiction in US/EU/UK, chunk_hash 64 hex, valid parent link, content free of detected PII entities via a re-scan). A failing row never goes to Parquet; one `ingest_rejects` row is written per failed check with `detail` redacted (no raw content) and the document-level outcome recorded. Write passing chunks as Parquet to `silver/tenant_id=<id>/dt=<date>/<document_id>.parquet`. Out of scope: consumer wiring (E6-T7).",
+      "acceptance_criteria": [
+        "Given a chunk set with 3 deliberately invalid rows (empty content, tier 9, bad jurisdiction), when validated, then `ingest_rejects` gains exactly 3 rows with `rule` naming each check and none appear in the Parquet (test)",
+        "Given a rejected row, when `detail` is inspected, then it contains no substring of the original content longer than 20 chars (test)",
+        "Parquet path matches `silver/tenant_id=<id>/dt=<date>/` and a reader recovers the same chunk_hash set (test)",
+        "Re-running the same document writes the same Parquet object path without duplicating reject rows (unique-by-rule test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.7",
+        "overview/05-data-model-and-storage.md#5.2",
+        "overview/05-data-model-and-storage.md#5.8",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T5",
+        "E1-T5",
+        "E1-T8"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T7",
+      "title": "silver worker role: consume bronze, emit silver",
+      "summary": "Wire the silver transform into an E5 worker consumer that reads docs.bronze.v1 and emits docs.silver.v1.",
+      "description": "Arch (4.7): role `silver` consumes `docs.bronze.v1`, writes silver Parquet and rejects, emits `docs.silver.v1`. Implement the handler on the E5 consumer framework (envelope check, `processed_events` dedupe in the sink transaction, retries, then `dlq.v1`, `app.tenant_id` set from the event key). Handler: read bronze bytes from GCS by `bronze_uri`, run E6-T5 transform and E6-T6 validation, update `documents.parser_version`, produce `docs.silver.v1` (ids and silver URI, no text). Register under `WORKER_ROLES=silver`. Per 4.7, an envelope with a PUBLIC tenant or key mismatch goes to `dlq.v1` (framework behaviour; assert it). Out of scope: framework itself (E5).",
+      "acceptance_criteria": [
+        "Given a docs.bronze.v1 message, when consumed, then Parquet exists, `docs.silver.v1` is emitted once and `processed_events` has the event_id (integration)",
+        "Given the same message delivered twice, when consumed, then only one `docs.silver.v1` is emitted (test)",
+        "Given an envelope whose tenant_id differs from the key, when consumed, then it lands in `dlq.v1` with a reason and nothing is written (test)",
+        "Given a message for the PUBLIC tenant, when consumed by the silver role, then it goes to `dlq.v1` (test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.7",
+        "overview/04-components-and-responsibilities.md#4.14"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T6",
+        "E5"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T8",
+      "title": "contextualizer: Haiku batch context headers behind a flag",
+      "summary": "Generate contextual headers for chunks via the Haiku Batch API when CONTEXTUAL_RETRIEVAL_ENABLED is true.",
+      "description": "Arch (4.7 `contextualizer`, ADR-016): 'Haiku 5.5 Batch API contextual headers (behind flag `CONTEXTUAL_RETRIEVAL_ENABLED`)', model `LLM_MODEL_AUX` (claude-haiku-5-5), input is redacted text only. Consume `docs.silver.v1`, read the silver Parquet, submit one Batch per document (the header prompt gets the redacted parent/section and the chunk), poll the batch, fill `context_header` on each child, emit `chunks.contextualized.v1` (ids, silver URI, no text). When the flag is false, pass chunks through with `context_header` NULL and make zero Anthropic calls. Header changes alter the text feeding `tsv`, but the embedding input and `chunk_hash` rules stay as the indexer defines (E6-T10). Batch failures retry then DLQ. Out of scope: suitability extraction (E6-T9), the L1 ablation that decides the flag default (E3-T16).",
+      "acceptance_criteria": [
+        "Given the flag false, when a silver message is consumed, then `chunks.contextualized.v1` is emitted with null headers and the fake Anthropic client records 0 calls (test)",
+        "Given the flag true, when consumed, then each child chunk has a non-empty header and the request used the Batch API with `claude-haiku-5-5` (test on the fake client)",
+        "Given a request payload, when inspected, then it contains only redacted chunk text (scan test against planted PII manifest)",
+        "Given a failed batch, when retries are exhausted, then the message lands in `dlq.v1` (test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.7",
+        "decisions.md#adr-016"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T7",
+        "E5"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T9",
+      "title": "Suitability-rule extraction, validation and lookup",
+      "summary": "Extract suitability rules with Haiku structured output, validate them and write suitability_rules.",
+      "description": "Arch (4.7 `contextualizer`; 5.2 `suitability_rules`; Flow 2): 'suitability-rule extraction (Haiku structured output, validated) into `suitability_rules`'. Columns: `rule_name, product_category, client_risk_profile` (CHECK conservative/moderate/aggressive), `min_tier_required`, `jurisdiction`, `regulatory_ref`, `rule_text` (redacted), `source_document_id` (composite FK), `extractor_model`, `validated_at`, `last_reviewed_at`. Run in the contextualizer for documents with `doc_type` indicating suitability rules; use a Pydantic output schema; validation rejects rows with an out-of-enum risk profile, tier outside 1..4, or missing regulatory_ref and records them in `ingest_rejects` (stage `suitability`) instead of inserting. Valid rows are upserted idempotently (key on tenant, source_document_id, rule_name, product_category, client_risk_profile). `validated_at` is set only on validated rows. Out of scope: the `lookup_suitability_rule` tool itself (E3-T11).",
+      "acceptance_criteria": [
+        "Given the synthetic corpus for tenant A, when the pipeline completes, then `suitability_rules` has >=1 row for each of conservative, moderate, aggressive and every row has `validated_at` not null (integration)",
+        "Given a model output with risk profile 'reckless', when validated, then no row is inserted and an `ingest_rejects` row with stage 'suitability' exists (test)",
+        "Given a rerun, when extraction repeats, then the row count is unchanged (test)",
+        "Given a real DB with the corpus loaded, when E3's `lookup_suitability_rule('equities','moderate')` runs for tenant A, then it returns >=1 row (integration test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.7",
+        "overview/05-data-model-and-storage.md#5.2",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T7",
+        "E1-T5",
+        "E3-T11"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T10",
+      "title": "indexer: hash-gated embed, upsert, supersede, corpus_version",
+      "summary": "Implement the indexer role that embeds only new (tenant_id, chunk_hash, embed_model) chunks and bumps corpus_version.",
+      "description": "Arch (4.7 `indexer`; Flow 2; 5.2 `chunks`): 'consumes `chunks.contextualized.v1`: Voyage `voyage-4` document embeddings only for chunks whose `(tenant_id, chunk_hash, embed_model)` is new, upserts `chunks`, deletes superseded chunks, then bumps the tenant's `corpus_version` (UPDATE on its own tenant row by policy), emits `chunks.indexed.v1`.' Use `EMBED_MODEL`/`EMBED_DIM` (voyage-4, 1024) and the E3-T3 embeddings client with `input_type='document'`. Per message in one transaction with `processed_events`: look up existing `(chunk_hash, embed_model)`; embed only the missing children (parents have NULL embedding); upsert with unique `(tenant_id, chunk_hash, embed_model)` (`ON CONFLICT DO UPDATE` of ACL/metadata columns only, no re-embed); delete chunks of the document not in the new hash set; `UPDATE tenants SET corpus_version = corpus_version + 1` only if anything changed. Embedding calls batched. Runs as `fa_worker`. Out of scope: columns/indexes (E3-T4).",
+      "acceptance_criteria": [
+        "Given a document ingested once, when the identical message is processed again, then the Voyage fake records 0 embed calls, `chunks` row count is unchanged and `corpus_version` is unchanged (test, count asserted)",
+        "Given a document with one paragraph edited, when reprocessed, then exactly the changed children are embedded and the superseded chunk rows are deleted (test asserts the embed call input count)",
+        "Given a first ingest, when processed, then `tenants.corpus_version` increases by exactly 1 per message with changes (test)",
+        "Given `fa_worker` in tenant A context, when it writes a chunk with tenant B id, then RLS denies it (test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.7",
+        "overview/04-components-and-responsibilities.md#4.14",
+        "overview/05-data-model-and-storage.md#5.2",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T8",
+        "E3-T3",
+        "E3-T4",
+        "E1-T8"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T11",
+      "title": "Partition replay and ACL-change tests with zero embed calls",
+      "summary": "Prove that replaying a partition and an ACL metadata change cost no embeddings.",
+      "description": "Plan E6 done-when: 'Re-running the same partition re-embeds zero unchanged chunks (count asserted); an ACL change updates metadata with zero embed calls.' Arch (Flow 2 notes): 'A backfill or re-embed is a replay: Dagster re-publishes `docs.bronze.v1` for the partition (bronze is immutable), and unchanged chunk hashes cost nothing.' Write an end-to-end test (compose: Postgres, Redpanda or the E5 test broker, fake GCS, fake Voyage/Anthropic) that (1) materializes tenant x dt through all stages, (2) re-materializes the same partition and asserts embed calls == 0, chunk count and `corpus_version` unchanged, (3) creates an `acl_change_requests` row (`update_acl`, new tier) with its outbox event, lets the E5 acl-applier apply it, and asserts `chunks.tier_required`/`documents.tier_required` updated with 0 embed calls. If the applier does not update the denormalised chunk columns, fix it here only within the ETL stages; the applier itself is E5. Out of scope: building the applier.",
+      "acceptance_criteria": [
+        "Replay test: second materialization of the same partition yields 0 Voyage embed calls (counter asserted == 0) and an unchanged `chunks` count",
+        "ACL test: after the applier processes the change, every chunk of the document has the new `tier_required` and the Voyage counter delta == 0",
+        "The tests run in CI as part of the integration suite and fail if the indexer is changed to embed unconditionally (mutation check documented)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.14",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T10",
+        "E5"
+      ],
+      "size": "S",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T12",
+      "title": "Dagster partitions and the etl job entrypoint",
+      "summary": "Make tenant x dt partitions materialize end to end as one Cloud Run job invocation.",
+      "description": "Arch (4.8 `etl`; Flow 2): 'trigger tenant x date partition' from Cloud Scheduler; 'Daemon-less'. Add the bronze asset (E6-T4) to the Dagster definitions with a static tenant partition set read from `tenants` (kind='firm') crossed with a daily partition; `jobs etl --tenant <slug> --dt <date>` (and `--backfill-from/--to`) materializes that partition and exits non-zero on failure; downstream stages are Kafka consumers so the job only produces `docs.bronze.v1`. Replays republish `docs.bronze.v1` for the partition without refetching. Role `fa_etl`. Out of scope: Terraform for Cloud Run job and Scheduler (infra epic).",
+      "acceptance_criteria": [
+        "Given tenant slug and date, when `jobs etl --tenant a --dt 2026-01-01` runs, then only that partition's documents are published (test counts messages)",
+        "Given an invalid tenant slug, when run, then exit code != 0 and nothing is published (test)",
+        "Given `--backfill-from/--to` over 3 days, when run, then 3 partition runs are recorded in the dagster DB (integration)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.8",
+        "overview/04-components-and-responsibilities.md#4.14",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T4",
+        "E6-T2"
+      ],
+      "size": "S",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T13",
+      "title": "etl-public: in-process EDGAR 497K pipeline as fa_etl_public",
+      "summary": "Run all stages in-process for PUBLIC EDGAR 497K filings and publish only analytics events.",
+      "description": "Arch (4.8 `etl-public`; Flow 2 notes; 4.7): 'runs every stage in-process and publishes only analytics topics (`ingest.analytics.v1`); the only writer of PUBLIC rows'; 'bumps the PUBLIC `corpus_version` itself'; 'worker consumers reject PUBLIC'. Build `jobs etl-public`: fetch 497K filings from EDGAR (declared User-Agent, rate limit under 10 req/s per SEC rules), bronze to `bronze/PUBLIC_TENANT_ID/{sha256}`, then call the same transform/validation/contextualize/embed functions from E6-T5..T10 in-process (no Kafka between stages), writing as DB role `fa_etl_public` with the PUBLIC tenant id, then bump PUBLIC `corpus_version`. Publish only `ingest.analytics.v1` events (counts, durations, reject counts; no text). Apply Docling decisions from docs/adr/docling-497k.md. Out of scope: schema of `ingest.analytics.v1` beyond what E5 defines (see questions).",
+      "acceptance_criteria": [
+        "Given fa_etl_public, when the job ingests a fixture 497K filing, then `documents` and `chunks` rows exist with PUBLIC tenant id and PUBLIC `corpus_version` increased by 1 (integration)",
+        "Given role `fa_worker`, when it inserts a PUBLIC chunk, then the policy denies it (test)",
+        "Given a PUBLIC event published on `docs.bronze.v1`, when a worker consumer receives it, then it is sent to `dlq.v1` (test)",
+        "Given a run, when topics are inspected, then the only topic written is `ingest.analytics.v1` and no payload contains chunk text (scan test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.8",
+        "overview/04-components-and-responsibilities.md#4.14",
+        "overview/04-components-and-responsibilities.md#4.7",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T10",
+        "E6-T1",
+        "E1-T8",
+        "E1-T3"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T14",
+      "title": "Raw-text scan test across documents, chunks, events, BigQuery",
+      "summary": "Add a test that fails if raw document text exists anywhere except GCS bronze.",
+      "description": "Plan E6 done-when: 'no raw document text exists outside GCS bronze (scan test of `documents`, `chunks`, events, BigQuery)'. Using the planted-PII manifest from E6-T3, run the full synthetic pipeline, then scan (a) every column of `documents`, `chunks`, `suitability_rules`, `ingest_rejects`, (b) every payload captured from pipeline topics, (c) the BigQuery tables fed by the pipeline (use the BQ emulator or recorded sink rows), for planted raw strings and for any substring of a bronze document body longer than a threshold. Also assert every Pandera failure in a seeded bad-input run has an `ingest_rejects` row. Out of scope: new product code, except fixing leaks found.",
+      "acceptance_criteria": [
+        "Given the full pipeline run, when scanning all four stores, then 0 planted PII strings and 0 raw bronze substrings (>=40 chars) are found",
+        "Given a deliberately leaky stub (test-only toggle writing raw text into an event), when scanned, then the test fails (negative control)",
+        "Given a seeded bad-input run with N invalid rows, when finished, then `ingest_rejects` count for that run == N"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.10",
+        "overview/05-data-model-and-storage.md#5.2",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T11",
+        "E6-T13",
+        "E6-T19"
+      ],
+      "size": "S",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T15",
+      "title": "dbt project and Postgres gold models as fa_dbt",
+      "summary": "Create the dbt project with gold models documents_current, stale_documents and corpus_stats.",
+      "description": "Arch (5.2 Gold layer; 4.8 `dbt`): 'Gold layer (dbt, `fa_dbt`, which owns schema `gold`...): models `gold.documents_current`, `gold.stale_documents` and `gold.corpus_stats`; views with `security_invoker = true`, or incremental models with a tenant predicate (never full-table rebuilds)'; 'per tenant run on a dedicated connection'. Create `dbt/` project with `dbt-postgres`; the three models as `security_invoker` views over RLS-protected tables (documents status='active' for current; stale = `last_reviewed_at` older than the staleness config; corpus_stats counts docs/chunks/tokens per tenant). Run per tenant via `jobs dbt --tenant <slug>` setting `app.tenant_id` on a dedicated connection. A custom materialization/post-hook sets `security_invoker = true`. Out of scope: BigQuery marts (E6-T18), CI assertions (E6-T16).",
+      "acceptance_criteria": [
+        "Given tenants A and B, when dbt runs as fa_dbt for tenant A, then `gold.documents_current` returns only tenant A rows (integration)",
+        "Given the built views, when `pg_class.reloptions` is read, then each gold view has `security_invoker=true` (test)",
+        "Given a doc with `last_reviewed_at` > staleness limit, when queried, then it appears in `gold.stale_documents` (dbt test)",
+        "`dbt test` passes in CI against the compose Postgres"
+      ],
+      "arch_refs": [
+        "overview/05-data-model-and-storage.md#5.2",
+        "overview/04-components-and-responsibilities.md#4.8",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E1-T8",
+        "E6-T10"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T16",
+      "title": "CI assertions: tenant tables RLS and no dbt full rebuild",
+      "summary": "Add CI checks that every tenant-schema table has RLS and that dbt never full-rebuilds a tenant table.",
+      "description": "Plan E6 done-when: 'dbt gold models pass the CI assertion that every tenant-schema table has RLS enabled, forced, with policies, and no dbt run does a full-table rebuild of a tenant table; only `fa_tenant_lookup` is `SECURITY DEFINER`.' Build a test script (pytest against compose Postgres after migrate + dbt run): (1) every table with a `tenant_id` column in the app schemas has `relrowsecurity` and `relforcerowsecurity` true and >=1 policy; (2) `pg_proc` has exactly one SECURITY DEFINER function, `fa_tenant_lookup` (extend, do not duplicate, E1-T17 if it exists); (3) a static check over dbt models that rejects `materialized='table'` for any model reading a tenant table, and a runtime check that no `DROP TABLE`/`CREATE TABLE AS` for tenant tables appears in the dbt run's executed SQL log. Gate in CI.",
+      "acceptance_criteria": [
+        "Given a new table with tenant_id and no RLS, when the assertion runs, then it fails naming the table (negative test)",
+        "Given a dbt model with `materialized='table'` over `chunks`, when the check runs, then it fails (negative test)",
+        "Given the clean repo, when run, then the only SECURITY DEFINER function is `fa_tenant_lookup`",
+        "The checks are wired into the CI workflow and block merge"
+      ],
+      "arch_refs": [
+        "overview/05-data-model-and-storage.md#5.2",
+        "overview/04-components-and-responsibilities.md#4.8",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T15",
+        "E1-T17"
+      ],
+      "size": "S",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T17",
+      "title": "BigQuery dataset: partitioned tables, authorized views, row policies",
+      "summary": "Create fa_analytics tables with day partitioning, tenant clustering, per-tenant authorized views and row access policies.",
+      "description": "Arch (4.11, 5.8): dataset `fa_analytics`, tables `chat_audit`, `chat_usage`, `eval_events`, `gateway_audit`, `acl_changes`, `ingest_events`; 'day-partitioned, clustered by `tenant_id`; per-tenant authorized views (primary isolation) plus row access policies (second layer); `maximum_bytes_billed` on every query'; 'redacted text only'. Implement DDL as code in the repo (`bigquery/` SQL or Python module `etl/bq/schema.py`, applied by an idempotent `jobs`-callable command) with `BQ_DATASET` and `BQ_MAX_BYTES_BILLED`; partition by `DATE(event_time)` with `require_partition_filter`; cluster by `tenant_id`; per-tenant authorized view created on tenant onboarding (a function `ensure_tenant_view(tenant_id)`) in a separate views dataset, authorized on the base dataset; a row access policy per tenant as second layer. All query helpers pass `maximum_bytes_billed=BQ_MAX_BYTES_BILLED`. Out of scope: the bq-sink writer, onboarding hook wiring beyond a callable function.",
+      "acceptance_criteria": [
+        "Given the applied DDL, when table metadata is read, then each of the 6 tables has `time_partitioning.type=DAY` and `clustering_fields[0]=='tenant_id'` (test against BQ emulator or real test dataset)",
+        "Given rows for tenants A and B, when a query runs through tenant A's authorized view, then only tenant A rows return (integration)",
+        "Given a client helper, when a query is built, then `maximum_bytes_billed` equals `BQ_MAX_BYTES_BILLED` and a query without it is rejected by the wrapper (unit test)",
+        "Running the DDL command twice is a no-op (idempotency test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.11",
+        "overview/05-data-model-and-storage.md#5.8",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T2"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T18",
+      "title": "dbt-bigquery marts and ingest_events feed",
+      "summary": "Build dbt-bigquery marts over fa_analytics and land ingest analytics events into ingest_events.",
+      "description": "Arch (4.11, 4.8 `dbt`, 5.8): 'Marts are built by `dbt-bigquery`'; 'bq-sink: consumes audit, usage, eval, ingest and ACL topics; writes BigQuery with event-id dedupe' (bq-sink framework is E5; PUBLIC analytics events are exempt from the envelope check). Add a dbt-bigquery target with incremental, partition-aware marts (e.g. daily ingest summary per tenant from `ingest_events`, rejects per rule per day) using insert_overwrite on day partitions, `maximum_bytes_billed` set in the profile, and a `partition_filter` on every source read. Implement the `ingest_events` row mapping for `ingest.analytics.v1` and the ingest topic events so the E5 bq-sink role can write them with event-id dedupe. Out of scope: chat/eval/gateway marts (other epics) and the sink framework.",
+      "acceptance_criteria": [
+        "Given duplicate `ingest.analytics.v1` events with the same event_id, when mapped and written twice, then `ingest_events` has one row (test)",
+        "Given the dbt-bigquery profile, when parsed, then `maximum_bytes_billed` is set and equals `BQ_MAX_BYTES_BILLED` (test)",
+        "Given a mart run twice over the same day, when finished, then the row count equals the first run (no duplicates, no full-table rewrite: query log shows only that day partition)",
+        "A PUBLIC analytics event is written with PUBLIC tenant id and visible only to the PUBLIC view (test)"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.11",
+        "overview/05-data-model-and-storage.md#5.8",
+        "decisions.md#adr-014"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T17",
+        "E6-T13",
+        "E5"
+      ],
+      "size": "M",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    },
+    {
+      "key": "E6-T19",
+      "title": "BigQuery tenant isolation and byte-cap acceptance test",
+      "summary": "Prove tenant views isolate rows and queries are capped.",
+      "description": "Plan E6 done-when: 'BigQuery tables are day-partitioned, clustered by `tenant_id`, with `maximum_bytes_billed` set; a tenant's authorized view returns only that tenant's rows.' Add a test that provisions two tenants' views from E6-T17, inserts rows for both, and checks (1) tenant A's view never returns B's rows including via `SELECT *`, filters on B's id and a join on the base dataset (denied for tenant A's principal), (2) a deliberately large scan exceeding `BQ_MAX_BYTES_BILLED` is rejected with `bytesBilledLimitExceeded`, (3) table metadata partitioning and clustering. Runs in CI against the emulator, and a gated job against a real test project if the emulator cannot enforce authorized views (record which in the test docs).",
+      "acceptance_criteria": [
+        "Tenant A principal selecting from tenant A's view returns 0 rows with tenant_id != A (assertion on result set)",
+        "Tenant A principal querying the base table directly is denied (test)",
+        "A query estimated above `BQ_MAX_BYTES_BILLED` fails with `bytesBilledLimitExceeded`"
+      ],
+      "arch_refs": [
+        "overview/04-components-and-responsibilities.md#4.11",
+        "overview/05-data-model-and-storage.md#5.8"
+      ],
+      "repo": "FinAdvisor",
+      "depends_on": [
+        "E6-T17"
+      ],
+      "size": "S",
+      "status": "todo",
+      "issue": null,
+      "branch": null,
+      "pr": null
+    }
+  ],
+  "questions": [
+    "Where do the BigQuery DDL, datasets and authorized-view grants live: application code (E6-T17 assumes repo-managed idempotent DDL) or Terraform in the infra epic? Terraform would own IAM for authorized views.",
+    "The schema of `ingest.analytics.v1` and the other ingest topics (docs.bronze.v1, docs.silver.v1, chunks.contextualized.v1, chunks.indexed.v1) is not in 6.x for this slice; E6 tickets assume the E5 envelope plus id-only payloads. Confirm the payload schemas are defined by E5.",
+    "Who owns the `bq-sink` role implementation (arch lists it under fa-worker 4.7)? E6-T18 only supplies the ingest_events mapping; assumed E5 builds the sink framework.",
+    "Cloud Run job resources and Cloud Scheduler for `etl`, `etl-public`, `dbt` are not ticketed in E6 (assumed infra epic E10). Confirm.",
+    "The arch does not give Pandera check names or limits beyond 'Pandera, rejects'; E6-T6 defines them. Confirm or specify, including whether rejects block the whole document or only the failing chunk.",
+    "The arch does not state the staleness threshold used by `gold.stale_documents`; E6-T15 assumes a config value. Which key and default?",
+    "Sizes of the synthetic corpus per tenant (document count) are not specified; E6-T3 takes n_docs as a parameter.",
+    "Gaps G-07, G-39 and G-62 are named as fixed by this epic but their text is not in the slice; confirm ticket coverage against the gap list.",
+    "E5 tickets were not yet written when this was drafted; E6 tickets depend on the bare key 'E5' where the specific consumer-framework ticket is unknown. Replace with concrete E5 keys when available.",
+    "Does the E5 acl-applier already update denormalised ACL columns on `chunks` (5.2: copied from documents)? E6-T11 assumes yes and only tests it."
+  ]
+}

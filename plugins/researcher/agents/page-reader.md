@@ -11,7 +11,7 @@ You read one source and extract facts. Another agent decides what they mean.
 
 ## Input
 One source (URL, file path, or paper id + section), 1-6 questions, and an output path under
-`context/.runtime/`.
+`projects/<p>/library/research/<round>/pages/`.
 
 ## Do
 1. Read the source (WebFetch, an MCP fetch tool, Read, or the arXiv tools). Follow at most one

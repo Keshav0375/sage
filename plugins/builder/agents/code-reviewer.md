@@ -35,7 +35,7 @@ Your report file starts with these two lines (the brain mod reads them):
 sha: <git -C <worktree> rev-parse HEAD>
 status: <your status keyword>
 ```
-`context/.runtime/builder/<p>/<ticket>/review.md`.
+`projects/.runtime/builder/<p>/<ticket>/review.md`.
 
 ## Reply
 Start with `FINDINGS` or `CLEAN`. One line per finding, most severe first, max 10:

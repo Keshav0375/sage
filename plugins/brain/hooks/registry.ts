@@ -47,7 +47,7 @@ export function resolveCwd(reg: Registry, cwd: string, home: string): Match | un
   return best
 }
 
-// Keeps the card small: only the "Open decisions" and "Blockers" sections of STATE.md.
+// Keeps the card small: only the "Open decisions" and "Blockers" sections of state.md.
 export function stateHighlights(state: string, maxLines = 12): string[] {
   const out: string[] = []
   let keep = false
@@ -81,20 +81,20 @@ export function renderCard(
       lines.push(`- ${repo}: ${path}${repoExists[repo] === false ? '  (MISSING on disk)' : ''}`)
     }
   }
-  lines.push(`Context folder: projects/${name}/ (arch/, tracker.json, STATE.md, lessons.jsonl)`)
+  lines.push(`Project folder: projects/${name}/ (state.md, arch/, epic/, library/; layout in the brain:layout skill)`)
   const hl = state ? stateHighlights(state) : []
-  if (hl.length) lines.push('From STATE.md:', ...hl)
+  if (hl.length) lines.push('From state.md:', ...hl)
   if (tracker) {
     try {
       lines.push(...trackerSummary(tracker))
     } catch {
-      lines.push('Tracker: tracker.json does not parse.')
+      lines.push('Epics: a ticket file does not parse.')
     }
   }
   return lines.join('\n')
 }
 
-// A short summary of context/projects/<p>/tracker.json: the GitHub project, epic progress, and
+// A short summary of projects/<p>/epic/ (as a plan JSON): the GitHub project, epic progress, and
 // the next tickets whose dependencies are done.
 export function trackerSummary(text: string, maxNext = 3): string[] {
   const t = JSON.parse(text)
@@ -115,7 +115,7 @@ export function trackerSummary(text: string, maxNext = 3): string[] {
   }
   const next = all.filter((tk) => tk.status === 'todo' && (tk.depends_on ?? []).every((d) => done.has(d)))
   if (next.length) lines.push(`Ready: ${next.slice(0, maxNext).map((tk) => `${tk.key} ${tk.title}`).join('; ')}`)
-  return lines.length ? ['Tracker:', ...lines] : []
+  return lines.length ? ['Epics:', ...lines] : []
 }
 
 export function renderBoard(reg: Registry, home: string): string {

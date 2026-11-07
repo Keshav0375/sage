@@ -1,0 +1,651 @@
+{
+ "epic": "E4",
+ "tickets": [
+  {
+   "key": "E4-T1",
+   "title": "Spike: Model Armor screen latency and fail-closed",
+   "summary": "Measure Model Armor sanitizeUserPrompt latency and record ADR-009 evidence.",
+   "description": "Spike (E4 'Spikes first'). Call Model Armor REST (template = MODEL_ARMOR_TEMPLATE) from a Cloud Run-like environment with 200 redacted prompts of 50-2000 chars (benign, injection, jailbreak). Record p50/p95/p99 latency, false-positive rate on the benign set, detection rate on the injection set, and behaviour at a forced 500 ms timeout. Output: an ADR addendum in context/projects/finadvisor/arch/decisions.md under ADR-009 with the numbers and a keep/change verdict for MODEL_ARMOR_TIMEOUT_MS=500 and fail-closed. Arch: ADR-009 'Model Armor input screen in parallel with embed (500 ms timeout, fail closed)'; 4.5 guardrails. Out of scope: production client (see the Model Armor client ticket).",
+   "acceptance_criteria": [
+    "Given 200 prompts, when the benchmark script runs, then p50, p95, p99 latency and false-positive and detection rates are written to the ADR addendum.",
+    "Given the 500 ms timeout is applied client-side, when p99 is above 500 ms, then the ADR states the resulting fail-closed rate as a percentage and a decision (keep or change).",
+    "The benchmark script is committed and re-runnable with one command and exits non-zero if the template is unreachable."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E1"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T2",
+   "title": "Spike: Presidio latency and recall on synthetic corpus",
+   "summary": "Measure Presidio en_core_web_sm latency and PII recall on the synthetic corpus.",
+   "description": "Spike. No official figure exists (ADR-009). With presidio-analyzer 2.2.x and spaCy en_core_web_sm (PRESIDIO_SPACY_MODEL), run on (a) 500 synthetic advisor questions with injected PII (names, emails, phones, account numbers, national ids, addresses) and (b) 1000-char and 4000-char inputs. Record warm per-call p50/p95, cold-start time, memory, and per-entity recall and precision. Test pseudonymization round-trip (placeholders stable within a turn). Record as an ADR-009 addendum; propose INPUT_MAX_CHARS and the entity list/score threshold. Out of scope: wiring into chat.",
+   "acceptance_criteria": [
+    "Given the 500-question set, when the benchmark runs, then per-entity recall and precision and latency p50/p95 are recorded in the ADR addendum.",
+    "If overall recall on injected PII is below 0.90 the ADR lists the missed entity classes and a mitigation (custom recognizer or lower threshold); the verdict is stated either way.",
+    "The proposed INPUT_MAX_CHARS is justified by the 4000-char latency measurement."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E1"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T3",
+   "title": "Spike: Sonnet 5.5 prompt-cache hit behaviour with versioned tools",
+   "summary": "Measure prompt-cache hits for system prompt plus tools on claude-sonnet-5-5.",
+   "description": "Spike. Using the Anthropic SDK against claude-sonnet-5-5 (cache minimum 512 tokens per ADR-006), put cache_control on the end of tools+system and send 20 sequential and 20 concurrent requests with varying tenant/user/date text after the breakpoint. Record cache_read_input_tokens vs cache_creation_input_tokens, hit rate, TTFT with and without hit, and show that changing one tool definition invalidates the cache. Repeat once for claude-sonnet-4-6 (1,024-token minimum) to feed the fallback. Record as an ADR-006 addendum. Out of scope: the production LLMClient.",
+   "acceptance_criteria": [
+    "Given 20 sequential requests with a stable prefix, when run, then the hit rate and cache_read tokens are recorded and the ADR states whether the prefix reaches the 512-token minimum.",
+    "Given one tool definition is edited, when the next request is sent, then cache_read_input_tokens is 0 and cache_creation is >0; the result is recorded.",
+    "TTFT p50 with hit and without hit are both recorded."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-006"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E1"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T4",
+   "title": "Add E4 settings keys and the stable error-code mapping",
+   "summary": "Typed Settings for E4 keys and a single error-code to HTTP/SSE mapping with fixed messages.",
+   "description": "Add to the pydantic-settings Settings class (6.6), no secret default, missing required key fails boot: ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, LLM_MODEL_ANSWER, LLM_MODEL_AUX, LLM_MODEL_FALLBACK, LLM_FALLBACK_ENABLED(false), LLM_MAX_ITERATIONS(3), LLM_MAX_TOKENS, LLM_TIMEOUT_S, LLM_RETRIES, LLM_BREAKER_*, PROMPT_VERSION, INPUT_MAX_CHARS, MODEL_ARMOR_TEMPLATE, MODEL_ARMOR_TIMEOUT_MS(500), MODEL_ARMOR_FAIL_OPEN(false), PRESIDIO_SPACY_MODEL, TENANT_TOKEN_BUDGET, TENANT_MAX_CONCURRENCY, SSE_HEARTBEAT_S, SSE_REPLAY_TTL_S, TURN_LEASE_S, HISTORY_MAX_TURNS(6), HISTORY_MAX_TOKENS(3000), EVAL_SAMPLE_RATE. Values marked 'set in E4' come from the spikes and are documented in .env.example. Implement guardrails error mapping (6.1): UNAUTHENTICATED 401, FORBIDDEN 403, INPUT_TOO_LONG 413, INPUT_BLOCKED, GUARD_UNAVAILABLE, RATE_LIMITED 429 with Retry-After, TENANT_BUDGET_EXCEEDED, LLM_UNAVAILABLE, RETRIEVAL_UNAVAILABLE, TURN_INTERRUPTED, IDEMPOTENCY_KEY_REUSED 409, INTERNAL. HTTP error body is {\"error\":{\"code\",\"message\",\"request_id\",\"retryable\"}} with a fixed message per code, never exception text. Replaces the MVP src/errors.py behaviour that leaks exceptions.",
+   "acceptance_criteria": [
+    "Given a missing required key, when Settings loads, then boot raises (unit test per key group).",
+    "Given each exception class raised in a handler, when mapped, then the response body has the stable code and the fixed message and contains no substring of the exception text (parametrized test over every code).",
+    "X-Request-Id from Kong is echoed in error.request_id (test)."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.1",
+    "overview.md#6.6"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T5",
+   "title": "LLMClient: streaming, timeouts, jittered retries, config-only models",
+   "summary": "In-process LLMClient over the Anthropic SDK with streaming, timeouts and retries.",
+   "description": "Implement src/llm (ADR-005). stream(messages, tools, system, model=None) yields normalized events (text delta, tool_use, usage, stop_reason). Explicit connect/read timeouts from LLM_TIMEOUT_S; retries LLM_RETRIES with exponential backoff and full jitter on 429/5xx/overloaded/connection errors only (never on 4xx other than 429); max_tokens=LLM_MAX_TOKENS always set; model ids only from Settings; base URL from ANTHROPIC_BASE_URL. The request builder must never send temperature, top_p or top_k (removed 2026-10-21, 400). Replaces LiteLLM use in the MVP (litellm/ dir out of scope to delete unless E1 owns it). Out of scope: breaker, fallback, caching.",
+   "acceptance_criteria": [
+    "Given a stubbed 529 twice then 200, when streaming, then exactly 3 attempts are made with sleeps drawn from the jitter range (seeded test).",
+    "Given a 400 response, when streaming, then no retry occurs and LLM_UNAVAILABLE-mappable error is raised.",
+    "Given any request, when captured at the HTTP layer, then the body has no temperature, top_p or top_k keys and has max_tokens (test).",
+    "Given no hardcoded model string in src/llm, a grep-based test fails if a literal 'claude-' id appears outside config/tests."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-005",
+    "decisions.md#ADR-006"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T6",
+   "title": "LLMClient: circuit breaker and eval-gated same-provider fallback",
+   "summary": "Add a circuit breaker and a fallback to LLM_MODEL_FALLBACK only when LLM_FALLBACK_ENABLED is true.",
+   "description": "Extend LLMClient. Breaker params from LLM_BREAKER_* (failure threshold, window, open duration, half-open probes); when open, calls fail fast with LLM_UNAVAILABLE. Fallback: after primary exhausts retries or the breaker is open, if and only if LLM_FALLBACK_ENABLED is true, retry once on LLM_MODEL_FALLBACK (claude-sonnet-4-6; same provider only, never another vendor); the usage record carries the model actually used. Fallback has its own prompt cache and 1,024-token minimum (use spike result). Config default false until the eval gate passes (E7). Quote ADR-005: 'same-provider fallback only ... enabled only if it passes the eval gate'.",
+   "acceptance_criteria": [
+    "Given primary forced to fail and LLM_FALLBACK_ENABLED=false, when streaming, then LLM_UNAVAILABLE is raised and the fallback model is never called (test).",
+    "Given primary forced to fail and LLM_FALLBACK_ENABLED=true, when streaming, then the fallback model is used and usage.model equals LLM_MODEL_FALLBACK; no temperature/top_p/top_k sent.",
+    "Given N consecutive failures, when the breaker opens, then the next call fails without a network request until the open duration passes (fake clock test); half-open success closes it."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-005"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T5"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T7",
+   "title": "LLMClient: prompt caching, versioned tools, model retirement check",
+   "summary": "Cache system prompt plus tools, version them with PROMPT_VERSION and fail readiness on retired models.",
+   "description": "Place cache_control at the end of tools then system (cache order tools, system, messages); tenant/user/date text only in messages after the breakpoint. Tool definitions and system prompt are built by one function keyed on PROMPT_VERSION; a test hashes them so a change without a PROMPT_VERSION bump fails CI. Apply the spike (E4-T3) result: if the prefix is under the model minimum, log a warning with token count. Add a retirement table (model id -> retirement date) in config and a check used by /readyz (model availability item, 6.1) and a CI test that fails when a configured model is retired or retires within 30 days. Record cache_read/creation tokens in usage. Quote ADR-006: 'tool definitions are versioned with the prompt because changing them invalidates the cache'.",
+   "acceptance_criteria": [
+    "Given two consecutive requests with the same prefix against the stub, when built, then the system/tools blocks are byte-identical and carry cache_control; tenant/user/date text appears only after the breakpoint (test).",
+    "Given a tool schema edited without a PROMPT_VERSION bump, when CI runs, then the hash test fails.",
+    "Given LLM_MODEL_ANSWER set to a retired id, when /readyz is called, then it reports not ready; and the CI retirement test fails for a model retiring within 30 days.",
+    "Usage events include cache_read_input_tokens and cache_creation_input_tokens."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-006",
+    "overview.md#6.1"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T5",
+    "E4-T3"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T8",
+   "title": "Guard-in: input cap and Presidio pseudonymization",
+   "summary": "Cap input length and pseudonymize PII before embed, LLM, traces and logs.",
+   "description": "In src/guardrails: reject over INPUT_MAX_CHARS with INPUT_TOO_LONG (413) before any other work; Presidio AnalyzerEngine (spaCy PRESIDIO_SPACY_MODEL=en_core_web_sm, loaded once per process at startup, entity list/threshold from spike E4-T2) returns the redacted text plus a placeholder map held only in request memory. The redacted text is the only text passed to embedding, Model Armor, LLM, Langfuse, OTel attributes and logs. Replace the MVP src/pii fallback. Quote ADR-009: 'Presidio in-process pseudonymization ... before embed / LLM / traces / logs'. Out of scope: output redaction.",
+   "acceptance_criteria": [
+    "Given a question containing an email, a phone number and a person name, when guard-in runs, then the returned text has none of them and contains typed placeholders (unit test).",
+    "Given input of INPUT_MAX_CHARS+1, when guard-in runs, then INPUT_TOO_LONG is raised before the Presidio engine is invoked (mock call count 0).",
+    "Given the benchmark corpus from E4-T2, recall is at least the value recorded in the ADR (regression test with threshold).",
+    "Warm p95 latency on a 1000-char input stays within the ADR-recorded bound (marked perf test)."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T2",
+    "E4-T4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T9",
+   "title": "Model Armor input screen client, fail closed",
+   "summary": "Screen redacted input via Model Armor with a 500 ms timeout that fails closed.",
+   "description": "Client in src/guardrails calling Model Armor sanitizeUserPrompt with MODEL_ARMOR_TEMPLATE on the redacted text; timeout MODEL_ARMOR_TIMEOUT_MS (500). Verdict match -> INPUT_BLOCKED (not an LLM call, SSE error or HTTP per 6.1). Timeout, 5xx or auth error -> GUARD_UNAVAILABLE and the turn stops, unless MODEL_ARMOR_FAIL_OPEN is true (default false; boot warns in prod profile if true). The screen runs concurrently (asyncio.gather) with the Voyage embed; if the screen blocks or fails, the embed result is discarded and no retrieval SQL runs. The REST API only detects; the app acts (ADR-009). Use verdict/latency findings from E4-T1.",
+   "acceptance_criteria": [
+    "Given Model Armor stubbed to delay 600 ms, when screened, then GUARD_UNAVAILABLE is returned at about 500 ms and no retrieval call is made (test with timing assertion <700 ms).",
+    "Given a blocked verdict, when screened, then INPUT_BLOCKED is raised and neither Anthropic nor DB retrieval is called.",
+    "Given the embed and screen stubs each sleeping 300 ms, when run together, then total wall time is under 450 ms (concurrency test).",
+    "Given MODEL_ARMOR_FAIL_OPEN=false and a 5xx, the result is GUARD_UNAVAILABLE (never pass-through)."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T1",
+    "E4-T8"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T10",
+   "title": "Tool dispatcher: JSON tool_result, validation, max iterations",
+   "summary": "Dispatch the four tools with Pydantic validation, JSON-encoded results and no exception text.",
+   "description": "In src/agent/tools, per 6.3: unknown tool names rejected; arguments validated by Pydantic models (search_firm_kb top_k bounded; lookup_product_factsheet product_name; lookup_suitability_rule product_category and enum client_risk_profile); no tool accepts tenant, tier, jurisdiction or licenses (tests assert the schemas lack those fields); output is model_dump_json(); failures return {\"error_code\": ...} with no exception text; iterations capped at LLM_MAX_ITERATIONS (3). Retrieved text only ever appears in a tool_result block, never in system. Tools call the E3 services (search_firm_kb, factsheet, suitability) through RetrievalService(principal); this ticket does not reimplement them. Tool definitions registered for the prompt-cache builder (E4-T7).",
+   "acceptance_criteria": [
+    "Given a tool call with an unknown name, when dispatched, then the result is {\"error_code\":\"UNKNOWN_TOOL\"} and no service is called.",
+    "Given a tool raising ValueError('secret sql'), when dispatched, then the tool_result JSON contains error_code and the string 'secret sql' appears nowhere in it (test).",
+    "Given every tool's JSON schema, when inspected, then no property named tenant_id, tier, jurisdiction or licenses exists.",
+    "Given a model that requests tools 4 times, when the loop runs, then it stops after 3 iterations."
+   ],
+   "arch_refs": [
+    "overview.md#6.3",
+    "overview.md#4.5",
+    "decisions.md#ADR-007"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T4",
+    "E3-T9",
+    "E3-T10",
+    "E3-T11"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T11",
+   "title": "CitationVerifier implementation and server citation events",
+   "summary": "Deterministic verifier: every [n] in retrieved chunk ids with quote overlap; server emits citation events.",
+   "description": "Implement the CitationVerifier Protocol defined in E3 (the cache hit path in E3-T14 already depends on it). Rules (ADR-009, 8.1 LLM05): every [n] in the answer maps to a retrieved chunk of this turn (id set from the retrieval result); a cited claim must overlap the chunk text by a deterministic quote/token-overlap threshold (threshold a config value tuned in evals, default documented). On accept, build the SSE 'citation' event {index, chunk_id, source_title, regulatory_ref, last_reviewed_at, stale, excerpt}; excerpt passes through the output redactor (G-16); stale is computed server-side. The model never emits citation events itself. Verifier failure behaviour: drop the uncited sentence marker and set finish_reason accordingly or return refusal; choose per arch (see questions). Uses retrieval.fetch_chunks(ids) for chunk data.",
+   "acceptance_criteria": [
+    "Given an answer citing [4] when retrieved ids map only to 1..3, when verified, then it is rejected and no citation event is emitted (verifier test).",
+    "Given an answer whose [n] set is a subset of retrieved chunks and with quote overlap above threshold, when verified, then one citation event per distinct n is returned with a redacted excerpt.",
+    "Given a chunk excerpt containing an email, when the event is built, then the excerpt contains no email (test).",
+    "Property test: for random answers, every [n] present in emitted citation events is in the retrieved chunk-id set."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.2",
+    "decisions.md#ADR-009",
+    "overview.md#8.1"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E3-T14",
+    "E4-T8"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T12",
+   "title": "Sentence-buffered output PII redaction",
+   "summary": "Buffer streamed text to sentence boundaries and redact PII before emitting delta events.",
+   "description": "In src/guardrails: wrap the LLM text stream; accumulate until a sentence boundary (or max buffer length to bound latency, config), run Presidio on the sentence (and restore pseudonym placeholders only if arch allows; default: leave redacted), then emit. Flush remaining buffer at end of stream. Must handle [n] markers split across chunks without breaking them. Quote ADR-009: 'sentence-buffered output PII redaction ... adds a small latency to first visible tokens'. Record the added first-delta latency in the PR.",
+   "acceptance_criteria": [
+    "Given a stream chunked mid-sentence containing an email split across two chunks, when redacted, then no emitted delta contains the email in full or in part (test).",
+    "Given a stream ending without a final period, when finished, then the remaining text is flushed (test).",
+    "Given the marker '[1' and '2]' split across chunks, when processed, then the emitted text contains '[12]' unchanged or '[1]' per original (no corruption; parametrized test).",
+    "Added latency before first delta is measured on a stub and reported; test fails if the buffer exceeds the configured max."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T8"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T13",
+   "title": "turn_events store and SSE v2 event encoding",
+   "summary": "Persist ordered events per turn and encode them as SSE with ids and a client-safe schema.",
+   "description": "Define event models (6.2): turn, meta, tool, delta, citation, refusal, error, done with exact data shapes; encode as 'id: <seq>\\nevent: <name>\\ndata: <json>'. Implement an EventSink that assigns strictly increasing seq per turn (turn at seq 0), inserts into turn_events (table from E1 schema; if absent see questions) in short transactions, batching delta events (documented interval) so the DB is not hit per token, and sends heartbeat comment lines every SSE_HEARTBEAT_S. Client-visible events are built only from these models: tool events carry tool name, status, tool_use_id; no payloads, inputs or exception text (G-04); error events carry {code, retryable} only. Do not make DB calls while holding a stream open longer than a short tx.",
+   "acceptance_criteria": [
+    "Given events of every type are emitted in a test turn, when serialized, then none contains tool input/output payloads or exception text (test over all event types with a poisoned tool result and exception).",
+    "Given a turn, when events are persisted, then seq is 0,1,2,... strictly increasing with no gaps and turn is seq 0.",
+    "Given SSE_HEARTBEAT_S=1 and no events for 3 s, when streaming, then at least 2 comment lines ': hb' are sent.",
+    "Delta batching: 1000 token deltas produce fewer than 1000 inserts (assert insert count)."
+   ],
+   "arch_refs": [
+    "overview.md#6.2",
+    "decisions.md#ADR-007"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T4"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T14",
+   "title": "POST /v1/chat with Idempotency-Key and replay",
+   "summary": "Idempotent chat endpoint: same key and body replays, different body returns 409.",
+   "description": "POST /v1/chat requires header Idempotency-Key and body {conversation_id?, message}. turn_id derived from the Idempotency-Key (deterministic, per principal/tenant namespace). Short tx: insert turn_events seq 0 ON CONFLICT DO NOTHING plus store a request-body hash with the turn; if the row existed with the same hash, stream a replay of persisted events (then tail until done) instead of generating; a different hash returns 409 IDEMPOTENCY_KEY_REUSED. Missing header -> 400 with a stable code. Auth and principal first. Streams text/event-stream; Kong passes it unbuffered. Orchestrator call is a stub interface here (implemented in the orchestrator tickets).",
+   "acceptance_criteria": [
+    "Given the same Idempotency-Key and body sent twice, when the second arrives, then the LLM stub is called once and the second response replays identical events (test counting stub calls).",
+    "Given the same key with a different body, when posted, then status is 409 with code IDEMPOTENCY_KEY_REUSED.",
+    "Given two concurrent requests with the same key, when both arrive, then exactly one generation runs (race test).",
+    "Given a different tenant using the same key string, when posted, then it is a distinct turn (no cross-tenant replay)."
+   ],
+   "arch_refs": [
+    "overview.md#6.1",
+    "overview.md#6.2",
+    "decisions.md#ADR-007"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T13",
+    "E1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T15",
+   "title": "GET /v1/chat/{turn_id}/events resume and TURN_INTERRUPTED",
+   "summary": "Resume a dropped stream from Last-Event-ID, tail to done, and detect dead producers.",
+   "description": "Endpoint (6.1/6.2): owner of the turn only (403/404 otherwise, RLS-scoped); header Last-Event-ID; replay turn_events with seq > Last-Event-ID, then tail (poll or LISTEN, documented) until done; heartbeat as in E4-T13. If the last persisted event is older than TURN_LEASE_S and no done/error exists, append once error {code: TURN_INTERRUPTED, retryable: true} and end; the append must be idempotent across concurrent resumers. Events older than SSE_REPLAY_TTL_S are no longer replayable (410 or documented code).",
+   "acceptance_criteria": [
+    "Given a turn of 20 events and a client that disconnects after seq 7, when it reconnects with Last-Event-ID 7, then it receives exactly seq 8..N with no duplicates or gaps (test).",
+    "Given the producer stops and TURN_LEASE_S passes, when two resumers connect concurrently, then exactly one TURN_INTERRUPTED error row exists in turn_events.",
+    "Given another advisor's turn_id, when requested, then no events are returned (403/404 test).",
+    "Given Last-Event-ID absent, the stream starts from seq 0."
+   ],
+   "arch_refs": [
+    "overview.md#6.1",
+    "overview.md#6.2"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T13",
+    "E4-T14"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T16",
+   "title": "Conversations and messages persistence with history window",
+   "summary": "Persist conversations/messages and load the last 6 turns within 3k tokens.",
+   "description": "Repository in src/agent (using E1 tables conversations and messages, monthly range partitions, columns incl. retrieval_degraded and citations (redacted)). Functions: create/get conversation (owner = principal), insert user message (redacted text only) and assistant message, load history = last HISTORY_MAX_TURNS turns trimmed to HISTORY_MAX_TOKENS (token count method documented), soft delete via DELETE /v1/conversations/{id} (204), GET /v1/conversations and /messages with cursor. All in short, tenant-scoped transactions. Stored text is the redacted text.",
+   "acceptance_criteria": [
+    "Given 10 prior turns, when history loads, then at most 6 turns are returned and total tokens <= 3000 (test with a long-turn fixture).",
+    "Given another advisor's conversation id, when GET messages, then 404/403 (RLS test).",
+    "Given DELETE then GET, the conversation is excluded and returns 204 once.",
+    "Given a user message containing PII, the stored content equals the redacted text (test)."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-007",
+    "overview.md#6.1"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T4",
+    "E4-T8",
+    "E1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T17",
+   "title": "Follow-up condensation with Haiku",
+   "summary": "Rewrite a follow-up into a standalone query only when history exists.",
+   "description": "When history is non-empty, call LLMClient with LLM_MODEL_AUX (claude-haiku-5-5), small max_tokens, input = redacted history + redacted question, output = standalone redacted question used for embed/retrieval/cache key. No history -> no call. Failure or timeout falls back to the original question (not an error). Output re-passes the guard-in redactor. No temperature/top_p/top_k.",
+   "acceptance_criteria": [
+    "Given empty history, when preparing a turn, then the aux LLM stub is called 0 times.",
+    "Given history and the stub returning a rewritten query, when prepared, then retrieval receives the rewritten query.",
+    "Given the aux call timing out, when prepared, then the original question is used and the turn continues.",
+    "Given a rewritten query containing an email, then it is redacted before use (test)."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "decisions.md#ADR-007",
+    "decisions.md#ADR-006"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T5",
+    "E4-T16",
+    "E4-T8"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T18",
+   "title": "Orchestrator pre-LLM stages: cache, screen+embed, retrieval, gate",
+   "summary": "Retrieve-first pipeline up to the gate, with the meta event and refusal path.",
+   "description": "src/agent orchestrator order (4.5, Flow 1): guard-in (cap, Presidio) -> condensation (if history) -> answer_cache lookup (E3-T13/T14 store, key from the normalized redacted question; hit re-fetches via fetch_chunks, re-runs the CitationVerifier, a miss on invisible chunk) -> on miss: Model Armor screen in parallel with Voyage embed -> RetrievalService search+rerank+gate (E3) in short transactions -> emit 'meta' {retrieval_degraded, reason?} once after rerank and store messages.retrieval_degraded. Gate failure emits 'refusal' {NO_FIRM_DOCUMENTATION, escalate_offer} then done(finish_reason gate) with no LLM call. Cache hit path emits delta/citation events from the verified cached answer and skips screen and embed. Failures map to one error event with a code (RETRIEVAL_UNAVAILABLE etc). Cache write after a verified, non-escalating turn is in the next ticket's persist step.",
+   "acceptance_criteria": [
+    "Given the gate stub failing, when a turn runs, then events are turn, meta, refusal, done(gate) and the LLM stub is called 0 times.",
+    "Given the reranker stub returning 429, when run, then meta.retrieval_degraded is true with reason rerank_429 and the stored messages.retrieval_degraded is true (equality test across both).",
+    "Given a cache hit, when run, then Model Armor and Voyage stubs are called 0 times and chunks are fetched via fetch_chunks.",
+    "Given a cache hit citing a chunk no longer visible to the principal, then it behaves as a miss.",
+    "Given Model Armor timeout, the turn ends with error GUARD_UNAVAILABLE and no retrieval SQL."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.2",
+    "decisions.md#ADR-007"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T9",
+    "E4-T10",
+    "E4-T17",
+    "E4-T13",
+    "E3-T9",
+    "E3-T14"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T19",
+   "title": "Orchestrator LLM loop: streaming with tools, verifier and redaction",
+   "summary": "One streaming LLM call with tools, max 3 iterations, wired to verifier and output redaction.",
+   "description": "After the gate passes (parent expansion and staleness via E3), inject retrieval as a JSON-encoded tool_result for a synthetic search_firm_kb tool_use, then stream via LLMClient with tools (4 tools, E4-T10 dispatcher), prompt cache (E4-T7) and the versioned system prompt (update MVP src/agent/system_prompt.py: no secrets or tenant data, 'today' and tenant/user text after the cache breakpoint, instruct citing with [n]). Emit 'tool' events (name/status/tool_use_id) on tool_use start and result; text goes through sentence-buffered redaction to 'delta'; when the answer completes (or per sentence), the CitationVerifier runs and citation events are emitted; verifier rejection handled per questions. Max LLM_MAX_ITERATIONS. finish_reason in (end_turn, max_tokens, refusal, gate). LLM failures after breaker/fallback -> error LLM_UNAVAILABLE.",
+   "acceptance_criteria": [
+    "Given the LLM stub citing [n] not in retrieved ids, when the turn runs, then no citation event for that n is emitted and the verifier outcome is recorded (end-to-end verifier test).",
+    "Given a tool raising an exception with sensitive text, then no emitted event or tool_result contains that text.",
+    "Given the LLM stub requesting tools forever, then the loop stops at 3 iterations and done is emitted.",
+    "Given the retrieved text contains 'ignore previous instructions', it appears only inside a tool_result block in the captured Anthropic request, never in system (test).",
+    "Delta events contain no PII injected in the stubbed answer."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.3",
+    "decisions.md#ADR-007",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T7",
+    "E4-T10",
+    "E4-T11",
+    "E4-T12",
+    "E4-T18"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T20",
+   "title": "escalate_to_compliance persistence and GET /v1/escalations",
+   "summary": "Persist escalations with server-side licenses and an outbox event; list endpoint.",
+   "description": "Tool (6.3): input {reason, product_class}; licenses read from Principal/advisors.licenses (never tool args); insert into escalations (E1 table) and an outbox row in one transaction; returns {escalation_id, status:'pending_review'}; client sees tool name+status only (G-18). A turn that calls it is flagged side_effect so it is never written to answer_cache. GET /v1/escalations: compliance_officer sees tenant escalations, others only their own (RLS + role check). Reason text is redacted before persist.",
+   "acceptance_criteria": [
+    "Given a tool call, when executed, then exactly one escalations row and one outbox row exist, in the same transaction (rollback test: failure of the outbox insert leaves no escalation).",
+    "Given an advisor with licenses X, the stored license snapshot equals advisors.licenses and any 'licenses' argument from the model is rejected by schema validation.",
+    "Given a non-officer, GET /v1/escalations returns only own rows; officer returns tenant rows; other tenant rows never appear.",
+    "Given a turn that escalated, the answer cache write is skipped (test)."
+   ],
+   "arch_refs": [
+    "overview.md#6.3",
+    "overview.md#4.5",
+    "overview.md#8.1"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T10",
+    "E1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T21",
+   "title": "Outbox writer and turn persist transaction",
+   "summary": "Write chat.audit, chat.usage and sampled eval.sample outbox rows in the turn-persist transaction.",
+   "description": "Module events (4.5): insert-only outbox writer taking the current transaction; no Kafka client or credentials in chat-api (import-linter contract + test). Turn persist = one short transaction: assistant message (retrieval_degraded, finish_reason, redacted citations), final turn_events flush, outbox rows chat.audit and chat.usage (tokens in/out, cache tokens, model used, latency, tenant) and, with probability EVAL_SAMPLE_RATE on completed turns, eval.sample.v1; answer_cache write (E3 store) when eligible (no side-effect tool, verifier passed). Payloads use redacted text only. Event schema names/versions follow the 6.4 topic catalogue (verify against it).",
+   "acceptance_criteria": [
+    "Given a completed turn, when persisted, then one chat.audit and one chat.usage outbox row exist in the same transaction as the assistant message (kill-after-message test: no orphan rows).",
+    "Given EVAL_SAMPLE_RATE=1.0 an eval.sample row is written; at 0.0 none (seeded-RNG test).",
+    "Given chat-api code, importing a kafka client fails the import-linter contract.",
+    "Given PII in the stubbed answer, outbox payloads contain only redacted text (test)."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.2",
+    "decisions.md#ADR-007"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T19",
+    "E4-T20",
+    "E1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T22",
+   "title": "Per-tenant token budget and concurrency limits",
+   "summary": "Enforce TENANT_TOKEN_BUDGET and TENANT_MAX_CONCURRENCY before generation.",
+   "description": "Before the LLM call, check the tenant's token usage against TENANT_TOKEN_BUDGET (window defined in questions; source: usage rows already written, no new infra unless arch lists one) and in-flight turns against TENANT_MAX_CONCURRENCY. Exceeded budget -> TENANT_BUDGET_EXCEEDED; concurrency -> RATE_LIMITED 429 with Retry-After. Concurrency slot released in finally. Both limits are per tenant, not per instance (state in Postgres or Valkey per questions).",
+   "acceptance_criteria": [
+    "Given budget exhausted, when a turn starts, then error TENANT_BUDGET_EXCEEDED is returned and the LLM stub is called 0 times.",
+    "Given TENANT_MAX_CONCURRENCY=2 and 3 simultaneous turns, then the third gets 429 RATE_LIMITED with Retry-After; after one finishes a new turn is accepted.",
+    "Given a turn that raises, the concurrency slot is released (test)."
+   ],
+   "arch_refs": [
+    "overview.md#6.1",
+    "overview.md#6.6",
+    "overview.md#8.1"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T19"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T23",
+   "title": "Admin: PATCH /v1/admin/advisors/{id}",
+   "summary": "Tenant admins update advisors directly, bumping entitlement_version with an outbox event.",
+   "description": "Endpoint (6.1): role tenant_admin via principal; body {role?, tier?, jurisdictions?, licenses?, status?} validated; direct UPDATE advisors (policy allows tenant_admin only), bump entitlement_version, outbox AdvisorEntitlementChanged in the same transaction; own-tenant only (RLS). Takes effect within ENTITLEMENT_CACHE_TTL_S (no Kafka invalidation).",
+   "acceptance_criteria": [
+    "Given a tenant_admin, when patching tier, then 200, entitlement_version increments by 1 and one outbox row exists.",
+    "Given a non-admin, then 403 FORBIDDEN and no row changes.",
+    "Given an advisor of another tenant, then 404 and no change (RLS test).",
+    "Given an invalid tier value, 422/400 with a stable code."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.1"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T21",
+    "E1"
+   ],
+   "size": "S",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T24",
+   "title": "Admin: ACL change and delete requests with status endpoint",
+   "summary": "ACL change/delete returns 202 and writes one acl_change_requests row plus one outbox row.",
+   "description": "Endpoints (6.1, ADR-022): POST /v1/admin/documents/{id}/acl-changes {tier_required?, jurisdiction?} and DELETE /v1/admin/documents/{id} (action=delete), role tenant_admin; in one transaction insert acl_change_requests (pending) and outbox AclChangeRequested (acl.changes.v1) and return 202 {request_id}; validate that the document is visible to the admin's tenant by reading via RetrievalService (no write to content tables). GET /v1/admin/acl-changes/{request_id} returns {status: pending|applied|failed, applied_at}. The acl-applier worker is not in this epic. chat-api's DB role fa_app has no INSERT/UPDATE/DELETE on documents, chunks, suitability_rules.",
+   "acceptance_criteria": [
+    "Given a tenant_admin POST, then 202 and exactly one acl_change_requests row and one outbox row are created in one transaction (count test; failure of outbox insert rolls back both).",
+    "Given a non-admin, 403 and zero rows.",
+    "Given the fa_app role, a privilege test asserts no INSERT/UPDATE/DELETE grant on documents, chunks and suitability_rules (information_schema.role_table_grants query).",
+    "Given a request id of another tenant, GET status returns 404."
+   ],
+   "arch_refs": [
+    "overview.md#4.5",
+    "overview.md#6.1",
+    "decisions.md#ADR-022"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T21",
+    "E3-T12",
+    "E1"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T25",
+   "title": "Leak-path tests: PII never reaches Voyage, Anthropic, logs or Langfuse",
+   "summary": "End-to-end test that injected PII is absent from every outbound call, log line and trace.",
+   "description": "Integration test: run the full orchestrator with stubs capturing (a) Voyage embed and rerank request bodies, (b) Anthropic requests incl. aux condensation, (c) Model Armor request, (d) captured log records and OTel/Langfuse span attributes, (e) outbox payloads and turn_events. Inject PII (email, phone, name, account number) in the question and in history. Assert none of the raw values appear anywhere; also assert client SSE events contain no tool payloads or exception text across all event types. Ensure Langfuse masking is wired if LANGFUSE_ENABLED (mask before export).",
+   "acceptance_criteria": [
+    "Given PII in the question, when a turn runs, then a scan of all captured outbound bodies, logs, spans and outbox rows finds zero occurrences of the raw values (test fails if one leaks).",
+    "Given a poisoned tool exception text, the full SSE capture contains no part of it.",
+    "Given LANGFUSE_ENABLED=true with a capture exporter, span attributes contain redacted text only."
+   ],
+   "arch_refs": [
+    "overview.md#8.1",
+    "decisions.md#ADR-009"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T19",
+    "E4-T21"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T26",
+   "title": "Resume, idempotency and failure end-to-end tests",
+   "summary": "Integration tests for dropped connections, key reuse, fallback gating and meta consistency.",
+   "description": "Add the epic's integration tests against a real Postgres: (1) drop the connection mid-stream, resume with Last-Event-ID, final event list equals an uninterrupted run; (2) same Idempotency-Key twice -> one LLM call; different body -> 409; (3) meta.retrieval_degraded equals messages.retrieval_degraded for degraded and non-degraded turns; (4) with primary forced to fail, fallback used only when LLM_FALLBACK_ENABLED is true; (5) Model Armor 500 ms timeout -> GUARD_UNAVAILABLE; (6) every emitted [n] is within retrieved chunk ids. Wire into CI.",
+   "acceptance_criteria": [
+    "Test (1) fails if any event is missing or duplicated after resume.",
+    "Test (2) fails if the LLM stub call count is not 1, or the status is not 409 on a different body.",
+    "Test (3) fails if the two flags differ for either case.",
+    "Tests (4)-(6) fail as described in their assertions and run in CI on every PR."
+   ],
+   "arch_refs": [
+    "overview.md#6.2",
+    "decisions.md#ADR-007"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T19",
+    "E4-T15",
+    "E4-T6",
+    "E4-T9"
+   ],
+   "size": "M",
+   "status": "todo"
+  },
+  {
+   "key": "E4-T27",
+   "title": "TTFT benchmark on 10k-chunk corpus with a real LLM",
+   "summary": "Measure TTFT p50/p95 against the overview 2.1 target and fail if above.",
+   "description": "Script and CI-manual job: load the 10k-chunk synthetic corpus (E3-T16 fixture), real Voyage and Anthropic (claude-sonnet-5-5), Model Armor and Presidio on, prompt cache warm; run at least 200 turns including 30% follow-ups and a cache-hit mix reported separately. TTFT = request received to first delta event. Report p50/p95, stage breakdown (guard, embed/screen, retrieval, rerank, LLM first token). Targets from overview 2.1: p50 < 2.0 s, p95 < 3.5 s; script exits non-zero above them. Save results in the repo docs and an ADR note.",
+   "acceptance_criteria": [
+    "Given the 10k corpus and real LLM, when the benchmark runs 200 turns, then p50 < 2.0 s and p95 < 3.5 s or the command exits non-zero.",
+    "The report lists per-stage p50/p95 so a regression is attributable.",
+    "Cache-hit and cache-miss turns are reported as separate distributions."
+   ],
+   "arch_refs": [
+    "overview.md#2.1",
+    "overview.md#4.5"
+   ],
+   "repo": "FinAdvisor",
+   "depends_on": [
+    "E4-T19",
+    "E3-T16"
+   ],
+   "size": "M",
+   "status": "todo"
+  }
+ ],
+ "questions": [
+  "overview 05 data model was not in my slice: confirm E1 creates conversations, messages (retrieval_degraded), turn_events (with request-body hash for idempotency), escalations, acl_change_requests, outbox and answer_cache; otherwise add schema work to E4.",
+  "Citation verifier on rejection: the arch does not say whether to strip the unverified [n], withhold the sentence, or refuse the turn; and the numeric quote-overlap threshold is unspecified (assumed config tuned by evals).",
+  "Per-tenant token budget: window (daily/monthly), where counters live (Postgres usage rows vs Valkey) and the budget value are not specified.",
+  "turn_id derivation from Idempotency-Key and the delta batching interval for turn_events are not specified; tickets assume deterministic per-tenant hashing and a documented batch interval.",
+  "Resume tailing mechanism (poll vs LISTEN/NOTIFY) and behaviour after SSE_REPLAY_TTL_S are not specified.",
+  "Whether pseudonym placeholders are restored in output text for the advisor (Presidio is one-way vs reversible) is not specified; tickets assume placeholders stay redacted.",
+  "Whether the MVP litellm/ directory removal belongs to E4 or E1 is not specified."
+ ]
+}

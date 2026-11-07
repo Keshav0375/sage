@@ -20,6 +20,6 @@ The registry is `<context_dir>/registry.json`. Each project has `kind`, `status`
 3. **Write the registry.** Read `registry.json`, add or merge the project, keep every other
    entry unchanged, write it back with 2-space indentation. Never drop a repo without asking.
 4. **Create the brain folder** for a new project: copy every file in
-   `${CLAUDE_PLUGIN_ROOT}/templates/project/` to `<context_dir>/projects/<project>/`, and replace
+   `${CLAUDE_PLUGIN_ROOT}/templates/project/` (all subfolders) to `<context_dir>/<project>/`, and replace
    `{{project}}` in each file with the project name. Do not overwrite existing files.
 5. **Confirm** with the `mcp__brain__where` tool for the project, and show the card.
