@@ -18,6 +18,14 @@ evidence and differ only in preference. Collect such questions and ask them in o
 early as you can. Everything else you decide, record as an ADR with the strongest dissent, and
 continue. Keshav can overturn any ADR later with `/researcher:decide`.
 
+**Run state and handoffs.** At the start, call `mcp__brain__run_update` with the goal, `stage`
+and `status: active`; update `stage`, `step` and `next` at every stage and wave boundary, and set
+`status: done` at the end. The mod keeps this state across compaction and usage-limit stops, so
+the run goes from stage 0 to stage 6 in one go: no hard stop between stages and no resume command
+for Keshav. A refused tool call from an agent (a guard or permission message) is a harness
+defect: fix the config the message names when it is under `projects/`, else report it, and resume
+the agent by SendMessage. Agent questions are answered by you (see `brain:pipeline` rule 6).
+
 ## Stage 0. Orient
 `mcp__brain__where` for the project card. If the project is not registered, run `/brain:register`
 first. Read the existing `arch/` by section and `epic/` if present. Spawn `Explore` to
@@ -44,6 +52,9 @@ through `arch-writer`, with an ADR for each change.
 ticket-writers write them as files in `epic/<E>-<slug>/tickets/`. No approval gate: the plan is ready when every check in `/researcher:plan` passes.
 
 ## Stage 5. Publish → `/researcher:publish`
+Part of the run, not a separate approval: it starts when the stage 4 checks pass, unless the
+run's brief says not to publish. For an already published plan, publish applies the diff
+(update, close, new) the plan stage wrote.
 `publisher` creates the GitHub Project, epics and tickets, and writes the links back into the epic and ticket files.
 
 ## Stage 6. Hand off

@@ -39,3 +39,11 @@ Start with `VERDICT`, then `GREEN` or `RED`. Then at most 10 lines:
 `criterion: <text> → met|not met (<evidence>)`, then `blocking:` items with their source report,
 then `not run:`. GREEN only when every criterion is met, every test passed, and nothing is
 blocking.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.

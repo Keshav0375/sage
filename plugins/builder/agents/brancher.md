@@ -35,3 +35,11 @@ job: `<job> → <first relevant error lines>`.
 ## Rules
 Never force-push, never delete a branch, never merge. On any git error, stop and reply `GAP` with
 the command and its output.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.

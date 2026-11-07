@@ -26,3 +26,11 @@ The full extract to the output path you were given.
 ## Reply
 Start with `EVIDENCE`. Then, at most 8 lines: `Q<n>: "<shortest exact quote>" (<section>)` or
 `Q<n>: NOT FOUND`, then the version/date and the output path.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.

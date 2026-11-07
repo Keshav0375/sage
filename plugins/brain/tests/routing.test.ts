@@ -67,7 +67,7 @@ test('spawn tier at depth 2 is always the leaf model and leaf effort', () => {
 
 test('budget guard speaks only past a threshold', () => {
   expect(budgetGuard({ context: 30, window: 10 }, 50, 75)).toBeUndefined()
-  expect(budgetGuard({ context: 62, window: 10 }, 50, 75)).toContain('/clear')
+  expect(budgetGuard({ context: 62, window: 10 }, 50, 75)).toContain('run_update')
   expect(budgetGuard({ context: 10, window: 80 }, 50, 75)).toContain('one agent at a time')
   expect(budgetGuard({}, 50, 75)).toBeUndefined()
 })
