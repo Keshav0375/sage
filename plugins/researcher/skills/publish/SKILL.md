@@ -16,7 +16,9 @@ has no remote or its owner is not his account.
    `gh auth refresh -s project`). Every ticket `repo` maps to a GitHub repo: read
    `git -C <path> remote get-url origin` for each registry repo.
 2. **Check for duplicates.** If `epic/README.md` frontmatter already has `github.project_number`, reuse that
-   project and create only the epics and tickets with `issue: null` in their frontmatter.
+   project and create only the epics and tickets with `issue: null` in their frontmatter. When the
+   newest round folder has `publish-diff.md`, pass it: the publisher also updates and closes the
+   published issues it names.
 3. **Publish.** Spawn `researcher:publisher` with the project, the `epic/` path, the owner and
    the repo map.
 4. **Verify (main session).** Read the epic and ticket files back: every one has an `issue` with

@@ -49,16 +49,19 @@ verifier, or the orchestrator). Never put a step that decides or declares on Hai
    then Read with offset/limit). Keep each deep-dive file under 250 lines.
 3. **Resume, do not respawn.** A follow-up for an agent that already holds the context goes by
    SendMessage to that agent, not to a new one.
-4. **Fresh session per stage.** Progress lives in files (`arch/*`, `epic/`, `state.md`,
-   `projects/.runtime/`). Between big stages (research → architecture → plan → build), update
-   `state.md`, then let Keshav `/clear` or start a new session; the next stage resumes from files.
-   The orchestrator's own context is the most expensive context in the system.
+4. **One continuous run, automatic handoff.** Progress lives in files (`arch/*`, `epic/`,
+   `state.md`, `library/`) and in the run state (`mcp__brain__run_update`: stage, step, next action).
+   Update the run state at every stage and wave boundary. When the main-loop context passes the
+   guard, the brain mod compacts the session by itself and keeps the run state; the run continues.
+   Never ask Keshav to `/clear` or to type a resume command.
 5. **Write by section.** Writers create or replace a whole section file in one write; they do not
    make many small edits to one large file (each call re-reads it).
-6. **Hard stop per stage.** The orchestrator finishes ONE stage per session: when the stage's
-   files are written, it updates `state.md` with the exact resume command and stops, even if Keshav
-   says "continue". The brain mod's `budget-guard` block (main-loop context ≥ 50% or usage window
-   ≥ 75%) is an order: save progress and hand off, or drop to one agent at a time.
+6. **Keshav decides, agents do the rest.** Only questions about goals, scope, money, compliance
+   or a pure preference go to Keshav, batched in one AskUserQuestion message; set the run status
+   `waiting_keshav` while you wait and `active` after. Every other question an agent raises is
+   answered by the orchestrator from the arch or with a reader, recorded in the round's decision
+   file, and sent back to that agent by SendMessage. The `budget-guard` window line is an order:
+   drop to one agent at a time.
 7. **Write early.** Every agent writes its output file in its first turns and extends it, so a
    usage-limit stop loses nothing; a stopped agent is resumed by SendMessage, never respawned.
 8. **Tiers are enforced.** `projects/routing.json` `tiers` sets model and effort per agent type and

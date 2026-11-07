@@ -46,3 +46,11 @@ Create or replace a whole deep-dive file in one Write; do not make many small Ed
 file. Split a deep-dive file that grows past 250 lines. Update the links in `architecture.md` and
 the node names in `architecture-diagram.md` when you add a file. References like
 `deep-dive/05-data-model.md#tables` and `decision-logs.md#adr-002` must resolve.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.

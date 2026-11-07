@@ -125,7 +125,7 @@ export function budgetGuard(
 ): string | undefined {
   const lines: string[] = []
   if ((b.context ?? 0) >= contextLimit) {
-    lines.push(`Main-loop context is ${Math.round(b.context ?? 0)}% full (limit ${contextLimit}%). Finish the current step, write progress and the exact resume command to the project state.md, and ask Keshav to /clear and resume. Do not start a new stage or wave in this session.`)
+    lines.push(`Main-loop context is ${Math.round(b.context ?? 0)}% full (limit ${contextLimit}%). Record the run state now with mcp__brain__run_update (stage, step, next action); the brain mod compacts the session by itself and the run continues. Keep agent replies short and read files by section.`)
   }
   if ((b.window ?? 0) >= windowLimit) {
     lines.push(`The usage window is ${Math.round(b.window ?? 0)}% used (limit ${windowLimit}%). Spawn at most one agent at a time, prefer Haiku tiers, and save progress to files before each spawn.`)

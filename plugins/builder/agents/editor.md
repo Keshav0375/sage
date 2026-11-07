@@ -32,3 +32,11 @@ reply `GAP` with the exact question. Do not improvise.
 ## Reply
 Start with `DONE` or `GAP`. For `DONE`: the commit hashes, files changed, tests added, and the
 test commands you ran with their summary lines.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.

@@ -51,3 +51,11 @@ Write your full report to the output path the orchestrator gave you (under `proj
 if none, `projects/<p>/library/research/<round>/<your-agent-name>-<topic>.md`). Your reply is the status
 keyword, the path, and a summary of at most 8 lines with the load-bearing findings. The
 orchestrator reads the file only when it needs the details.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.

@@ -6,6 +6,7 @@ import {
   parseClaim, claimedByOther, fixAttempts, deriveStep, renderRuns, CHECKS, CLAIM_MS,
 } from './ledger.ts'
 import { planOf, activeTickets, setTicketFields, ticketFileFor } from './tickets.ts'
+import { parseRun, updateRun, runBlock, shouldCompact } from './runs.ts'
 
 // Reads context/registry.json. Returns undefined when context_dir is unset or the file is missing.
 async function loadRegistry($, contextDir) {
@@ -162,6 +163,21 @@ async function shipGate($, contextDir, command) {
 }
 
 let trackerWrites = Promise.resolve()
+// Last automatic compaction (ms), so the guard compacts at most once per cooldown.
+let lastCompact = 0
+
+// Every research run file under projects/.runtime/runs/.
+async function loadRuns($, contextDir) {
+  const dir = `${contextDir}/.runtime/runs`
+  if (!contextDir || !(await $.fs.exists(dir))) return []
+  const out = []
+  for (const f of await $.fs.list(dir)) {
+    if (f.kind !== 'file' || !f.name.endsWith('.json')) continue
+    const r = parseRun(await readOr($, `${dir}/${f.name}`))
+    if (r) out.push(r)
+  }
+  return out
+}
 
 // Subagent id → type, filled at spawn, read by the write guard.
 const agentTypes = new Map()
@@ -224,6 +240,15 @@ export function register(on, options) {
       inputSchema: { type: 'object', properties: { project: { type: 'string' } } },
     })
     await $.tool.register({
+      name: 'run_update',
+      description: 'Record the research run state of one project (stage 0-6, step, next action, status active|waiting_keshav|done, waiting questions). Call it at every stage and wave boundary; the mod keeps it across compaction and puts it into every prompt so the run continues by itself.',
+      inputSchema: {
+        type: 'object',
+        required: ['project', 'fields'],
+        properties: { project: { type: 'string' }, fields: { type: 'object' } },
+      },
+    })
+    await $.tool.register({
       name: 'ticket_update',
       description: 'Change one ticket file (status, branch, pr, issue) in projects/<p>/epic/<E>/tickets/ with one locked write. Use it instead of editing ticket frontmatter during a build.',
       inputSchema: {
@@ -242,6 +267,8 @@ export function register(on, options) {
     const runs = await runsText($, contextDir)
     const blocks = [...e.blocks, { name: 'project', text }]
     if (runs && !runs.startsWith('No unfinished')) blocks.push({ name: 'builder-runs', text: runs })
+    const run = runBlock(await loadRuns($, contextDir))
+    if (run) blocks.push({ name: 'research-run', text: run })
     const guard = budgetGuard(budget, guardContext, guardWindow)
     if (guard) blocks.push({ name: 'budget-guard', text: guard })
     return next({ ...e, blocks })
@@ -253,15 +280,41 @@ export function register(on, options) {
     budget.window = Math.max(0, ...(e.rateLimits ?? []).map((r) => r.percentUsed ?? 0))
     const guard = budgetGuard(budget, guardContext, guardWindow)
     await $.ui.status(guard ? `budget: context ${Math.round(budget.context ?? 0)}%, window ${Math.round(budget.window)}%` : undefined)
+    // Automatic handoff: during an active research run, compact the main loop when its context
+    // passes the guard; the compaction keeps the run state and the run continues.
+    const runs = await loadRuns($, contextDir)
+    const active = runs.some((r) => r.status === 'active')
+    const now = Date.now()
+    if (shouldCompact(budget.context, guardContext, active, lastCompact, now)) {
+      lastCompact = now
+      const r = runBlock(runs) ?? ''
+      $.session.compact({ instructions: `Keep this research run state word for word, then continue its next action:\n${r}` }).catch(() => {})
+    }
     return next(e)
   })
 
   // Compaction keeps the run state, so a long build resumes at the right step.
   on('session.compact', async ($, e, next) => {
+    const parts = []
     const runs = await runsText($, contextDir)
-    if (!runs || runs.startsWith('No unfinished')) return next(e)
-    const keep = `Keep this builder run state word for word in the summary:\n${runs}`
+    if (runs && !runs.startsWith('No unfinished')) parts.push(`Keep this builder run state word for word in the summary:\n${runs}`)
+    const research = runBlock(await loadRuns($, contextDir))
+    if (research) parts.push(`Keep this research run state word for word in the summary:\n${research}`)
+    if (!parts.length) return next(e)
+    const keep = parts.join('\n\n')
     return next({ ...e, instructions: e.instructions ? `${e.instructions}\n\n${keep}` : keep })
+  })
+
+  on('tool.call', { tool: 'mcp__brain__run_update' }, async ($, e) => {
+    if (!contextDir) return { result: 'No registry. Run /brain:setup.' }
+    const path = `${contextDir}/.runtime/runs/${e.project}.json`
+    try {
+      const run = updateRun(parseRun(await readOr($, path)), String(e.project), e.fields ?? {}, new Date().toISOString())
+      await $.fs.write(path, JSON.stringify(run, null, 2) + '\n')
+      return { result: `Run ${e.project}: stage ${run.stage ?? '?'}, status ${run.status}${run.next ? `, next: ${run.next}` : ''}` }
+    } catch (err) {
+      return { result: `Not updated: ${err instanceof Error ? err.message : String(err)}` }
+    }
   })
 
   on('tool.call', { tool: 'mcp__brain__run_status' }, async ($, e) => {

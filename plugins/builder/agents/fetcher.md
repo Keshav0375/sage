@@ -36,3 +36,11 @@ decision). Then the pack path and a five-line summary, including any gaps.
 ## Delegate searching (token rule)
 For wide code searches spawn `Explore` (Haiku leaf) with a precise question; it returns file:line
 conclusions. Read the files the pack quotes yourself. At most 3 leaves at a time.
+
+## Handoff rules
+- Never stop on a question. When the inputs do not decide something, take the most conservative
+  option the arch allows, mark it `ASSUMPTION:` where you use it, and list it under `Questions` in
+  your reply. The orchestrator answers and may send you back.
+- If a tool call is refused (a guard or permission message), stop at once and reply `BLOCKED` with
+  the exact message and the path. Do not draft work you cannot save, and do not work around it.
+- Write your output files early and extend them, so a usage-limit stop loses nothing.
