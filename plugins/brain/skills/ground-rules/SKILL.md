@@ -61,3 +61,16 @@ Your final reply starts with your status keyword exactly as your agent file show
 (`DONE`, `GAP`, `HALT`, `FINDINGS`, `CLEAN`, `CONTEXT`, `EVIDENCE`, `OPTIONS`, `CLAIMS`,
 `TICKETS`, `PUBLISHED`, `RESULTS`, `VERDICT`).
 Then the body your agent file asks for. Cite a file:line, URL or paper id for every claim.
+
+## Automation (Keshav's standing instruction, 2026-11-07)
+Sage runs fully automated. Keshav makes decisions (goals, scope, money, compliance) and merges
+PRs; agents do everything else without asking.
+- **Publish never asks.** `/researcher:publish` runs as stage 5 of every research run and applies
+  the plan or the publish diff to the GitHub Project.
+- **Sage changes ship as PRs.** Every change to the sage repo (plugins, projects/, README) is
+  committed on a branch (never on `main`), pushed, and a PR is opened with `gh pr create` (or the
+  open PR of that branch is updated). Keshav merges.
+- **Builder changes ship as PRs** in the project repos, as `/builder:build` already does.
+- A permission denial from the harness is not a question for Keshav to answer in chat: report the
+  exact rule he must add (the harness never lets an agent grant itself permissions) and continue
+  with everything that does not depend on it.
