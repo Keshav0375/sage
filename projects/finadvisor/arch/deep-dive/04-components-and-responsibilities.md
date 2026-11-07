@@ -161,8 +161,11 @@ All from the one image (`jobs` entrypoint). Triggered by Cloud Scheduler, by `de
 | `etl-public` | `fa_etl_public` | Public ingest (eCFR, EUR-Lex CELLAR, legislation.gov.uk, SEC RR datasets, FCA API): runs every stage in-process and publishes only analytics topics (`ingest.analytics.v1`); the only writer of PUBLIC rows. One PUBLIC corpus per cell, ingested independently by that cell's job. FCA content never reaches Kafka or BigQuery (§4.20) |
 | `purge-source` | `fa_etl_public` | `purge_source('fca_api')` and other source kill switches (§4.20): erases the source's PUBLIC rows, bumps `source_epoch`, writes one row to the PUBLIC `source_purges` table (each firm tenant's `erasure-worker` pulls it and enqueues its own `deletion_requests`) |
 | `reconcile` | per tenant `fa_worker`; PUBLIC `fa_etl_public` | Counts and set-hashes at every hop, ANN self-hit canary, tombstone invariant, BigQuery dataset-setting check (§4.22); hourly while the system runs |
-| `erasure-verify` | per tenant `fa_worker` | Probes each store after its window timer and issues receipt phase 2 (§4.19) |
-| `erasure-canary` | `fa_worker` (canary tenant rows) | The canary drill at demo start (§4.23) |
+| `erasure` | `fa_worker` | One pass of the `erasure-worker` code as a Cloud Run job; first run at `demo-up` (R4-D20 Q4) |
+| `ledger-export` | `fa_worker` | Daily export of `erasure_ledger` to `LEDGER_EXPORT_BUCKET` (Cloud Scheduler) |
+| `erasure-replay` | `fa_worker` | Manual, no schedule: re-applies the ledger after any restore (§4.19) |
+| `erasure-verify` | per tenant `fa_worker` | Probes each store after its window timer and issues receipt phase 2 (§4.19); hourly at minute 30 while the system runs; reads Kafka with the read-only `KAFKA_VERIFY_API_KEY` |
+| `erasure-canary` | `fa_worker` (canary tenant rows) | The canary drill at demo start, after `demo-prewarm`; a FAILED canary does not stop `demo-up` (the CRITICAL alert is the control) (§4.23) |
 | `embed-backfill` | per tenant `fa_worker` | Builds a new embedding generation (§4.27); own Voyage semaphore at 25% of the RPM limit |
 | `move-tenant` | set in E13 (ADR-033) | Copy, verify, cutover, erase for a tenant move between cells (§4.24) |
 | `dbt` | `fa_dbt` | dbt Core gold models on Postgres (`dbt-postgres`: views with `security_invoker = true`, or incremental models with a tenant predicate, never full rebuilds; `contract: enforced` where the materialization supports it) and BigQuery marts (`dbt-bigquery`); per tenant run on a dedicated connection |
@@ -239,7 +242,7 @@ flowchart TB
 
 Terraform (google provider, plus Confluent provider) owns every resource in this view and the Confluent cluster, with state per env prefix, applied from GitHub Actions through WIF (plan on PR). The one exception is the Valkey instance lifecycle (§4.6). `lifecycle.ignore_changes` covers `activation_policy`, `min_instance_count`, `manual_instance_count`.
 
-- **Cloud Scheduler**: triggers `etl`, `etl-public`, `dbt`, `maintenance`, `reconcile`, `erasure-verify`, `eval`, `redteam` and `demo-ttl`. `demo-down` pauses all except `demo-ttl`. The canary and the erasure job are run by `demo-up`, not by a cron (§4.23).
+- **Cloud Scheduler**: triggers `etl`, `etl-public`, `dbt`, `maintenance`, `reconcile`, `erasure-verify` (hourly at :30 while running), `ledger-export` (daily), `eval`, `redteam` and `demo-ttl`. `demo-down` pauses all except `demo-ttl`. The `erasure` job and the canary are run by `demo-up` (canary after `demo-prewarm`, non-blocking), not by a cron; `erasure-replay` is manual (§4.23).
 - **Secret Manager**: all secrets (DB passwords per role, Kafka and Schema Registry keys per service, Anthropic, Voyage, Langfuse keys, the Kong `key-auth` key for the egress route, the salt for ledger hashes). A Cloud KMS key signs the erasure receipts (HMAC). No secret defaults in code: missing config fails boot.
 - **Artifact Registry**: images by digest; deploy references digests, never tags.
 - **VPC / PSC / egress** (ADR-024): Cloud SQL private only (PSC); all services and jobs use Direct VPC egress in `private-ranges-only` mode (public SaaS APIs are reached directly; no Cloud NAT), Private Google Access on the subnet, and a Cloud DNS private zone mapping `run.app` to `private.googleapis.com`. Startup probe on Cloud Run. Per-service service accounts, least privilege (G-50). Fallback if the private-DNS spike fails: all-traffic egress + Cloud NAT (about +$32/month) with an ADR.

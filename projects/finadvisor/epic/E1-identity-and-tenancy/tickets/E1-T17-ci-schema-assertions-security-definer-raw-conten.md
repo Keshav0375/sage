@@ -6,11 +6,11 @@ repo: "FinAdvisor"
 size: "S"
 status: "todo"
 depends_on: ["E1-T8", "E1-T9", "E1-T10"]
-arch_refs: ["deep-dive/05-data-model-and-storage.md#5.2", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.4", "decision-logs.md#adr-002", "decision-logs.md#adr-010"]
+arch_refs: ["deep-dive/05-data-model-and-storage.md#5.2", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.4", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.10", "decision-logs.md#adr-002", "decision-logs.md#adr-010", "decision-logs.md#adr-027"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 33, "id": 6155609705, "url": "https://github.com/Keshav0375/FinAdvisor/issues/33"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary
@@ -23,8 +23,11 @@ Checks over `pg_catalog` for the app schemas (excluding `gold` views and `alembi
 
 Out of scope: the runtime startup check (E1-T18).
 
+Round 4 (ADR-027, R4-D3): add invariant (7): every leaf partition of `chunks` (each tenant and PUBLIC) has an exclusion constraint (`pg_constraint.contype = 'x'`) whose definition contains `valid_range WITH &&` and the predicate `upper_inf(system_range)`, and `btree_gist` is installed (`pg_extension`). This is the L0 test of section 5.10.
+
 ## Acceptance criteria
 - [ ] Given the migrated schema, when the suite runs, then all six invariants pass.
 - [ ] Given a temporary `SECURITY DEFINER` function `evil()` created in the test database, then invariant (1) fails (negative test asserts the failure).
 - [ ] Given a temporary table with `tenant_id` but without FORCE RLS, then invariant (4) fails; given a temporary column `raw_content` on `documents`, then invariant (2) fails (negative tests).
 - [ ] Given the CI workflow, then this suite runs in the same job as the other DB tests and a failure fails the PR (workflow file contains the job step; a CI run with the negative fixture enabled via env var turns red).
+- [ ] Given the migrated schema with the PUBLIC partition and one onboarded tenant partition, then invariant (7) passes; given a temporary leaf created with plain `CREATE TABLE ... PARTITION OF chunks` (no constraint), then invariant (7) fails (negative test `tests/db/test_schema_invariants.py::test_every_leaf_has_exclude`).

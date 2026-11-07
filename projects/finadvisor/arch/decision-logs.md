@@ -33,6 +33,20 @@ Newest first. Each entry: status (date, decided-by), context, options with costs
 
 **Trigger to revisit.** Measured first stage above 600 ms; Model Armor publishes GA, SLA and latency; a `rerank-3` gain measured by arm 3; Voyage publishes a region or changes its retention terms.
 
+**Amended 2026-11-07 (planning).** Stage 4 ticket planning decisions ([decision-r4.md R4-D20](../library/research/r4/decision-r4.md)):
+- Table owners: `source_purges` E12-T6, `erasure_ledger` and `deletion_requests` E12-T5, `tenant_moves` E13-T13, `pseudonym_map` E1-T23, `document_versions` E11-T4/T5; `erasure_ledger` SELECT for `fa_etl_public` and the sink roles.
+- `tenants` columns `cell_id`, `residency_class`, `source_epoch` (E1-T4; `HOME_CELL` default "us"), `llm_egress_ack` (E11-T14), `active_embed_model` (E12-T25); `conversations` and `messages` carry `pseudonym_id` (E1-T23).
+- `as_of`: ISO 8601 always accepted; numeric dates follow the advisor's jurisdiction; the parsed date is echoed.
+- Numeric gate: a failing sentence is withheld and the answer ends with `ANSWER_WITHHELD` + reason; earlier sentences stay released. `acl.changes.v1` is analytics only.
+- New refusal code `LLM_EGRESS_NOT_ACKNOWLEDGED`; config keys `ERASURE_MAX_ATTEMPTS`, `EMBED_BLUE_KEEP_DAYS`, `EMBED_MODEL_ALLOWLIST` (owner E3-T5), `MODEL_ARMOR_ENABLED`, `CELLS_PUBLIC_KEY`.
+- `cells.json` signed with Ed25519 over RFC 8785 canonical JSON; `/resolve` is a Kong route to `chat-api` (`CellDirectory`).
+- Operator release / reject / unfreeze: admin CLI only, no API endpoint in the demo.
+- E7-E10 planning ([changes-E7-E10.md](../library/research/r4/changes-E7-E10.md) Q1-Q16): `GET /v1/admin/quarantine/summary` (compliance role, counts and reason codes only); per-citation `source_class` (public, firm, private_demo); `GET /v1/conversations/{id}` returns stored footers; the SPA follows `cell_hint` only when it matches `/resolve`.
+- Config keys `KMS_RECEIPT_KEY_ID`, `LEDGER_EXPORT_BUCKET`, `KAFKA_VERIFY_API_KEY` / `KAFKA_VERIFY_API_SECRET`, `EVAL_PRIVATE_BUCKET_URI`, `JUDGE_MIN_RHO2` (06 §6.6).
+- Jobs: `erasure` (one erasure-worker pass, `fa_worker`, first at `demo-up`), `ledger-export` daily, `erasure-replay` manual after restore, `erasure-verify` hourly at :30 while running; canary after `demo-prewarm` and non-blocking (04 §4.8, §4.12).
+- 09 §9.2 adopts the E11/E12 metric names and adds `canary_failed`, `erasure_langfuse_unconfirmed`, `public_manifest_drift` and the per-store canary gauge; "page" = CRITICAL email, "ticket" = WARNING, FAILED canary CRITICAL.
+- ADR-037 amended: binary labels, rho = phi, alpha 0.05/4, power 0.8, sign-flip simulation, at least 25 probe cases outside the 200, intra-rater relabel adds about 6-8 h.
+
 ## ADR-038: Residency promise wording and the LLM egress rule
 
 **Status.** Accepted 2026-11-02 (round 4). decided-by: researcher (orchestrator decision R4-D10 on Keshav's K-R4-1). Source: `projects/finadvisor/library/research/r4/decision-r4.md`; r4/P-reliability.md §8; r4/S-skeptic-3.md H10. Amends the "real firm data" triggers of ADR-013 and ADR-018.
@@ -83,6 +97,8 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 **Trigger to revisit.** Judge-human rho^2 below 0.4; the pilot shows a detectable effect above 10 pp; weekly run cost over the alert.
 
 **Amended 2026-11-07 (validation).** Confirmatory arm 3 is `rerank-3` vs `rerank-3-lite` (the default model and the arm now match; the full model enters only with a measured gain, D-R4-3; R4-D18 V1). `rerank-2.5` leaves the design. The K-R4-4 criterion "above 100 effective items after clustering by source document" is replaced by the pilot-based detectable effect. With a floor of 40 clusters and a cap of 5 per cluster, 200 items means exactly 5 items in each of 40 clusters; the floor is raised if the corpus yields more usable provisions (V-consistency.md S7). Judge acceptance is judge-human rho^2 >= 0.4 only.
+
+**Amended 2026-11-07 (planning).** Statistics fixed by R4-D20 (E7-E10 Q11-Q13): labels are binary pass/fail; rho is the phi coefficient (Spearman on 0/1); gate rho^2 >= 0.4; alpha 0.05/4 (Holm worst case), power 0.8, sign-flip simulation for the detectable effect; at least 25 synthetic probe cases stay outside the 200 (security gates, no cluster statistics); the 30-item intra-rater relabel adds about 6-8 h to the labelling (total about 46-63 h, ESTIMATE). Config keys `EVAL_PRIVATE_BUCKET_URI`, `JUDGE_MIN_RHO2` (06 §6.6). Link: [decision-r4.md](../library/research/r4/decision-r4.md).
 
 ## ADR-036: Guardrails on real data: ingest scan, numeric gate, licence footers, role policy
 

@@ -22,7 +22,11 @@
 | `reconcile_mismatch_total{pair}`, `ann_selfhit_rate` | reconciliation findings per pair; ANN self-hit canary (§9.7) |
 | `tombstone_violations_total` | tombstoned data found present in a store; must be 0 |
 | `erasure_oldest_pending_age_s`, `erasure_receipts_open` | oldest `deletion_requests` row not executed (pages > 4 h); receipts waiting for phase 2 |
-| `connector_frozen{source}`, `connector_listing_items{source}`, `silent_edit_total{source}` | breaker state, last listing size, silent edits |
+| `source_frozen{source_id,reason}`, `connector_listing_items{source}`, `source_silent_edit_total{source_id}` | breaker state, last listing size, silent edits (names follow E11; R4-D20 Q9) |
+| `canary_failed` | 1 when the erasure canary did not reach zero in a store inside its documented window; CRITICAL (E12-T21) |
+| `erasure_canary_time_to_zero_s{store}` | per-store canary time to zero (gauge; exact name set in E12-T21) |
+| `erasure_langfuse_unconfirmed` | Langfuse deletes not confirmed; alerts at 24 h |
+| `public_manifest_drift` | PUBLIC manifest differs from the store contents (E12/E13) |
 | `llm_egress_refused_total` | private ingest refused because `llm_egress_ack` is false |
 | `llm_fallback_total`, `llm_breaker_state` | fallback and breaker |
 | `answer_cache_hit_ratio` | cache effectiveness |
@@ -53,6 +57,8 @@ Structured JSON to stdout, redacted before writing: `ts`, `severity`, `trace`, `
 | Latency | TTFT p95 < 3.5 s (p50 < 2.0 s), full answer p95 < 8 s | `demo` and `prod` (measured; estimates) |
 | Retrieval | first stage p95 <= 600 ms, rerank p95 < 700 ms | both |
 
+Severity words (R4-D20 Q10): "page" = a CRITICAL email alert, "ticket" = a WARNING (one email channel, R75); a FAILED canary (`canary_failed`) is CRITICAL.
+
 Alert thresholds (ADR-025 R72): outbox oldest age > 300 s; ACL apply lag > 120 s; consumer lag > 1000 for 10 min; availability burn rate 14.4x over 1 h and 6x over 6 h. The DEFAULT-partition alert window is 30 min, and the `maintenance` job runs every 15 min in demo mode (R76, R21). Notification channel: email to `alert_email` (R75).
 
 Alerts: availability burn rate (thresholds above), degraded turns > 5% in 15 min, rerank 429 > 0, LLM fallback in use, outbox oldest age, ACL applier lag, consumer lag, DLQ non-empty, DEFAULT partition non-empty, readiness failing, model retirement soon, the reconciliation alerts of §9.7, `erasure_oldest_pending_age_s` > 4 h, `tombstone_violations_total` > 0, a frozen connector, a Langfuse delete not honoured after 24 h, and the budget alerts: a **$180/month total alert guards the $200 ceiling** (R4-D16, `BUDGET_ALERT_USD`), plus the LLM share (`LLM_MONTHLY_BUDGET_USD` 75) from GCP billing and `llm_cost_usd_total`; eval runs are capped by `EVAL_BUDGET_USD`. Dashboards in Cloud Monitoring (one per concern: chat, retrieval, events, cost, data lifecycle). Epic E9, with E12 for the lifecycle alerts.
@@ -78,7 +84,7 @@ Job `reconcile` runs hourly only while the system runs and compares only version
 ### 9.8 Deletion receipts and the canary at demo start (ADR-030, R4-D9)
 
 - Receipts: phase 1 "executed" from `erasure_steps` within hours; phase 2 "windows closed" after each store's window, signed by `erasure-verify`. `erasure_receipts_open` shows what waits for phase 2. A Langfuse delete that is not honoured is retried, alerts at 24 h and leaves the receipt at phase 1.
-- Canary: `demo-up` runs the erasure job first, then drives a synthetic canary advisor with unique tokens through chat, a trace, events and BigQuery, erases it and records when each observable store reaches zero. It runs at each demo start, not on a weekly cron, because the system is often stopped. Compose runs the same drill nightly minus provider windows.
+- Canary: `demo-up` runs the `erasure` job first, then after `demo-prewarm` drives a synthetic canary advisor with unique tokens through chat, a trace, events and BigQuery, erases it and records when each observable store reaches zero. A FAILED canary does not stop `demo-up`; it raises the CRITICAL alert, reports store and age and triggers an `erasure-verify` re-sweep. It runs at each demo start, not on a weekly cron, because the system is often stopped. Compose runs the same drill nightly minus provider windows.
 - Not observed: the BigQuery fail-safe, Cloud SQL PITR logs and provider retention are documented windows; the canary and receipts mark them `documented` or `provider`, never measured (§6.9).
 
 ### 9.9 Guardrail measurement (ADR-036, ADR-037)

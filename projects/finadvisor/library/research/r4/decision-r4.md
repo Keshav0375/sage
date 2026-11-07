@@ -183,3 +183,63 @@ R4-D19 Consistency must-fix decisions (V-consistency.md M1-M8):
   M8 Section pointers to the split deep-dive files: fixed by script (74 pointers, 44 files).
   Should-fix S1-S24 in V-consistency.md: apply all as written there, unless one conflicts with
   R4-D1..D19 (then follow the decision and note it).
+
+R4-D20 Stage 4 ticket questions (2026-11-07):
+  E11-Q1 REVISED: `source_purges` is created by E12-T6 (it depends only on E1); E11-T22 depends on it and writes the purge row in the same transaction as the source_epoch bump; E12-T19 reads it.
+         erasure-worker only reads it. Arch table owner: E11.
+  E11-Q2 as_of date parsing: ISO 8601 always accepted; numeric DD/MM vs MM/DD follows the advisor's
+         jurisdiction (US month-first, EU/UK day-first); the parsed date is always echoed (R4-D4).
+  E11-Q3 Operator release/reject/unfreeze: admin CLI only, no API endpoint in the demo.
+  E11-Q4 `tenants.llm_egress_ack` column: added by E11-T14.
+  E11-Q6 E3/E4 round-4 changes (cache key as_of/embed_model/source_epoch; as_of resolver) are
+         folded into E3-T13 and E4-T18 by the stage-4 update writers.
+  E11-Q7 ESMA connector (E11-T27) stays: its deleted Q&As are real delete test cases. Publisher
+         document reuse is closed by K-R4-3 (private demo only).
+  E13    cells.json signed with Ed25519 over RFC 8785 canonical JSON (CELLS_PUBLIC_KEY baked in);
+         `tenant_moves` table in the source cell DB (E13); /resolve = Kong route to a chat-api
+         endpoint backed by CellDirectory; privacy notice at docs/privacy-notice.md.
+  E12    `erasure_ledger` (key tenant_id, doc_key, sha256; release action) is created by E12-T5
+         with deletion_requests; a new E5 ticket provides the uncached sink-guard helper (depends
+         on E12-T5); E5-T14, the E6 sinks and E12-T8 depend on it. `pseudonym_map` migration is an
+         E1 ticket. E12 Terraform/KMS/export bucket land in E10, alert policies in E9. A canary store
+         that does not reach zero inside its documented window is a FAILED canary: report store and
+         age, raise the E9 alert, trigger an erasure-verify re-sweep.
+  E0-E3  tenants columns cell_id, residency_class, source_epoch are added by E1-T4 (HOME_CELL
+         default "us"; E13 sets real values); conversations and messages carry a random
+         pseudonym_id (E1-T23); document_versions and chunk version FKs are E11-T4/T5;
+         EMBED_MODEL_ALLOWLIST is owned by E3-T5 and reused by E12-T25; the as_of CI check covers
+         SQL on chunks and document_versions.
+  Arch touch-up (final pass): residency_class and pseudonym_id columns in 05 §5.2; config keys
+         HOME_CELL, ERASURE_MAX_ATTEMPTS, EMBED_BLUE_KEEP_DAYS, MODEL_ARMOR_ENABLED in 06 §6.6;
+         table owners per R4-D20 in 05.
+  E4-E6  acl.changes.v1 stays as an analytics topic only (ADR-022 amended); the ACL path polls
+         Postgres. Numeric gate: a failing sentence is withheld and the answer ends with
+         ANSWER_WITHHELD + reason; earlier sentences stay released. calc tool arguments set in
+         E4-T33; LLM_EGRESS_NOT_ACKNOWLEDGED refusal code (add to 06 §6.1). fa_etl_public and the
+         sink roles get SELECT on erasure_ledger (E12-T5 grants; 05 §5.3).
+  E7-E10 (answers to changes-E7-E10.md Q1-Q16):
+   Q1  Quarantine summary: GET /v1/admin/quarantine/summary, compliance role, counts by source and
+       reason code only (no text). Endpoint ticket E11-T28; UI ticket in E8.
+   Q2  citation event carries per-citation `source_class` (public | firm | private_demo); GET
+       /v1/conversations/{id} returns stored footers. E8-T15 labels per citation.
+   Q3  Canary runs after demo-prewarm (still after the erasure job); a FAILED canary does not stop
+       demo-up; the CRITICAL alert is the control.
+   Q4  `erasure` job = one pass of the erasure-worker code as a Cloud Run job, role fa_worker.
+   Q5  ledger-export: daily Cloud Scheduler row, fa_worker; erasure-replay: manual, run after any
+       restore (no schedule), fa_worker.
+   Q6  KMS_RECEIPT_KEY_ID and LEDGER_EXPORT_BUCKET are the names; erasure-verify reads Kafka with a
+       dedicated read-only Confluent key (KAFKA_VERIFY_API_KEY/SECRET in Secret Manager).
+   Q7  E10-T26 creates the GCS data bucket and fa_analytics dataset in Terraform (no E6 script).
+   Q8  erasure-verify hourly at minute 30 while the system runs.
+   Q9  Metric names follow the E11/E12 tickets; the 9.2 table adopts them and adds the missing rows.
+   Q10 "page" = CRITICAL email alert, "ticket" = WARNING; a FAILED canary is CRITICAL.
+   Q11 alpha 0.05/4 (Holm worst case), power 0.8, sign-flip simulation; labels are binary
+       pass/fail; rho is the phi coefficient (Spearman on 0/1); gate rho^2 >= 0.4 (ADR-037).
+   Q12 Keep the >= 25 synthetic probe cases outside the 200 (security gates, no cluster stats).
+   Q13 EVAL_PRIVATE_BUCKET_URI and JUDGE_MIN_RHO2 go into 06 §6.6; the 30-item intra-rater relabel
+       adds ~6-8 h to Keshav's labelling (total ~46-63 h).
+   Q14 New tickets: E6-T22 voyage-context-4 chunk variant as an eval-only embedding generation
+       (E12 generations); E4-T34 structured lookup tool over fund_rr_facts and KID fee tables
+       behind a flag. E7-T7 depends on both.
+   Q15 The SPA follows cell_hint only when its host matches the /resolve answer for the slug.
+   Q16 Key order is cosmetic; dependencies decide build order.

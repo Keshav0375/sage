@@ -5,12 +5,12 @@ epic: "E1"
 repo: "FinAdvisor"
 size: "S"
 status: "todo"
-depends_on: ["E1-T1", "E1-T11"]
-arch_refs: ["deep-dive/08-security-and-privacy.md#8.2", "deep-dive/04-components-and-responsibilities.md#4.8", "decision-logs.md#adr-010"]
+depends_on: ["E1-T1", "E1-T22", "E1-T11"]
+arch_refs: ["deep-dive/08-security-and-privacy.md#8.2", "deep-dive/04-components-and-responsibilities.md#4.8", "decision-logs.md#adr-010", "decision-logs.md#adr-032"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 37, "id": 6155615006, "url": "https://github.com/Keshav0375/FinAdvisor/issues/37"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary
@@ -21,8 +21,11 @@ Implement the IdP onboarding script named in the scope ("IdP tenant provisioning
 
 Out of scope: Terraform (E10), SSO/SAML, creating advisors.
 
+Round 4 (ADR-032): the script creates one IdP tenant per firm and is gated by E1-T22 (`SAME_EMAIL_TWO_TENANTS=pass`); if the spike failed, the onboarding path follows the alias ADR instead and this ticket waits. It never creates a tenant shared by two firms.
+
 ## Acceptance criteria
 - [ ] Given a fake `tenant_mgt` client (unit test `tests/scripts/test_provision_idp_tenant.py`), when the script runs twice with the same display name, then `create_tenant` is called once and both runs print the same id.
 - [ ] Given a display name that does not exist, then `create_tenant` is called with `allow_password_sign_up=True` and the printed id equals the id the client returned; stdout contains exactly one line.
 - [ ] Given the client raises an authorisation or billing error, then the script exits non-zero with a message on stderr and prints nothing on stdout.
 - [ ] Given a real project (manual check recorded in the PR description with the output id redacted), then `migrate --onboard-tenant` accepts the printed id and `fa_tenant_lookup(p_idp_tenant_id => <id>)` resolves it.
+- [ ] Given two different display names, then two `create_tenant` calls are made and two different ids are printed; the same display name twice creates one (unit test `tests/scripts/test_provision_idp_tenant.py::test_one_tenant_per_firm`).

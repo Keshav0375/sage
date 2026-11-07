@@ -9,7 +9,8 @@
 ## Round 4 stage reached
 - Stage 1 (evidence) done. Stage 2 (design, decision-r4.md) done. Stage 3 (arch written) done: ADR-026..038, deep-dive files 01-11 with 04-1, 04-2, 05-1, `epic/plan.md`.
 - Stage 3 validation DONE (2026-11-07): database docs check (`r4/V-docs-db.md`), AI docs check (`r4/V-docs-ai.md`), consistency check (`r4/V-consistency.md`), all folded into the arch and plan. M8 (section pointers) was fixed earlier by script.
-- Next: stage 4, re-plan (cut E11-E13 tickets, update the published tickets, publish diff).
+- Stage 4 tickets cut (E0-E13); arch touch-up done (R4-D20, ADR-039 amended 2026-11-07 planning).
+- Next: publish diff.
 
 ## What the validation changed
 - Reranker: default `rerank-3-lite`; arm 3 = `rerank-3` vs `rerank-3-lite`; `rerank-2.5` leaves the design; TPM stated by model (02, 07, 10, 11, plan E3, E7, ADR-008, ADR-037).
