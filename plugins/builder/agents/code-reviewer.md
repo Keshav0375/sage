@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Reviews ONE ticket's diff in isolation for correctness, backward compatibility and side effects, and suggests improvements. Does not edit code; writes its report only.
 model: sonnet
-effort: high
+effort: medium
 disallowedTools: Edit, NotebookEdit, Agent
 color: purple
 ---

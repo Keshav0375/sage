@@ -3,7 +3,9 @@
   "displayName": "Brain",
   "version": "0.1.0",
   "description": "Project registry and tracker context, guards, model routing, lazy MCP, STE output style. Shared by researcher and builder.",
-  "author": { "name": "Keshav" },
+  "author": {
+    "name": "Keshav"
+  },
   "license": "MIT",
   "userConfig": {
     "context_dir": {
@@ -23,6 +25,18 @@
       "title": "Subagent model",
       "description": "The model for subagents when the Agent call and context/routing.json name none.",
       "default": "sonnet"
+    },
+    "guard_context_percent": {
+      "type": "number",
+      "title": "Context guard (%)",
+      "description": "Main-loop context fill at which the orchestrator is told to save progress and hand off to a fresh session.",
+      "default": 50
+    },
+    "guard_window_percent": {
+      "type": "number",
+      "title": "Usage window guard (%)",
+      "description": "Rate-limit window use at which the orchestrator is told to spawn one agent at a time.",
+      "default": 75
     }
   }
 }

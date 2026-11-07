@@ -24,5 +24,5 @@ One source (URL, file path, or paper id + section), 1-6 questions, and an output
 The full extract to the output path you were given.
 
 ## Reply
-Start with `EVIDENCE`. Then, at most 15 lines: `Q<n>: "<shortest exact quote>" (<section>)` or
+Start with `EVIDENCE`. Then, at most 8 lines: `Q<n>: "<shortest exact quote>" (<section>)` or
 `Q<n>: NOT FOUND`, then the version/date and the output path.

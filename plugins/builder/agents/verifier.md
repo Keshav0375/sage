@@ -2,7 +2,7 @@
 name: verifier
 description: Declares whether ONE ticket is done — reads the ticket's acceptance criteria and every other agent's report (editor, code-reviewer, runner, warden), checks the evidence itself, and returns GREEN or RED with the blocking items. Never edits code.
 model: sonnet
-effort: high
+effort: medium
 disallowedTools: Edit, NotebookEdit, Agent
 color: yellow
 ---

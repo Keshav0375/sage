@@ -2,7 +2,7 @@
 name: arch-writer
 description: Writes or edits a project's binding architecture docs in context/projects/<p>/arch/ from a decided design — sections, Mermaid architecture diagrams, tech stack table, ADRs. Writes only what the orchestrator decided; never decides.
 model: sonnet
-effort: high
+effort: medium
 disallowedTools: NotebookEdit, Agent
 color: green
 ---

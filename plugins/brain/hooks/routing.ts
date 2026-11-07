@@ -7,12 +7,23 @@
 //   always run on the leaf model (haiku). Anything else is refused.
 // An explicit model on the Agent call wins at depth 1, never at depth 2.
 
+export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+export type Tier = { model?: string; effort?: Effort }
+
 export type RoutingConfig = {
   agents: Record<string, string>
   leaves: string[]
   leafModel: string
+  leafEffort?: Effort
   reportOnly: string[]
+  // Per agent type: the model and effort every step of that agent runs on. The engine does not
+  // apply a plugin agent's frontmatter model reliably (2026-11-07 audit: haiku agents ran on
+  // sonnet), so the mod enforces the tier on each model request.
+  tiers: Record<string, Tier>
 }
+
+const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max']
+const effortOf = (v: unknown): Effort | undefined => (typeof v === 'string' && EFFORTS.includes(v) ? (v as Effort) : undefined)
 
 export function parseRoutingConfig(text: string): RoutingConfig {
   const data = JSON.parse(text)
@@ -20,13 +31,46 @@ export function parseRoutingConfig(text: string): RoutingConfig {
   for (const [k, v] of Object.entries(data.agents ?? {})) {
     if (typeof v === 'string' && !k.startsWith('_')) agents[k] = v
   }
+  const tiers: Record<string, Tier> = {}
+  for (const [k, v] of Object.entries(data.tiers ?? {})) {
+    if (k.startsWith('_') || !v || typeof v !== 'object') continue
+    const t = v as Record<string, unknown>
+    const tier: Tier = {}
+    if (typeof t.model === 'string') tier.model = t.model
+    const effort = effortOf(t.effort)
+    if (effort) tier.effort = effort
+    tiers[k] = tier
+  }
   const list = (v: unknown) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [])
-  return {
+  const cfg: RoutingConfig = {
     agents,
     leaves: list(data.leaf_agents),
     leafModel: typeof data.leaf_model === 'string' ? data.leaf_model : 'haiku',
     reportOnly: list(data.report_only_agents),
+    tiers,
   }
+  const leafEffort = effortOf(data.leaf_effort)
+  if (leafEffort) cfg.leafEffort = leafEffort
+  return cfg
+}
+
+// The model and effort a subagent runs on, decided once at spawn and enforced on every step.
+// Precedence: an explicit model on the Agent call or a hook escalation (`chosen`), then the leaf
+// model at depth 2, then the tier of the agent type, then the built-in map, then the fallback.
+export function spawnTier(
+  subagentType: string,
+  depth2: boolean,
+  chosen: string | undefined,
+  cfg: RoutingConfig,
+  fallback: string,
+): Tier {
+  const tier = cfg.tiers[subagentType] ?? {}
+  if (depth2) return { model: chosen ?? cfg.leafModel, effort: cfg.leafEffort ?? tier.effort }
+  const model = chosen ?? tier.model ?? cfg.agents[subagentType] ?? (subagentType.includes(':') ? undefined : fallback || undefined)
+  const out: Tier = {}
+  if (model) out.model = model
+  if (tier.effort) out.effort = tier.effort
+  return out
 }
 
 // Kept for callers that only need the per-type map.
@@ -65,4 +109,21 @@ export function leafDecision(
 export function writeAllowed(agentType: string | undefined, path: string, runtimeDir: string, cfg: RoutingConfig): boolean {
   if (!agentType || !cfg.reportOnly.includes(agentType)) return true
   return !!runtimeDir && path.startsWith(runtimeDir.replace(/\/$/, '') + '/')
+}
+
+// The orchestrator's budget guard: text for the next prompt when the main loop's context fill or
+// the usage window passes its threshold, else undefined.
+export function budgetGuard(
+  b: { context?: number; window?: number },
+  contextLimit: number,
+  windowLimit: number,
+): string | undefined {
+  const lines: string[] = []
+  if ((b.context ?? 0) >= contextLimit) {
+    lines.push(`Main-loop context is ${Math.round(b.context ?? 0)}% full (limit ${contextLimit}%). Finish the current step, write progress and the exact resume command to STATE.md, and ask Keshav to /clear and resume. Do not start a new stage or wave in this session.`)
+  }
+  if ((b.window ?? 0) >= windowLimit) {
+    lines.push(`The usage window is ${Math.round(b.window ?? 0)}% used (limit ${windowLimit}%). Spawn at most one agent at a time, prefer Haiku tiers, and save progress to files before each spawn.`)
+  }
+  return lines.length ? lines.join('\n') : undefined
 }
