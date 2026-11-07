@@ -19,7 +19,7 @@ FinAdvisor v2 is a compliance-aware RAG assistant for wealth advisors, serving s
 | K-R4-1 Regions (2026-11-02) | Two regional cells are designed and tested locally in docker compose; one region is deployed. Residency covers data at rest (Postgres, GCS, BigQuery, Kafka, Langfuse). Model calls are documented as US/global (Anthropic first-party `inference_geo` is `global` or `us` only). Claude on Vertex AI in an EU region stays a costed option in the ADR, not built | checkpoint-r4.md; ADR-031, ADR-038 |
 | K-R4-2 UK source (2026-11-02) | Current FCA COBS from the FCA Handbook API (revocation and delete-on-request handled); UK version history from legislation.gov.uk (OGL). No crawling of the Handbook website. FINRA Rulebook dropped (terms forbid bulk copy and ML use) | checkpoint-r4.md; ADR-026 |
 | K-R4-3 Publisher documents (2026-11-02) | Fund KIDs, SEC 497K and Form ADV brochures are private demo only: a small set (about 3 fund families, 10-20 brochures) fetched at runtime into private storage with attribution, never committed to the public repo and never published in eval sets | checkpoint-r4.md; ADR-026 |
-| K-R4-4 Golden set (2026-11-02) | 200 items labelled by Keshav (about 40-55 h estimate). Release gates and ablations with gains of about 5 points or more; the set stays above 100 effective items after clustering by source document. The cluster unit is the provision or product (R4-D17) | checkpoint-r4.md; ADR-037 |
+| K-R4-4 Golden set (2026-11-02) | 200 items labelled by Keshav (about 40-55 h estimate). Release gates and ablations with gains of about 5 points or more; the "above 100 effective items" criterion is replaced by the pilot-based detectable effect (R4-D15, R4-D17; ADR-037). The cluster unit is the provision or product (R4-D17) | checkpoint-r4.md; ADR-037 |
 
 ### 1.3 Non-goals
 
@@ -41,7 +41,7 @@ Gap IDs refer to `deep-dive/00-as-built-baseline.md` §13.
 
 | Gap | MVP defect | v2 fix | Where | Epic |
 |---|---|---|---|---|
-| G-01 | Identity is an `X-User-Id` header over 4 hard-coded users | Identity Platform ID tokens verified tenant-aware (`firebase.tenant`; signature, aud, iss, exp); entitlements from `advisors` | §8.2, §4 `auth`/`principal`, ADR-010 | E1 |
+| G-01 | Identity is an `X-User-Id` header over 4 hard-coded users | Identity Platform ID tokens verified at project level (signature, aud, iss, exp) with `firebase.tenant` checked against the URL tenant; entitlements from `advisors` | §8.2, §4 `auth`/`principal`, ADR-010 | E1 |
 | G-02 | `allUsers` run.invoker on backend and frontend | No `allUsers` on any service. `fa-gateway` has the Cloud Run invoker check disabled (the only such service; Google's recommended alternative to `allUsers`), ingress internal-and-cloud-load-balancing, Cloud Armor on the backend service. `chat-api` has ingress internal and `run.invoker` only for the Kong service account | §8.3, ADR-011, ADR-012 | E2, E10 |
 | G-03 | `documents.raw_content` unredacted, returned to LLM and client | Column dropped in the E1 migration; raw bytes only in GCS bronze; factsheet tool returns redacted chunks | §5.2, §6.3, ADR-014 | E1, E3, E6 |
 | G-04 | `tool` / `tool_result` SSE events carry raw tool JSON | Client receives tool name + status only; errors carry codes, not exception text | §6.2, §8.5, ADR-009 | E4 |

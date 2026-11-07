@@ -10,8 +10,10 @@ arch_refs: ["ADR-017"]
 issue: null
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
+
+Superseded by ADR-037 (amends ADR-017) and tickets E7-T19, E7-T20, E7-T21, E7-T22 (round 4): the golden set is 200 items labelled by Keshav, not about 300.
 
 ## Summary
 Reach ~300 golden cases, curated per tenant and balanced by category.

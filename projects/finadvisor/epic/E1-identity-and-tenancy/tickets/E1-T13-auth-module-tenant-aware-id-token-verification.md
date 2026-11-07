@@ -5,12 +5,12 @@ epic: "E1"
 repo: "FinAdvisor"
 size: "M"
 status: "todo"
-depends_on: ["E1-T1"]
-arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.5", "deep-dive/08-security-and-privacy.md#8.2", "decision-logs.md#adr-010"]
+depends_on: ["E1-T1", "E1-T22"]
+arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.5", "deep-dive/08-security-and-privacy.md#8.2", "decision-logs.md#adr-010", "decision-logs.md#adr-032"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 29, "id": 6155604467, "url": "https://github.com/Keshav0375/FinAdvisor/issues/29"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary
@@ -23,9 +23,12 @@ Build `src/auth/verifier.py`: `async verify_bearer(authorization: str | None) ->
 
 Out of scope: mapping to `tenants.id` and loading entitlements (E1-T14), route wiring (E1-T15), Kong header stripping (E2).
 
+Round 4 (ADR-032, R4-D18 V5): this ticket starts only after E1-T22 records `SAME_EMAIL_TWO_TENANTS=pass`. The verifier is project-level: it reads `firebase.tenant` from the token, checks it equals the tenant of the requested firm, and returns `(sub, idp_tenant_id)`; one token carries exactly one firm and no identity is merged across firms (a person in two firms has two `sub` values and two `advisors` rows). If E1-T22 recorded `fail`, stop and wait for the new ADR (per-firm email aliases).
+
 ## Acceptance criteria
 - [ ] Given a validly signed token of tenant A with the right audience, when `verify_bearer` runs, then it returns `(sub, A's idp tenant id)` (`tests/auth/test_verifier.py`).
 - [ ] Given each of: no header, `Authorization: Basic ...`, a token with a forged signature, an expired token, a token with a wrong audience, a token without the tenant claim, then `verify_bearer` raises `UNAUTHENTICATED` (6 parametrised cases) and the HTTP response is 401 with the same body for every case.
 - [ ] Given a token whose tenant claim names tenant B but which is verified against tenant A's `auth_for_tenant`, then `TenantIdMismatchError` is raised inside the module and surfaces as 401 (test).
 - [ ] Given a request carrying `X-User-Id: <uuid>` and no `Authorization`, when it hits a dependency using `verify_bearer`, then the response is 401; `grep -R 'X-User-Id\|mock_users' backend/src` returns nothing.
 - [ ] Given `mypy` and `import-linter` run in CI, then `src/auth` imports nothing from `src/retrieval` or `src/db` content access (contract passes).
+- [ ] Given two tokens for the same email, one from tenant A and one from tenant B, then `verify_bearer` returns different `sub` values and different `idp_tenant_id` values, and neither token verifies against the other tenant (`tests/auth/test_verifier.py::test_same_email_two_firms_no_merge`).

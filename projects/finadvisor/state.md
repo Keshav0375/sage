@@ -1,6 +1,15 @@
 # finadvisor: state
 
 ## Now
+- 2026-11-07 ROUND 4 RESEARCH COMPLETE (stages 1-4; no build, no publish). Arch: ADR-026..039 with
+  amendments, architecture.md + architecture-diagram.md + 15 deep-dive files, validation folded
+  (library/research/r4/V-*.md), decisions R4-D1..D20 in library/research/r4/decision-r4.md.
+  Plan: 14 epics, 315 tickets (all S/M, no cycles, structural check clean), new epics E11 real data,
+  E12 lifecycle and deletion, E13 regional cells. Publish diff for GitHub project #5:
+  library/research/r4/publish-diff.md — 103 published tickets: 67 keep, 36 update, 0 close;
+  6 published epics: update; new: 212 tickets, 8 epics (E6-E13).
+  NEXT (Keshav): review and approve the publish diff, then `/researcher:publish finadvisor` applies
+  it. Build starts only when Keshav says so (IMPLEMENTATION GATE).
 - 2026-11-01 As-built baseline DONE: `deep-dive/00-as-built-baseline.md` maps the code at FinAdvisor d6c2bd3
   (diagrams, data model, interfaces, config, runtime, CI, tests, security posture) with a gap
   register of 62 gaps (13 critical, 16 high, 27 medium, 6 low). ADR-001 makes it the baseline.
@@ -63,8 +72,9 @@
   - K1 A GCP project id with billing and Identity Platform multi-tenancy enabled. Gates E1-T1 and all cloud tickets.
   - K2 Langfuse Cloud Hobby project keys, stored as GitHub secrets `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` and in local `.env`. Gates E0-T1.
   - K3 A domain for the ALB managed certificate. Gates E2-T8 and E10.
-  - K4 About 30 human labels for the judge spike, labelled by Keshav with the CLI. Gates E7-T1.
+  - K4 Golden-set labelling by Keshav: 30-item pilot (E7-T19), items 31-60 (E7-T20), 140 items + 30-item intra-rater relabel (E7-T21); about 46-63 h in total. Gates E7.
   - K5 Enable branch protection on `main` after E0-T14 (R14). Gates the required-check acceptance of E0-T14.
+  - K6 Approve the round-4 publish diff (library/research/r4/publish-diff.md) before /researcher:publish.
 
 ## Blockers
 - (none)

@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E1-T3", "E1-T6", "E1-T7", "E1-T9"]
-arch_refs: ["deep-dive/05-data-model-and-storage.md#5.4", "deep-dive/05-data-model-and-storage.md#5.3", "decision-logs.md#adr-002"]
+arch_refs: ["deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.4", "deep-dive/05-data-model-and-storage.md#5.3", "decision-logs.md#adr-002"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 26, "id": 6155600427, "url": "https://github.com/Keshav0375/FinAdvisor/issues/26"}
 branch: null
 pr: null
@@ -17,7 +17,7 @@ updated: "2026-11-01"
 conversations, messages, turn_events, feedback, escalations, acl_change_requests, eval_scores, outbox, processed_events and answer_cache have their owner-clause policies and grants.
 
 ## Description
-Add an Alembic revision implementing the "Other tables" part of deep-dive/05-data-model-and-storage.md §5.4 and the matching 5.3 grants.
+Add an Alembic revision implementing the "Other tables" part of deep-dive/05-1-rls-indexes-versioning-and-deletion.md §5.4 and the matching 5.3 grants.
 
 Policies:
 - `conversations`, `messages`, `turn_events`, `feedback`: tenant match AND `advisor_id = current_setting('app.user_id')::uuid` (an advisor sees only their own rows) for `fa_app` (SELECT / INSERT / UPDATE as granted).

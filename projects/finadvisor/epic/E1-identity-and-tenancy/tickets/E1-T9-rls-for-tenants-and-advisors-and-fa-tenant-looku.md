@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E1-T3", "E1-T4"]
-arch_refs: ["deep-dive/05-data-model-and-storage.md#5.4", "deep-dive/05-data-model-and-storage.md#5.3", "decision-logs.md#adr-010", "decision-logs.md#adr-002"]
+arch_refs: ["deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.4", "deep-dive/05-data-model-and-storage.md#5.3", "decision-logs.md#adr-010", "decision-logs.md#adr-002"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 25, "id": 6155599197, "url": "https://github.com/Keshav0375/FinAdvisor/issues/25"}
 branch: null
 pr: null
@@ -17,7 +17,7 @@ updated: "2026-11-01"
 tenants and advisors policies and grants are in place, advisors cannot self-escalate, and the single SECURITY DEFINER function fa_tenant_lookup exists.
 
 ## Description
-Add an Alembic revision implementing the `tenants` and `advisors` items of deep-dive/05-data-model-and-storage.md §5.4 and the 5.3 grants.
+Add an Alembic revision implementing the `tenants` and `advisors` items of deep-dive/05-1-rls-indexes-versioning-and-deletion.md §5.4 and the 5.3 grants.
 
 `tenants`: `tenants_select_app TO fa_app FOR SELECT USING (id = current_setting('app.tenant_id')::uuid OR id = '<PUBLIC>'::uuid)`; `tenants_lookup TO fa_lookup FOR SELECT USING (true)`; `tenants_owner TO fa_owner` for SELECT, INSERT, UPDATE; `tenants_upd_worker TO fa_worker FOR UPDATE USING / WITH CHECK (id = app.tenant_id AND id <> <PUBLIC>)`; `tenants_upd_public TO fa_etl_public FOR UPDATE USING / WITH CHECK (id = <PUBLIC>)`. Column grants: `fa_app` SELECT on (`id`, `slug`, `corpus_version`, `acl_version`, `budgets`) only; `fa_lookup` SELECT on the columns the function returns plus `slug`; UPDATE limited to `corpus_version` and `acl_version` for `fa_worker` and to `corpus_version` for `fa_etl_public`.
 

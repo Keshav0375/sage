@@ -6,11 +6,11 @@ repo: "FinAdvisor"
 size: "S"
 status: "todo"
 depends_on: ["E3-T5"]
-arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.5", "deep-dive/06-interfaces-and-contracts.md#6.3", "decision-logs.md#adr-008", "decision-logs.md#adr-004"]
+arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.5", "deep-dive/06-interfaces-and-contracts.md#6.3", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.6", "decision-logs.md#adr-008", "decision-logs.md#adr-004", "decision-logs.md#adr-027"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 68, "id": 6155651010, "url": "https://github.com/Keshav0375/FinAdvisor/issues/68"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary
@@ -25,8 +25,11 @@ Behaviour: `expand_parents` replaces each child hit with its parent chunk text (
 
 Out of scope: building the full `search_firm_kb` payload (E3-T9), the citation verifier itself (E4).
 
+Round 4 (ADR-027): `expand_parents(ranked_chunks, as_of)` and `fetch_chunks(ids, as_of)` take the same `as_of` as `search` and their statements on `chunks` carry `valid_range @> $n::date AND upper_inf(system_range)`; a parent or chunk not valid at `as_of` is absent (the cache-hit path treats absence as a miss). `Chunk` returned by `fetch_chunks` includes `valid_range` so callers can re-check.
+
 ## Acceptance criteria
 - [ ] Given two child hits that share one parent when `expand_parents` runs then one expanded item is returned with the parent's text and the better-ranked child's chunk id (test `backend/tests/test_expand_parents.py::test_dedup_shared_parent`).
 - [ ] Given a parent in another tenant that the caller cannot see when `expand_parents` runs then it is absent and no error text mentions the other tenant (test `test_parent_rls`).
 - [ ] Given `last_reviewed_at` = today minus 366 days and a fixed clock when `is_stale` runs then True; today minus 365 days then False; None then True-or-False exactly as the constant's documented rule (test `backend/tests/test_staleness.py::test_threshold_boundary`).
 - [ ] Given ids [visible, other-tenant, nonexistent] when `fetch_chunks` runs under RLS then exactly one chunk is returned (test `test_fetch_chunks_only_visible`).
+- [ ] Given a chunk id whose range ended before `as_of`, then `fetch_chunks([id], as_of)` returns nothing, and with an `as_of` inside the range returns it with `valid_range` populated (`test_retrieval_fetch.py::test_fetch_chunks_respects_as_of`, `integration`).

@@ -6,11 +6,11 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E3-T8", "E3-T13"]
-arch_refs: ["decision-logs.md#adr-015", "deep-dive/05-data-model-and-storage.md#5.7", "deep-dive/06-interfaces-and-contracts.md#6.3", "deep-dive/04-components-and-responsibilities.md#4.5"]
+arch_refs: ["decision-logs.md#adr-015", "decision-logs.md#adr-027", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.7", "deep-dive/06-interfaces-and-contracts.md#6.3", "deep-dive/04-components-and-responsibilities.md#4.5"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 74, "id": 6155658134, "url": "https://github.com/Keshav0375/FinAdvisor/issues/74"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary
@@ -27,6 +27,8 @@ Behaviour of `lookup`: read the row (not expired); call `RetrievalService.fetch_
 
 Out of scope: the orchestrator's call order (E4), implementing the verifier, purge (E3-T15).
 
+Round 4 (ADR-015 amended, ADR-027): `lookup(key, principal, verifier, as_of)` also requires, after `fetch_chunks(ids, as_of)` (E3-T8), that every cited chunk is returned and that its `valid_range @> as_of`; a cited chunk that is absent or whose range does not contain `as_of` makes the lookup a miss (`answer_cache_total{result="miss_verifier"}`). This is the as-of validity check that runs beside the citation verifier on a hit.
+
 ## Acceptance criteria
 - [ ] Given a stored answer whose verifier stub returns False when `lookup` runs then it returns None and `answer_cache_total{result='miss_verifier'}` increased by 1 (test `backend/tests/test_answer_cache_lookup.py::test_verifier_failure_is_miss`).
 - [ ] Given the verifier stub raises an exception when `lookup` runs then the result is None (test `test_verifier_exception_is_miss`).
@@ -34,3 +36,5 @@ Out of scope: the orchestrator's call order (E4), implementing the verifier, pur
 - [ ] Given a turn whose `tools_called` contains `escalate_to_compliance` when `store_if_eligible` runs then no row is written, even if the answer verified (test `test_side_effect_turn_never_cached`); given a multi-turn request then no row is written (test `test_multi_turn_not_cached`).
 - [ ] Given a hit with a cited chunk whose `last_reviewed_at` crossed the stale threshold since storage when `lookup` runs then the returned citation has `stale=True` (test `test_staleness_recomputed_on_hit`).
 - [ ] Given the cache holds an answer stored when `acl_version` was 3 and the tenant is now at 4 when the new key is computed then `lookup` returns None as a plain miss (test `test_acl_version_bump_makes_entry_unreachable`).
+- [ ] Given a stored answer citing chunk C whose `valid_range` was closed by a newly published version so that it no longer contains `as_of`, when `lookup` runs, then it returns None and the miss counter `miss_verifier` increased by 1 (`test_answer_cache_lookup.py::test_cited_chunk_outside_as_of_is_miss`, `integration`).
+- [ ] Given the same question after a new version is published (E3-T15 purge ran), then the cache misses and the freshly generated answer carries the new text (#3 core; `test_new_version_published_cache_misses`).

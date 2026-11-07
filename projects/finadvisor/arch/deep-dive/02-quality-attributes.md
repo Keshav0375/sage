@@ -8,8 +8,8 @@ All latency figures are estimates to be measured (D13e). They replace the earlie
 | Metric | Target | Notes |
 |---|---|---|
 | Time to first token (TTFT) | p50 < 2.0 s, p95 < 3.5 s | with rerank and guardrails |
-| Retrieval first stage (embed + hybrid SQL) | p95 < 300 ms | to be measured; see the reconciliation note below |
-| Rerank | p95 < 700 ms | Voyage rerank ~0.68 s per call measured by a third party on short facts (evidence-r2.md) |
+| Retrieval first stage (embed + hybrid SQL) | p95 <= 600 ms | embed then hybrid SQL is serial (0.25 + 0.30 s p95 estimated, 0.55 s sum); measured in the E3 spike (R4-D19 M3; the MVP's 300 ms was rejected because the arch's own estimate cannot meet it) |
+| Rerank (default `rerank-3-lite`) | p95 < 700 ms | Voyage rerank ~0.68 s per call measured by a third party on short facts (evidence-r2.md) |
 | Full answer | p95 < 8 s | |
 
 #### Guardrail latency budget inside TTFT 2.0 / 3.5 s (ADR-036)
@@ -18,19 +18,19 @@ Every figure below is an ESTIMATE from r4/P-reliability.md §11, to be measured 
 
 | Step on the critical path | p50 / p95 estimate | Status |
 |---|---|---|
-| Embed query (runs in parallel with the Model Armor prompt screen) | 0.15 / 0.25 s | to be measured |
+| Embed query (runs in parallel with the Model Armor prompt screen; serial before the hybrid SQL, which needs the vector) | 0.15 / 0.25 s | to be measured |
 | Model Armor prompt screen (parallel to embed) | X, unknown | to be measured from the Cloud Run region: latency, SLA and precision are NOT FOUND in the docs. The fail-closed timeout is set from the measured p99 plus a margin, not 500 ms by default |
 | First-stage hybrid SQL | 0.15 / 0.30 s | to be measured |
 | Rerank | 0.35 / 0.70 s | to be measured |
 | LLM first token | 0.8 / 1.2 s | to be measured |
 | Sentence buffer + numeric gate + citation verifier | 0.1 / 0.15 s | to be measured; regex + Decimal gate estimated under 10 ms per answer |
-| Sum (without Model Armor X and the items below) | 1.55 / 2.60 s | headroom against 2.0 / 3.5 s: 0.45 s at p50, 0.90 s at p95 |
+| Sum (without Model Armor X and the items below) | 1.55 / 2.60 s | headroom against 2.0 / 3.5 s: 0.45 s at p50, 0.90 s at p95. First-stage sum (embed + SQL) = 0.30 s at p50 and 0.55 s at p95, inside the 600 ms first-stage target (p95 headroom 0.05 s). TTFT targets unchanged |
 
 Not yet in the budget (to be measured; named by r4/S-skeptic-3.md): Kong hop, `auth` and `principal`, Presidio on the prompt, answer-cache lookup, Cloud Run cold start, and the sentence-level release of the numeric gate. The user sees the first complete sentence, not the first token, so first visible text is later than TTFT by an amount to be measured (the skeptic's rough figure is +0.3-0.5 s at typical streaming speed, unmeasured).
 
 Rule (ADR-036): any guard that adds more than 150 ms p95 to the critical path moves to async-after-first-sentence or is dropped. Precision, recall and latency per guardrail are measured weekly on the sets of §2.10 and reported through §9.2.
 
-Reconciliation to do by measurement: the p95 estimates for embed (0.25 s) and first-stage SQL (0.30 s) sum to 0.55 s when serial, against the 300 ms first-stage target above (§10).
+Reconciled (R4-D19 M3, ADR-039): the first-stage p95 target is 600 ms, above the serial estimate of 0.55 s, and the 3.5 s TTFT budget keeps 0.90 s of p95 headroom after it. The E3 spike measures both legs; if the measured sum exceeds 600 ms the ADR records the new figure (§10).
 
 ### 2.2 Availability
 
@@ -52,7 +52,7 @@ RPO / RTO: not set by the brief.
 | Advisors | a few hundred | 2,000 |
 | Peak QPS | ~10 | 5-50 (requirements.md range) |
 | Corpus | 50 docs / ~114 chunks today. First real set: about 25,000 child chunks from about 25-30 MB of text, about 7M tokens (ASSUMPTION: 4 chars/token, ~400-token children; r4/P-reliability.md A1) plus synthetic per tenant | 100k-1M chunks across tenants (1M x 1024 halfvec ~ 2 GB); two embedding generations double HNSW memory during a re-embed, so 1M chunks is outside the 8 GiB instance envelope and 250k per tenant fits (ADR-035) |
-| Rerank throughput | Voyage Tier 1: 2M TPM, ~5 QPS at 10-15 candidates x <= 400 tokens (~6k tokens/query) | request a tier upgrade before load tests (D13e). Round-4 evidence lists rerank-2.5-lite at 4M TPM; E3 measures which applies (§10) |
+| Rerank throughput | Voyage Tier 1 by model: `rerank-3-lite` (default) 4M TPM, about 11 QPS at ~6k tokens/query (10-15 candidates x <= 400 tokens); `rerank-3` 2M TPM, about 5 QPS; 2,000 RPM for both; multiplied by the Voyage tier | request a tier upgrade before load tests (D13e). https://docs.voyageai.com/docs/rate-limits (V-docs-ai.md Q2) |
 | Partition triggers | n/a | one tenant > 250k chunks, total > 2M chunks, or ANN p95 > 100 ms (§7.2) |
 | Anthropic and Voyage limits, re-embed times | n/a | §7.5 |
 
@@ -71,7 +71,7 @@ Citation accuracy >= 0.95, faithfulness >= 0.90, cross-tenant/tier/jurisdiction 
 | Always-on `prod` | $300+ (out of budget, by design) |
 | Budget | $100-200/month (Keshav) |
 
-Unit prices (evidence-r2.md, confirmed for Sonnet 5.5 and Haiku 5.5 on https://platform.claude.com/docs/en/about-claude/pricing on 2026-11-02): Sonnet 5.5 $2 / $10 per MTok in/out, cache read $0.10; Haiku 5.5 $0.10 / $0.50; Batch API -50%; fallback Sonnet 4.6 $3 / $15; voyage-4 $0.06/M tokens (200M free); rerank-2.5-lite $0.05/M; Model Armor free to 2M tokens/month then $0.10/1M; Cloud SQL Enterprise 2 vCPU / 8 GiB ~$101 while running (HA ~$202); Memorystore Valkey shared-core-nano ~$23/month (~$0.03/h, only while the demo is up).
+Unit prices (evidence-r2.md, confirmed for Sonnet 5.5 and Haiku 5.5 on https://platform.claude.com/docs/en/about-claude/pricing on 2026-11-02): Sonnet 5.5 $2 / $10 per MTok in/out, cache read $0.10; Haiku 5.5 $0.10 / $0.50; Batch API -50%; fallback Sonnet 4.6 $3 / $15; voyage-4 $0.06/M tokens (200M free); `rerank-3-lite` $0.02/M (`rerank-3` $0.05/M); Model Armor free to 2M tokens/month then $0.10/1M; Cloud SQL Enterprise 2 vCPU / 8 GiB ~$101 while running (HA ~$202); Memorystore Valkey shared-core-nano ~$23/month (~$0.03/h, only while the demo is up).
 
 ### 2.6 Other attributes
 
@@ -120,8 +120,8 @@ A parser bump is a planned re-baseline keyed on `parser_version`, not an alert s
 | Set | Size | Notes |
 |---|---|---|
 | Golden set | 200 items, labelled by Keshav (about 39-56 h, ESTIMATE) | Slices (sum 200): single-hop US 25 / EU 25 / UK 15; tables and fee numbers 25; temporal as-of, superseded, revoked 30; multi-document and cross-jurisdiction 20; cross-lingual 20; unanswerable, out-of-scope and ACL refusal 20; injection-in-document 10; compliance checks 10. Tranche 1 = 60 items (the PR subset), tranche 2 = 140. Public items about 165 and private items about 35 (private items run only where the private bucket is mounted, K-R4-3) |
-| Cluster rule | at least 40 clusters, at most 5 items per cluster | cluster unit = provision or product (R4-D17); analysis at cluster level; no fixed n_eff claim; the detectable effect is computed after a 30-item pilot and recorded |
-| Confirmatory arms | exactly 4, Holm | contextual retrieval vs section-path prefix; voyage-context-4 vs plain chunks; rerank-3 vs rerank-2.5; structured lookup vs table chunks. All others exploratory. Slices under 30 items use exact tests or stay exploratory |
+| Cluster rule | at least 40 clusters, at most 5 items per cluster (200 items therefore means exactly 5 items in each of 40 clusters; raise the floor if the corpus yields more usable provisions) | cluster unit = provision or product (R4-D17); analysis at cluster level; no fixed n_eff claim: the earlier "above 100 effective items after clustering by source document" criterion (K-R4-4) is replaced by the pilot-based detectable effect, computed after a 30-item pilot and recorded |
+| Confirmatory arms | exactly 4, Holm | contextual retrieval vs section-path prefix; voyage-context-4 vs plain chunks; rerank-3 vs rerank-3-lite (the full model enters only with a measured gain); structured lookup vs table chunks. All others exploratory. Slices under 30 items use exact tests or stay exploratory |
 | Intra-rater check | 15% relabelled after one week; agreement >= 0.8 or the labelling guide is revised | no second reviewer exists |
 | PII guardrail set | 2,000 sampled en/de/fr from ai4privacy openpii-1.5m (CC-BY-4.0 per card) + 2,000 Gretel finance multilingual (Apache-2.0) | per-class precision and recall; IBAN and account numbers get generated cases with valid checksums |
 | Direct injection | 1,000 Lakera gandalf (MIT); deepset 662 (licence conflict: smoke only); JBB benign plus the golden questions as benign | over-refusal measured |

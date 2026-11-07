@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E1-T19", "E1-T14"]
-arch_refs: ["deep-dive/05-data-model-and-storage.md#5.3", "deep-dive/05-data-model-and-storage.md#5.4", "deep-dive/05-data-model-and-storage.md#5.5", "decision-logs.md#adr-002", "decision-logs.md#adr-003"]
+arch_refs: ["deep-dive/05-data-model-and-storage.md#5.3", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.4", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.5", "decision-logs.md#adr-002", "decision-logs.md#adr-003"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 36, "id": 6155613681, "url": "https://github.com/Keshav0375/FinAdvisor/issues/36"}
 branch: null
 pr: null
@@ -17,7 +17,7 @@ updated: "2026-11-01"
 The leak matrix also covers direct partition access, advisor self-escalation, pooled-connection reuse and EXPLAIN pruning, and gates every PR.
 
 ## Description
-Extend `tests/leak/` (E1-T19) with the remaining cases from deep-dive/05-data-model-and-storage.md §5.3 and 5.4: "direct SELECT / INSERT on a partition as `fa_app` / `fa_worker` gives permission denied", "advisor raises own tier / role gives denied", pooled-connection reuse, and "`EXPLAIN` shows partition pruning for LIST partitions under RLS" (plan.md E1 done-when; deep-dive/05-data-model-and-storage.md §5.5: "the same check is repeated for LIST partitions in the E1 leak-matrix test").
+Extend `tests/leak/` (E1-T19) with the remaining cases from deep-dive/05-data-model-and-storage.md §5.3 and 5.4: "direct SELECT / INSERT on a partition as `fa_app` / `fa_worker` gives permission denied", "advisor raises own tier / role gives denied", pooled-connection reuse, and "`EXPLAIN` shows partition pruning for LIST partitions under RLS" (plan.md E1 done-when; deep-dive/05-1-rls-indexes-versioning-and-deletion.md §5.5: "the same check is repeated for LIST partitions in the E1 leak-matrix test").
 
 Cases:
 6. Direct partition access: as `fa_app` and `fa_worker`, `SELECT` and `INSERT` on the tenant's own `chunks` partition, on `chunks_public`, on `chunks_default` and on a `messages` monthly partition fail with permission denied (SQLSTATE 42501); the same statements through the parent succeed or are filtered by RLS.
