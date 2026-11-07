@@ -23,7 +23,7 @@ All `/v1` routes except `GET /v1/tenants/{slug}` require `Authorization: Bearer 
 | `GET /healthz` | none | none | liveness (process up) |
 | `GET /readyz` | none | none | readiness: DB reachable and role flags / FORCE RLS / pgvector >= 0.8 asserted, Kafka reachable (degraded, not failing, for chat), model availability (configured models not retired or soon-retiring), firebase-admin verifier initialised |
 
-Error codes: `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `INPUT_TOO_LONG` (413), `INPUT_BLOCKED` (Model Armor or guard), `GUARD_UNAVAILABLE` (screen failed closed), `WRONG_CELL` (421) and `TENANT_MOVED` (421) with a cell hint, `CELL_UNAVAILABLE` (503, §6.11), `ENTITLEMENT_CHANGED` (SSE error: an entitlement bump aborted an in-flight turn, ADR-033), `NOT_FOUND` (404), `RATE_LIMITED` (429, `Retry-After`, from Kong or per-tenant budget), `TENANT_BUDGET_EXCEEDED`, `NO_FIRM_DOCUMENTATION` and `ANSWER_WITHHELD` with a `reason` (refusal events, not HTTP errors), `LLM_UNAVAILABLE`, `RETRIEVAL_UNAVAILABLE`, `TURN_INTERRUPTED`, `IDEMPOTENCY_KEY_REUSED`, `INTERNAL`. Numeric limits (input cap, budgets, rate limits) are config values (§6.6).
+Error codes: `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `INPUT_TOO_LONG` (413), `INPUT_BLOCKED` (Model Armor or guard), `GUARD_UNAVAILABLE` (the in-process fallback guard itself failed; a Model Armor outage alone does not raise it, ADR-036), `WRONG_CELL` (421) and `TENANT_MOVED` (421) with a cell hint, `CELL_UNAVAILABLE` (503, §6.11), `ENTITLEMENT_CHANGED` (SSE error: an entitlement bump aborted an in-flight turn, ADR-033), `NOT_FOUND` (404), `TENANT_NOT_FOUND` (404, discovery endpoint), `TURN_EXPIRED` (410, SSE resume after `SSE_REPLAY_TTL_S`), `RATE_LIMITED` (429, `Retry-After`, from Kong or per-tenant budget), `TENANT_BUDGET_EXCEEDED`, `NO_FIRM_DOCUMENTATION` and `ANSWER_WITHHELD` with a `reason` (refusal events, not HTTP errors), `LLM_UNAVAILABLE`, `RETRIEVAL_UNAVAILABLE`, `TURN_INTERRUPTED`, `IDEMPOTENCY_KEY_REUSED`, `INTERNAL`. Numeric limits (input cap, budgets, rate limits) are config values (§6.6).
 
 ### 6.2 SSE event contract
 
@@ -57,23 +57,23 @@ Retrieval is not a model decision: the orchestrator runs retrieval first and inj
 
 ### 6.4 Kafka topic catalogue
 
-Cluster: Confluent Cloud Basic (us-central1); local `apache/kafka:4.4.0`. Client `confluent-kafka` 2.16.1, idempotent producers, at-least-once consumers with idempotent sinks (`processed_events`). `chat-api` has no Kafka credentials: its events leave through the `outbox` table and the `outbox-relay`. Keys are `tenant_id` (per-tenant ordering). Value schemas: JSON Schema in Schema Registry (Essentials, 100 schemas free; subject `<topic>-value`, registry default compatibility), generated from Pydantic envelope models. Common envelope: `{event_id, event_type, schema_version, tenant_id, occurred_at, trace_context, payload}`; the Kafka header carries `traceparent`. Payloads are minimised: ids, hashes, redacted text only; never raw documents or prompts (D13j). Confluent Basic has no RBAC: one service account and API key per service (`fa-worker`, `etl`, `etl-public`, `eval`), Kafka ACLs per service account, limits 50 API keys, 1,000 ACLs and 1,500 partitions (D15.8). Partition counts and retention are set in E5 within those limits (the brief gives no values); the single DLQ is `dlq.v1`.
+Cluster: Confluent Cloud Basic (us-central1); local `apache/kafka:4.4.0`. Client `confluent-kafka` 2.16.1, idempotent producers, at-least-once consumers with idempotent sinks (`processed_events`). `chat-api` has no Kafka credentials: its events leave through the `outbox` table and the `outbox-relay`. Keys are `tenant_id` (per-tenant ordering). Value schemas: JSON Schema in Schema Registry (Essentials, 100 schemas free; subject `<topic>-value`, registry default compatibility), generated from Pydantic envelope models. Common envelope: `{event_id, event_type, schema_version, tenant_id, occurred_at, trace_context, payload}`; the Kafka header carries `traceparent`. Payloads are minimised: ids, hashes, scores and flags; never raw documents or prompts, and `chat.audit.v1` and `eval.sample.v1` never carry answer, question or excerpt text, which stays in erasable Postgres `messages` (D13j, R4-D19 M5). Confluent Basic has no RBAC: one service account and API key per service (`fa-worker`, `etl`, `etl-public`, `eval`), Kafka ACLs per service account, limits 50 API keys, 1,000 ACLs and 1,500 partitions (D15.8). Partition counts and retention are set in E5 within those limits (the brief gives no values); the single DLQ is `dlq.v1`.
 
 Consumer rule: every pipeline consumer (`silver`, `contextualizer`, `indexer`, `eval-judge`) rejects a message whose `envelope.tenant_id` differs from the message key, or whose tenant is PUBLIC, to `dlq.v1` with a reason (D16.6). `bq-sink` accepts PUBLIC analytics events. FCA Handbook API content never enters Kafka or BigQuery (ADR-026), no erasure request travels on Kafka (ADR-029), and subject-bearing topics are delete-policy with retention 7 d and `segment.ms` 1 d, payloads limited to ids and `pseudonym_id` (ADR-029).
 
-| Topic | Key | Schema / event types | Producer | Consumer group | Retention | Replay |
-|---|---|---|---|---|---|---|
-| `docs.bronze.v1` | `tenant_id` | `DocBronzeLanded` {document_id, bronze_uri, sha256, source, fetched_at, version_key, valid_from, source_class, licence_class (§6.8)} | `etl` job (Dagster bronze asset) | `cg.silver` | E5 | Dagster re-publishes for a partition; bronze is immutable |
-| `docs.silver.v1` | `tenant_id` | `DocSilverReady` {document_id, silver_uri, chunk_count, parser_version, reject_count} | `fa-worker` role `silver` | `cg.contextualizer` | E5 | offset reset; idempotent via `processed_events` |
-| `chunks.contextualized.v1` | `tenant_id` | `ChunksContextualized` {document_id, silver_uri, header_model, rules_extracted} | `fa-worker` role `contextualizer` | `cg.indexer` | E5 | offset reset |
-| `chunks.indexed.v1` | `tenant_id` | `ChunksIndexed` {document_id, upserted, unchanged, deleted, embed_model, corpus_version} | `fa-worker` role `indexer` | `cg.bq-sink` | E5 | offset reset; re-embed = replay of `docs.bronze.v1` |
-| `ingest.analytics.v1` | `tenant_id` (PUBLIC id) | `PublicIngestStage` {stage, document_id, counts} | `etl-public` job | `cg.bq-sink` | E5 | rerun the job |
-| `acl.changes.v1` | `tenant_id` | `AclChangeRequested` {request_id, document_id, action, new ACL}, `AclChangeApplied` {request_id, acl_version}, `AdvisorEntitlementChanged` {advisor_id, entitlement_version} | `outbox-relay` (rows written by `admin` and by `acl-applier`) | `cg.bq-sink` (analytics and audit only; the `acl-applier` no longer consumes this topic, it polls `acl_change_requests`, R4-D7) | E5 | offset reset; applier is idempotent on `request_id` |
-| `chat.audit.v1` | `tenant_id` | `TurnCompleted`, `TurnRefused`, `EscalationCreated` {ids, hashes, redacted text, retrieved chunk ids, model, gate result, retrieval_degraded} | `outbox-relay` (from `agent`) | `cg.bq-sink` | E5 | outbox rows remain in Postgres until published |
-| `chat.usage.v1` | `tenant_id` | `TurnUsage` {tokens, cache read, latency, cost estimate} | `outbox-relay` | `cg.bq-sink` | E5 | offset reset |
-| `eval.sample.v1` | `tenant_id` | `TurnSampled` {message_id, redacted question, redacted answer, cited excerpts (redacted)} written for a `EVAL_SAMPLE_RATE` fraction of turns | `outbox-relay` (from `agent`) | `cg.eval-judge` | E5 | offset reset; judge dedupes on `message_id` + metric |
-| `eval.events.v1` | `tenant_id` | `FeedbackRecorded`, `JudgeScored`, `EvalRunCompleted` | `outbox-relay` (feedback, judge scores), `eval` job (direct idempotent producer) | `cg.bq-sink` | E5 | offset reset |
-| `dlq.v1` | original key | original envelope + `{source_topic, consumer, error_code, reason, attempts}` (payload redacted) | any consumer after retries or envelope check | operator tooling | E5 | operator re-publishes after the fix |
+| Topic | Key | Schema / event types | Producer | Consumer group | Owner epic | Retention | Replay |
+|---|---|---|---|---|---|---|---|
+| `docs.bronze.v1` | `tenant_id` | `DocBronzeLanded` {document_id, bronze_uri, sha256, source, fetched_at, version_key, valid_from, source_class, licence_class (§6.8)} | `etl` job (Dagster bronze asset) | `cg.silver` | E5 | set in E5 within the Basic limits (no subject data) | Dagster re-publishes for a partition; bronze is immutable |
+| `docs.silver.v1` | `tenant_id` | `DocSilverReady` {document_id, silver_uri, chunk_count, parser_version, reject_count} | `fa-worker` role `silver` | `cg.contextualizer` | E5 | set in E5 within the Basic limits (no subject data) | offset reset; idempotent via `processed_events` |
+| `chunks.contextualized.v1` | `tenant_id` | `ChunksContextualized` {document_id, silver_uri, header_model, rules_extracted} | `fa-worker` role `contextualizer` | `cg.indexer` | E5 | set in E5 within the Basic limits (no subject data) | offset reset |
+| `chunks.indexed.v1` | `tenant_id` | `ChunksIndexed` {document_id, upserted, unchanged, deleted, embed_model, corpus_version} | `fa-worker` role `indexer` | `cg.bq-sink` | E5 | set in E5 within the Basic limits (no subject data) | offset reset; re-embed = replay of `docs.bronze.v1` |
+| `ingest.analytics.v1` | `tenant_id` (PUBLIC id) | `PublicIngestStage` {stage, document_id, counts} | `etl-public` job | `cg.bq-sink` | E5 | set in E5 within the Basic limits (no subject data) | rerun the job |
+| `acl.changes.v1` | `tenant_id` | `AclChangeRequested` {request_id, document_id, action, new ACL}, `AclChangeApplied` {request_id, acl_version}, `AdvisorEntitlementChanged` {pseudonym_id, entitlement_version} | `outbox-relay` (rows written by `admin` and by `acl-applier`) | `cg.bq-sink` (analytics and audit only; the `acl-applier` no longer consumes this topic, it polls `acl_change_requests`, R4-D7) | E5 | delete policy, `retention.ms` 7 d, `segment.ms` 1 d (subject-bearing, `pseudonym_id` only) | offset reset; applier is idempotent on `request_id` |
+| `chat.audit.v1` | `tenant_id` | `TurnCompleted`, `TurnRefused`, `EscalationCreated` {ids, hashes, retrieved chunk ids, scores, flags (model, gate result, retrieval_degraded); no text} | `outbox-relay` (from `agent`) | `cg.bq-sink` | E5 | delete policy, `retention.ms` 7 d, `segment.ms` 1 d (subject-bearing, `pseudonym_id` only) | outbox rows remain in Postgres until published |
+| `chat.usage.v1` | `tenant_id` | `TurnUsage` {tokens, cache read, latency, cost estimate} | `outbox-relay` | `cg.bq-sink` | E5 | delete policy, `retention.ms` 7 d, `segment.ms` 1 d (subject-bearing, `pseudonym_id` only) | offset reset |
+| `eval.sample.v1` | `tenant_id` | `TurnSampled` {message_id, chunk ids, hashes, flags; no text, the judge reads the redacted text from Postgres `messages` by `message_id` and skips erased messages} written for a `EVAL_SAMPLE_RATE` fraction of turns | `outbox-relay` (from `agent`) | `cg.eval-judge` | E5 | delete policy, `retention.ms` 7 d, `segment.ms` 1 d (subject-bearing, `pseudonym_id` only) | offset reset; judge dedupes on `message_id` + metric |
+| `eval.events.v1` | `tenant_id` | `FeedbackRecorded`, `JudgeScored`, `EvalRunCompleted` | `outbox-relay` (feedback, judge scores), `eval` job (direct idempotent producer) | `cg.bq-sink` | E5 | delete policy, `retention.ms` 7 d, `segment.ms` 1 d (subject-bearing, `pseudonym_id` only) | offset reset |
+| `dlq.v1` | original key | original envelope + `{source_topic, consumer, error_code, reason, attempts}` (payload redacted) | any consumer after retries or envelope check | operator tooling | E5 | set in E5 (payload redacted) | operator re-publishes after the fix |
 
 Gateway audit is not on Kafka: Kong `file-log` goes to Cloud Logging and a log sink to BigQuery (ADR-023).
 
@@ -104,7 +104,7 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 | `DB_PORT` | 5432 (ADR-025 R7) | all |
 | `DB_POOL_SIZE`, `DB_STATEMENT_TIMEOUT_MS` | required; pool per instance x max instances over all services must stay <= 300 of Cloud SQL `max_connections` 400 (D15.7) | chat-api, worker |
 | `PUBLIC_TENANT_ID` | required uuid | migrate, principal |
-| `IDP_PROJECT_ID` | required; firebase-admin tenant-aware verification uses it (`aud`, `iss`) | `auth` |
+| `IDP_PROJECT_ID` | required; firebase-admin project-level verification uses it (`aud`, `iss`) | `auth` |
 | `ENTITLEMENT_CACHE_TTL_S` | 60 | `principal` |
 | `ANTHROPIC_API_KEY` | required (secret); held by Kong when the egress route is used | `llm`, worker |
 | `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` or the Kong egress URL | `llm` |
@@ -119,7 +119,7 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 | `PROMPT_VERSION` | required; versions system prompt and tools | `agent`, cache key |
 | `VOYAGE_API_KEY` | required (secret) | `retrieval`, worker |
 | `EMBED_MODEL`, `EMBED_DIM` | `voyage-4`, 1024 | `retrieval`, indexer |
-| `RERANK_MODEL`, `RERANK_ENABLED` | `rerank-2.5-lite`, decided by the ablation | `retrieval` |
+| `RERANK_MODEL`, `RERANK_ENABLED` | `rerank-3-lite`; arm 3 of the ablation compares it with `rerank-3` (the full model enters only with a measured gain) | `retrieval` |
 | `RERANK_TIMEOUT_MS`, `RERANK_CANDIDATES`, `RERANK_TOP_N` | timeout: set in E3; candidates: default 15, range 10-30, the L1 ablation sets it (D14.1); top-n 6 | `retrieval` |
 | `RRF_K` | 60 | `retrieval` |
 | `EMBED_MAX_RETRIES` | 2, with jitter; then the turn fails with `RETRIEVAL_UNAVAILABLE` (ADR-025 R36) | `retrieval` |
@@ -132,7 +132,7 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 | `ANSWER_CACHE_ENABLED`, `ANSWER_CACHE_TTL_S` | true, 86400 | `retrieval` |
 | `HISTORY_MAX_TURNS`, `HISTORY_MAX_TOKENS` | 6, 3000 | `agent` |
 | `INPUT_MAX_CHARS` | 4000; Kong request-size limit 64 KB (ADR-025 R27) | `guardrails`, Kong size limit |
-| `MODEL_ARMOR_TEMPLATE`, `MODEL_ARMOR_TIMEOUT_MS`, `MODEL_ARMOR_FAIL_OPEN` | required; timeout set from latency measured from the Cloud Run region (p99 plus margin), not 500 ms by default (ADR-036); `false` | `guardrails` |
+| `MODEL_ARMOR_ENABLED` (feature flag; name set in E4), `MODEL_ARMOR_TEMPLATE`, `MODEL_ARMOR_TIMEOUT_MS` | flag default decided in E4 after the latency spike; timeout set from latency measured from the Cloud Run region (p99 plus margin), not 500 ms by default (ADR-036). Fallback when the flag is off or Model Armor fails or times out: Presidio + heuristic injection patterns; prompts fail open with an audit flag on the turn, ingest documents fail closed into quarantine (not configurable) | `guardrails` |
 | `TENANT_TOKEN_BUDGET`, `TENANT_MAX_CONCURRENCY` | 2,000,000 tokens per UTC day (counters in Postgres `tenant_usage`), 20 (ADR-025 R47) | `agent` |
 | `SSE_HEARTBEAT_S`, `TURN_LEASE_S` | required; set in E4 | `agent` |
 | `SSE_REPLAY_TTL_S` | 600; after it resume returns 410 `TURN_EXPIRED` (ADR-025 R49) | `agent` |
@@ -142,7 +142,7 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 | `SCHEMA_REGISTRY_URL`, `SCHEMA_REGISTRY_API_KEY`, `SCHEMA_REGISTRY_API_SECRET` | required | producers, consumers |
 | `KAFKA_CONSUMER_MAX_ATTEMPTS`, `KAFKA_RETRY_BACKOFF_MS` | 5, 500 (ADR-025 R53) | worker |
 | `OUTBOX_RELAY_BATCH`, `OUTBOX_RELAY_POLL_MS` | 100, 500 (ADR-025 R53) | `outbox-relay` |
-| `WORKER_ROLES` | comma list of `outbox-relay`, `silver`, `contextualizer`, `indexer`, `acl-applier`, `eval-judge`, `bq-sink` | worker |
+| `WORKER_ROLES` | comma list of `outbox-relay`, `silver`, `contextualizer`, `indexer`, `acl-applier`, `erasure-worker`, `eval-judge`, `bq-sink` | worker |
 | `GCS_DATA_BUCKET`, `BQ_DATASET`, `BQ_MAX_BYTES_BILLED` | required | jobs, worker |
 | `LANGFUSE_ENABLED`, `LANGFUSE_HOST`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` | secrets required when enabled | wrapper |
 | `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_DB_CAPTURE_PARAMS` | required, `false` | all |
@@ -152,6 +152,7 @@ One typed `Settings` class (pydantic-settings). No secret has a default; a missi
 | `DEMO_TTL_HOURS` | 4 (ADR-025 R81) | `demo-ttl` job |
 | `OUTBOX_DRAIN_TIMEOUT_MIN` | 10 (then force; remaining outbox rows are delivered on the next `demo-up`) | `demo-down` |
 | `VALKEY_INSTANCE_NAME` | fixed Memorystore name; endpoint passed to Kong as an env var by `demo-up` | demo script, Kong |
+| `KONG_VALKEY_HOST`, `KONG_VALKEY_PORT` | set from the Valkey endpoint by `demo-up` (names fixed in E2-T11; ADR-025 R82); `fa-gateway` Terraform does not ignore them | Kong |
 | `EVAL_SAMPLE_RATE` | 0.05-0.10 (5-10% of completed turns); value set in E7 | `agent`, `eval-judge` |
 | `EVAL_TENANT_ID` | required uuid of the dedicated `eval` tenant (bound into `fa_eval` policies) | migrate, eval jobs |
 | `MESSAGES_PARTITIONS_AHEAD`, `MESSAGES_RETENTION_MONTHS` | 3, 6 (ADR-025 R20) | `maintenance` |
@@ -193,7 +194,7 @@ class Connector(Protocol):
 
 Rules every connector obeys (ADR-026):
 - Idempotent on `(source_id, external_id, version_key, content_sha256)`. Same bytes again is a no-op. Same `version_key` with new bytes is a `silent_edit` event, a new `document_versions` row with a new system-time range, and an alert.
-- Every incremental read starts at `cursor - 48 h`; the cursor and overlap live in `source_state(source_id, cursor jsonb, overlap_s, last_listing_at)`, updated in the same transaction as the observations it covers.
+- Every incremental read starts at `cursor - 48 h`; the cursor, overlap and `last_listing_at` live on `source_registry` (§5.9; there is no `source_state` table), updated in the same transaction as the observations it covers.
 - Withdrawal needs two consecutive listings that omit the item. A listing that drops more than 5 items or more than 10% of a source, or returns 0 items, applies nothing, freezes the connector and pages.
 - Source class decides withdrawal: `law` and `qa` are RETIRED (`valid_to` set, text kept for as-of); `fca_api` and `publisher` are ERASED (§6.9). `pending` (legislation.gov.uk "known change, not yet applied") is stored as `status = 'known_pending'` on the provision; retrieval is unaffected and the compliance check adds a warning.
 - The connector suspends on HTTP 401 or 403 (FCA revocation) and an operator runs `purge_source('fca_api')` (§6.9).
@@ -247,7 +248,7 @@ Deletes go through a Postgres queue (`deletion_requests`, polled by `erasure-wor
 
 Lifecycle: `executed` = receipt phase 1 (hours); `windows_open` = waiting for store windows; `closed` = receipt phase 2 `windows_closed` (9 to 14 days). Ledger key is `(tenant_id, doc_key, sha256)`; an operator `release` action (`released_at`) allows a legitimate re-ingest. Every sink guards writes with an uncached point read of the ledger (ADR-028). Lock order for publish and erasure: per-document advisory lock first, tenant `corpus_version` row last, one document per transaction.
 
-Kill switch (not an HTTP endpoint): `purge_source('fca_api')` is an operator command. It runs as the PUBLIC owner role, bumps `source_epoch` (cache invalidation) and fans out one `deletion_requests` row per firm tenant (scope `source`, `parent_request_id` set; §4.20), each executed under that tenant's own role, for messages and cached answers that quote FCA text. There is no cross-tenant role (ADR-002 D13a stands). Drilled quarterly.
+Kill switch (not an HTTP endpoint): `purge_source('fca_api')` is an operator command. It runs as the PUBLIC owner role, bumps `source_epoch` (cache invalidation) and writes a row to the PUBLIC `source_purges` table (§4.20, §5.11). Each firm tenant's `erasure-worker` polls that table under its own role and inserts its own `deletion_requests` row (scope `source`, `subject_ref` = `purge_id`), executed under that tenant's own role, for messages and cached answers that quote FCA text. There is no cross-tenant write (ADR-002 D13a stands). Drilled quarterly.
 
 Receipt (JSON, stored in GCS, hash recorded in the ledger). Stored as `erasure_receipts.receipt` (§5.11); the per-store field set derives from `erasure_steps` (`status`, `executed_at`, `rows_affected`, `probe_result`, `window_closes_at`); names of the envelope fields are set in E12.
 

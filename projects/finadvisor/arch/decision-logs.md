@@ -2,9 +2,40 @@
 
 Newest first. Each entry: status (date, decided-by), context, options with costs, evidence (docs, papers, council), decision, dissent, what it makes harder later, trigger to revisit.
 
+## ADR-039: Stage 3 validation changes
+
+**Status.** Accepted 2026-11-07 (round 4, stage 3). decided-by: researcher (orchestrator decisions R4-D18 and R4-D19). Source: `projects/finadvisor/library/research/r4/decision-r4.md` (section "Stage 3 validation decisions"). Amends ADR-002 (note), ADR-008, ADR-009, ADR-010, ADR-013, ADR-018, ADR-023, ADR-025, ADR-026 to ADR-029, ADR-035 to ADR-038 by dated blocks.
+
+**Context.** Three checks ran on the stage-3 arch: database docs (`projects/finadvisor/library/research/r4/V-docs-db.md`), AI-provider docs (`projects/finadvisor/library/research/r4/V-docs-ai.md`) and an internal consistency audit (`projects/finadvisor/library/research/r4/V-consistency.md`, 8 must-fix and 24 should-fix findings). They found one stale model choice, two unenforceable settings, three unverified vendor claims, and several statements that contradicted each other.
+
+**Options.** Per finding: keep, improve or change; the choice made is listed below. Where a finding conflicted with R4-D1 to R4-D19 the decision won and the finding is noted.
+
+**Evidence.** V-docs-ai.md Q2 (Voyage lists `rerank-3` and `rerank-3-lite` as current; TPM 2M full, 4M lite; https://docs.voyageai.com/docs/reranker , https://docs.voyageai.com/docs/rate-limits ), Q3 (Model Armor GA, SLA and latency not published: https://docs.cloud.google.com/security-command-center/docs/model-armor-overview ), Q5 (Voyage retention and region: https://docs.voyageai.com/docs/faq ); V-docs-db.md (BigQuery project default: https://docs.cloud.google.com/bigquery/docs/default-configuration ; PITR range: https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/configure-pitr ; dbt-bigquery configs page documents no dataset time-travel option); V-consistency.md M1-M7 and S1-S24.
+
+**Decision.**
+- V1 Reranker: default `rerank-3-lite`; confirmatory arm 3 is `rerank-3` vs `rerank-3-lite`; the full model enters only with a measured gain; `rerank-2.5` leaves the design (ADR-008, ADR-037; fixes M2, M4, S1).
+- V2 BigQuery: project default `default_max_time_travel_hours = 48` via `ALTER PROJECT`; the per-dataset setting stays as a check; dbt sets no dataset options (ADR-029).
+- V3 Model Armor: behind a feature flag with a fallback (Presidio + heuristics): ingest quarantine fails closed, prompts fail open with an audit flag (ADR-036, ADR-009).
+- V4 `llm_egress_ack` wording: Voyage zero-day retention only after an irreversible org-admin opt-out; Voyage publishes no region; Anthropic first-party is US/global; the flag is acceptance, not a residency claim (ADR-038).
+- V5 Spikes: Cloud SQL backup expiry while stopped (E12); Identity Platform same email in two tenants (E1, gates the identity tickets). PITR log retention: Enterprise 1-7 d, set 7.
+- M1 Chunk identity is the 05-1 8-column key; generations are unique on it (it includes `embed_model`); the 3-column key is a non-unique reuse index (ADR-035, deep-dive 07, plan E6).
+- M3 First-stage retrieval p95 <= 600 ms (embed then SQL, serial, 0.25 + 0.30 s estimated), measured in the E3 spike; TTFT 2.0 s p50 and 3.5 s p95 unchanged; the 02 budget and the E3 gate are recomputed. Dissent: the MVP's 300 ms is rejected because the arch's own estimate cannot meet it.
+- M5 `chat.audit.v1` and `eval.sample.v1` carry ids, chunk ids, hashes, scores and flags only; text stays in Postgres `messages` (ADR-013, ADR-023).
+- M6 FCA purge is a pull model: a PUBLIC `source_purges` table; each firm tenant's `erasure-worker` inserts its own `deletion_requests`; `fa_etl_public` gets no INSERT on firm tables; ADR-002 D13a stands (ADR-026, ADR-029).
+- M7 Cache purge on document delete belongs to the `erasure-worker`, not the `acl-applier` (deep-dive 05-1 §5.7).
+- M8 (section pointers) was fixed by script before this ADR. S1-S24 are applied as written in V-consistency.md, with no conflict with R4-D1 to R4-D19.
+
+**Dissent.** The MVP's 300 ms first-stage target (rejected, M3). An INSERT-only exception on ADR-002 D13a instead of the pull model (rejected: it keeps a PUBLIC role writing firm rows).
+
+**What it makes harder later.** The 600 ms first stage leaves 0.05 s of p95 slack over the estimate, so the E3 spike must measure both legs; the prompt path fails open when Model Armor and its flag are off, so the audit flag must be watched; a firm tenant that never runs its `erasure-worker` never applies an FCA purge, so `demo-up` runs the worker first; the `eval-judge` can no longer replay text from Kafka and skips messages that were erased.
+
+**Proved by.** E3 spike (first stage p95 and rerank p95 on the default model). #15 with the pull model and no FCA or answer text in Kafka and BigQuery. Leak matrix: no `fa_etl_public` write on firm tables. E1 same-email spike; E12 stopped-instance backup spike. L0: private ingest with `llm_egress_ack=false` stays refused.
+
+**Trigger to revisit.** Measured first stage above 600 ms; Model Armor publishes GA, SLA and latency; a `rerank-3` gain measured by arm 3; Voyage publishes a region or changes its retention terms.
+
 ## ADR-038: Residency promise wording and the LLM egress rule
 
-**Status.** Accepted 2026-11-02 (round 4). decided-by: researcher (orchestrator decision R4-D10 on Keshav's K-R4-1). Source: `projects/finadvisor/library/research/decision-r4.md`; r4/P-reliability.md §8; r4/S-skeptic-3.md H10. Amends the "real firm data" triggers of ADR-013 and ADR-018.
+**Status.** Accepted 2026-11-02 (round 4). decided-by: researcher (orchestrator decision R4-D10 on Keshav's K-R4-1). Source: `projects/finadvisor/library/research/r4/decision-r4.md`; r4/P-reliability.md §8; r4/S-skeptic-3.md H10. Amends the "real firm data" triggers of ADR-013 and ADR-018.
 
 **Context.** K-R4-1 limits residency to data at rest. Anthropic's first-party API has `inference_geo` global or us only; Voyage regions are undocumented. Dropping the "exclude private EU text without an EU LLM path" filter leaves three egress paths for private text: the Anthropic prompt, Voyage embedding (ingest and query) and Voyage rerank. Redaction recall (Presidio) is unmeasured.
 
@@ -25,6 +56,8 @@ Newest first. Each entry: status (date, decided-by), context, options with costs
 
 **Trigger to revisit.** Anthropic or Voyage offers an EU region; a customer needs processing residency; Claude on Vertex EU is verified and priced.
 
+**Amended 2026-11-07 (validation).** (1) The wording gains the declared global data: "Data at rest (database, search index, document store, warehouse, event streams, traces) stays in the tenant's home cell, except the declared global data (ADR-031)." (user id, email, firm membership, tenant-to-cell map, PUBLIC manifest hashes, aggregate metrics; Cloud Logging, Trace and Monitoring are single-region). (2) `llm_egress_ack` records the tenant's acceptance of the egress paths; it is not a residency or zero-retention claim: Voyage offers zero-day retention only after an organization admin opts out in the dashboard (a payment method on file is required and the opt-out cannot be reversed), Voyage publishes no data region, and its default training use is not stated; Anthropic first-party processing is US/global (R4-D18 V4; https://docs.voyageai.com/docs/faq , V-docs-ai.md Q5). (3) The source path now reads `library/research/r4/decision-r4.md`.
+
 ## ADR-037: Real golden set, guardrail sets, ablation protocol and statistics
 
 **Status.** Accepted 2026-11-02 (round 4). decided-by: researcher (orchestrator decision R4-D15, R4-D16; Keshav K-R4-4). Source: decision-r4.md; r4/P-reliability.md §12; r4/S-skeptic-3.md. Amends ADR-017 and ADR-016.
@@ -38,7 +71,7 @@ Newest first. Each entry: status (date, decided-by), context, options with costs
 
 **Evidence.** https://arxiv.org/abs/2411.00640 (clustered SE, paired analysis); https://arxiv.org/abs/2311.09476 (ARES, PPI); Sartori and Garcia arXiv 2605.27789 [ABS]; Mangla arXiv 2603.23533 [PREPRINT]; evidence-r4.md §1.5-1.7, §E7; Anthropic pricing https://platform.claude.com/docs/en/about-claude/pricing (Sonnet 5.5 $2/$10 per MTok).
 
-**Decision.** 200 items, public/private split (private items from 497K, KIDs, ADV run only where the private bucket is mounted, K-R4-3). Sampling: the cluster unit is the PROVISION or PRODUCT, not the whole file (a CFR section, an EU article or annex, a COBS chapter section, a legislation.gov.uk provision, or one fund, KID or brochure), at least 40 clusters and at most 5 items per cluster (R4-D17). Analysis at cluster level: per-document aggregation then sign-flip permutation, exact McNemar for binary metrics; no fixed n_eff claim; the detectable effect is computed after a 30-item pilot and recorded. At most 4 confirmatory ablation arms with Holm; other arms are exploratory and cannot enter the default pipeline alone (D-R4-3); slices under 30 items use exact tests or stay exploratory. The four confirmatory arms (R4-D17): (1) LLM contextual retrieval vs the free section-path prefix; (2) voyage-context-4 vs plain chunks; (3) rerank-3 vs rerank-2.5; (4) structured lookup (SEC RR facts, KID fee tables) vs table chunks. Exploratory only: datamarking, single-shot query decomposition, cross-lingual query translation, others. The temporal validity filter is a correctness control, not an arm. Tier-1 deterministic metrics (evidence-span recall@10, MRR, gold-version-in-top-5, numeric-in-span, footer present, ASR); tier-2 Haiku 5.5 judge gates only if judge-human rho^2 >= 0.4. Ablation runs use the Message Batches API (50% off). Release gates (proposed lines, not sourced): citation verified >= 0.95, faithfulness >= 0.90, zero ungrounded numbers, zero cross-tenant/ACL/cross-cell leaks, correct refusal >= 0.90, recall@10 non-inferior (paired lower bound >= -2 pp), numeric-gate false rejects <= 3%, injection ASR <= 3 of 300. Guardrail sets: ai4privacy openpii (CC-BY-4.0), Gretel finance, Lakera gandalf (MIT), LLMail-Inject (MIT); licence recorded at integration.
+**Decision.** 200 items, public/private split (private items from 497K, KIDs, ADV run only where the private bucket is mounted, K-R4-3). Sampling: the cluster unit is the PROVISION or PRODUCT, not the whole file (a CFR section, an EU article or annex, a COBS chapter section, a legislation.gov.uk provision, or one fund, KID or brochure), at least 40 clusters and at most 5 items per cluster (R4-D17). Analysis at cluster level: per-document aggregation then sign-flip permutation, exact McNemar for binary metrics; no fixed n_eff claim; the detectable effect is computed after a 30-item pilot and recorded. At most 4 confirmatory ablation arms with Holm; other arms are exploratory and cannot enter the default pipeline alone (D-R4-3); slices under 30 items use exact tests or stay exploratory. The four confirmatory arms (R4-D17): (1) LLM contextual retrieval vs the free section-path prefix; (2) voyage-context-4 vs plain chunks; (3) `rerank-3` vs `rerank-3-lite` (default; the full model enters only with a measured gain, amended 2026-11-07); (4) structured lookup (SEC RR facts, KID fee tables) vs table chunks. Exploratory only: datamarking, single-shot query decomposition, cross-lingual query translation, others. The temporal validity filter is a correctness control, not an arm. Tier-1 deterministic metrics (evidence-span recall@10, MRR, gold-version-in-top-5, numeric-in-span, footer present, ASR); tier-2 Haiku 5.5 judge gates only if judge-human rho^2 >= 0.4. Ablation runs use the Message Batches API (50% off). Release gates (proposed lines, not sourced): citation verified >= 0.95, faithfulness >= 0.90, zero ungrounded numbers, zero cross-tenant/ACL/cross-cell leaks, correct refusal >= 0.90, recall@10 non-inferior (paired lower bound >= -2 pp), numeric-gate false rejects <= 3%, injection ASR <= 3 of 300. Guardrail sets: ai4privacy openpii (CC-BY-4.0), Gretel finance, Lakera gandalf (MIT), LLMail-Inject (MIT); licence recorded at integration.
 Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, first two months about $45; a budget alert at $180/month guards the $200 ceiling; `EVAL_BUDGET_USD` caps eval runs.
 
 **Dissent.** P-simplicity and P-reliability: 200 items cannot separate most arms (conceded); counter: deterministic retrieval metrics have more power and "inconclusive means off". S-skeptic-3: realistic eval is $8-15 per run ($35-60/month with arms), so the $22-30 delta is optimistic and the $180 alert is the control.
@@ -48,6 +81,8 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 **Proved by.** #21 (injection ASR line on slice G plus LLMail-wrapped chunks, weekly). Stats unit tests: cluster aggregation, Holm family fixed, exact tests on slices under 30. L0 check on the sampling rule (at least 40 clusters, at most 5 items per cluster). Pilot-based detectable-effect record exists before arms run.
 
 **Trigger to revisit.** Judge-human rho^2 below 0.4; the pilot shows a detectable effect above 10 pp; weekly run cost over the alert.
+
+**Amended 2026-11-07 (validation).** Confirmatory arm 3 is `rerank-3` vs `rerank-3-lite` (the default model and the arm now match; the full model enters only with a measured gain, D-R4-3; R4-D18 V1). `rerank-2.5` leaves the design. The K-R4-4 criterion "above 100 effective items after clustering by source document" is replaced by the pilot-based detectable effect. With a floor of 40 clusters and a cap of 5 per cluster, 200 items means exactly 5 items in each of 40 clusters; the floor is raised if the corpus yields more usable provisions (V-consistency.md S7). Judge acceptance is judge-human rho^2 >= 0.4 only.
 
 ## ADR-036: Guardrails on real data: ingest scan, numeric gate, licence footers, role policy
 
@@ -74,11 +109,13 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 
 **Trigger to revisit.** Measured Model Armor latency or false positives outside tolerance; numeric-gate false rejects above 3%; a Claude-tested spotlighting result.
 
+**Amended 2026-11-07 (validation).** Model Armor sits behind a feature flag with a documented fallback, because no GA status, SLA or latency is published and image screening is Preview (R4-D18 V3; https://docs.cloud.google.com/security-command-center/docs/model-armor-overview ; V-docs-ai.md Q3). Fallback: Presidio plus heuristic injection patterns. Ingest documents fail closed into quarantine; prompts fail open with an audit flag on the turn (the earlier "fail closed, `MODEL_ARMOR_FAIL_OPEN=false`" for prompts is replaced). Only text and PDF up to 4 MB are screened. The timeout is still set from latency measured in the E4 spike. `GUARD_UNAVAILABLE` now means the in-process fallback itself failed.
+
 ## ADR-035: Embedding generations (blue/green)
 
 **Status.** Accepted 2026-11-02 (round 4). decided-by: researcher (orchestrator decision R4-D13). Source: decision-r4.md; r4/P-reliability.md §10; r4/S-skeptic-3.md.
 
-**Context.** A new embedding model must be adopted without mixed-model vectors, with rollback, and without breaking erasure. `chunks` is already unique on `(tenant_id, chunk_hash, embed_model)` (ADR-003).
+**Context.** A new embedding model must be adopted without mixed-model vectors, with rollback, and without breaking erasure. `chunks` identity is the unique 8-column key `(tenant_id, document_id, provision_path, chunk_index, chunk_hash, valid_from, parser_version, embed_model)` (deep-dive 05-1 §5.10, ADR-027); `(tenant_id, chunk_hash, embed_model)` is only a non-unique reuse index, because a unique 3-column key would make text A, B, A impossible (amended 2026-11-07, R4-D19 M1).
 
 **Options.**
 1. In-place `UPDATE embedding`. Rejected: no rollback, mixed vector space.
@@ -97,6 +134,8 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 **Proved by.** #19 (half-built green: queries stay blue; flip: green; wrong-model query raises). #20 (erase a document during backfill: zero rows in both generations, receipt issued). #8 (replay twice after a parser bump: hash equals a single run, no duplicates).
 
 **Trigger to revisit.** Voyage batch throughput measured far from the ceilings; a tenant above 250k chunks; HNSW memory over budget.
+
+**Amended 2026-11-07 (validation).** Chunk identity is the unique 8-column key of deep-dive 05-1 §5.10, including `valid_from` and `parser_version`; an embedding generation is a row unique on that identity, which includes `embed_model`. The 3-column key `(tenant_id, chunk_hash, embed_model)` is a non-unique reuse index (R4-D19 M1; V-consistency.md M1). The statement in Context that `chunks` is unique on the 3-column key was wrong and is corrected above.
 
 ## ADR-034: Data contracts, quarantine and reconciliation
 
@@ -230,7 +269,7 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 
 **Evidence.** https://cloud.google.com/bigquery/docs/time-travel ; https://docs.confluent.io/cloud/current/topics/manage.html (retention.ms default 7 d, segment.ms minimum 4 h); https://cloud.google.com/sql/docs/postgres/backup-recovery/backups ; https://docs.cloud.google.com/kms/quotas ; https://cloud.google.com/kms/pricing ; evidence-r4.md §2.3.
 
-**Decision.** Queue: Postgres `deletion_requests` polled with `FOR UPDATE SKIP LOCKED` by `erasure-worker` (from P-simplicity); no Kafka on the delete path. `DELETE /v1/admin/documents/{id}` writes a `deletion_requests` row; `acl_change_requests` is for ACL and reclassification only (R4-D17, ADR-022). Ledger keyed as in ADR-028 holds salted hashes only, is exported daily to an append-only GCS object, and `erasure-replay` re-applies it after any restore before traffic. Subject rows carry a random `pseudonym_id`; deleting the mapping unlinks at once. Per-store: Postgres explicit ordered DELETE in one transaction with counts, then VACUUM (target < 24 h); GCS soft delete 0; BigQuery batched DML hourly on refs older than 30 min and `max_time_travel_hours=48` enforced on every dataset including dbt-created ones (2 d + 7 d fail-safe = 9 d); delete-policy topics with retention 7 d and `segment.ms` 1 d (about 8 d), payloads minimised to ids; Cloud SQL backups 7 d (PITR log days UNVERIFIED); logs 7 d with no PII. Erasure re-sweeps each store at the end of its window. Promise wording, not "instant": live stores (Postgres, index, answer cache, GCS) within 24 h of the system running, and in demo-on-demand the erasure job runs first at every start; BigQuery and Kafka within 14 d; backups within 7 d plus ledger replay; Langfuse provider best effort ("usually within 15 minutes"), stated as provider-bound. Records under legal hold carry `retention_class` and the receipt says "retained: legal basis X".
+**Decision.** Queue: Postgres `deletion_requests` polled with `FOR UPDATE SKIP LOCKED` by `erasure-worker` (from P-simplicity); no Kafka on the delete path. `DELETE /v1/admin/documents/{id}` writes a `deletion_requests` row; `acl_change_requests` is for ACL and reclassification only (R4-D17, ADR-022). Ledger keyed as in ADR-028 holds salted hashes only, is exported daily to an append-only GCS object, and `erasure-replay` re-applies it after any restore before traffic. Subject rows carry a random `pseudonym_id`; deleting the mapping unlinks at once. Per-store: Postgres explicit ordered DELETE in one transaction with counts, then VACUUM (target < 24 h); GCS soft delete 0; BigQuery batched DML hourly on refs older than 30 min and `max_time_travel_hours=48` enforced on every dataset including dbt-created ones (2 d + 7 d fail-safe = 9 d); delete-policy topics with retention 7 d and `segment.ms` 1 d (about 8 d), payloads minimised to ids and `pseudonym_id`; Cloud SQL backups 7 d (PITR log retention 7 d, the Enterprise maximum; amended 2026-11-07); logs 7 d with no PII. Erasure re-sweeps each store at the end of its window. Promise wording, not "instant": live stores (Postgres, index, answer cache, GCS) within 24 h of the system running, and in demo-on-demand the erasure job runs first at every start; BigQuery and Kafka within 14 d; backups within 7 d plus ledger replay; Langfuse provider best effort ("usually within 15 minutes"), stated as provider-bound. Records under legal hold carry `retention_class` and the receipt says "retained: legal basis X".
 
 **Dissent.** P-learning: an HMAC pseudonym with a deletable DEK row. Adopted only as `pseudonym_id` unlinking. Crypto-shredding dissent: "provable delete in backups"; rejected for cost and the undocumented backup effect.
 
@@ -239,6 +278,8 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 **Proved by.** #7 (Kafka stopped during deletes). #14 (restore into scratch, replay, counts 0). #23 (erase within 5 min of events: removed on the next batch). #20 (erase mid re-embed). #4 (erase from firm A leaves B). Assertion that every BigQuery dataset has `max_time_travel_hours=48`. Test that backups expire on schedule while Cloud SQL is stopped.
 
 **Trigger to revisit.** A customer demands cryptographic erasure; BigQuery or Kafka windows change; the 14 d bound is unacceptable.
+
+**Amended 2026-11-07 (validation).** (1) The FCA purge is a pull model through a PUBLIC `source_purges` table (ADR-026 amended); the execution window is unchanged. (2) BigQuery: the project default `default_max_time_travel_hours = 48` is set with `ALTER PROJECT` (per region) so new datasets, including dbt-created ones, inherit it; dbt-bigquery does not document dataset options, so the per-dataset `max_time_travel_hours = 48` stays only as a check (the earlier "enforced on every dataset including dbt-created ones" had no mechanism) (R4-D18 V2; https://docs.cloud.google.com/bigquery/docs/default-configuration , V-docs-db.md). (3) Cloud SQL PITR log retention is set to 7 d (Enterprise range 1-7 d, default 7: https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/configure-pitr); whether old backups expire while the instance is stopped is unverified and is an E12 spike (R4-D18 V5). (4) Subject-bearing topic payloads are ids, hashes, scores, flags and `pseudonym_id`; no text (ADR-013 amended).
 
 ## ADR-028: Atomic version publish, tombstones and per-document locking
 
@@ -253,7 +294,7 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 
 **Evidence.** PostgreSQL advisory locks and deadlock detection (S-skeptic-3 H7); Notion content-hash pattern (evidence-r4.md §2.1); r4/S-skeptic-3.md #2, #3, #10.
 
-**Decision.** The indexer is the only writer of chunks. It embeds outside any transaction, then one transaction per document: `pg_advisory_xact_lock(hash(tenant_id, doc_id))` first, then check no tombstone and `contract_passed AND scan_passed`, insert or extend chunks, set the version `active`, bump the tenant `corpus_version` row last, purge cache rows, write `processed_events`. Erasure and withdrawal use the same order, one document per transaction, retry with jitter, and insert the tombstone first. Tombstone ledger key `(tenant_id, doc_key, sha256)` with an explicit operator `release` action (`released_at`) for legitimate re-ingest. Every sink (bq-sink, silver, contextualizer, indexer) guards writes with an UNCACHED point read of the ledger in its own write path (no 60 s cache) and pauses if it cannot read it; the silver worker checks before and after writing Parquet and deletes its own output if a tombstone appeared. Erasure re-sweeps each store at the end of its window (ADR-029). A chunk in the table means the version passed every gate; Dagster checks are advisory (ADR-034).
+**Decision.** The indexer is the only writer of chunks. It embeds outside any transaction, then one transaction per document: `pg_advisory_xact_lock(hash(tenant_id, doc_id))` first, then check no tombstone and `contract_passed AND scan_passed`, insert or extend chunks, set the version `active`, purge cache rows, write `processed_events`, bump the tenant `corpus_version` row last (the order of deep-dive 04-2 §4.17; amended 2026-11-07). Erasure and withdrawal use the same order, one document per transaction, retry with jitter, and insert the tombstone first. Tombstone ledger key `(tenant_id, doc_key, sha256)` with an explicit operator `release` action (`released_at`) for legitimate re-ingest. Every sink (bq-sink, silver, contextualizer, indexer) guards writes with an UNCACHED point read of the ledger in its own write path (no 60 s cache) and pauses if it cannot read it; the silver worker checks before and after writing Parquet and deletes its own output if a tombstone appeared. Erasure re-sweeps each store at the end of its window (ADR-029). A chunk in the table means the version passed every gate; Dagster checks are advisory (ADR-034).
 
 **Dissent.** P-reliability's 60 s cache saves reads; rejected because it defeats the race control.
 
@@ -262,6 +303,8 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 **Proved by.** #1 (N interleavings of erase vs indexer, including a tombstone committed immediately before the sink write; zero rows or objects). #4 (tombstone key includes `tenant_id`: erase in A, B still ingests). Ledger release test (FCA module revoked then reinstated re-ingests after `release`). Two concurrent multi-document erasures plus an ingest storm: no deadlock loss, lock order held. #8 (zero resurrection on replay).
 
 **Trigger to revisit.** Publish throughput limited by the `corpus_version` row; deadlock aborts above noise.
+
+**Amended 2026-11-07 (validation).** The publish order is cache purge, `processed_events`, then the tenant `corpus_version` bump last, one transaction per document (not per document version), as in deep-dive 04-2 §4.17 (R4-D5; V-consistency.md S21).
 
 ## ADR-027: Bitemporal documents and chunks on Postgres 16 ranges, as-of semantics and cache key
 
@@ -277,7 +320,7 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 
 **Evidence.** https://www.postgresql.org/docs/16/ddl-partitioning.html (no exclusion constraint across a partitioned table); https://www.postgresql.org/docs/17/release-17.html (added in 17); https://www.postgresql.org/docs/18/sql-createtable.html (temporal FKs cannot cascade); pgvector iterative scan https://github.com/pgvector/pgvector ; FiscalQA Pro arXiv 2608.09393 [PREPRINT]; evidence-r4.md §2.2.
 
-**Decision.** `document_versions` (unpartitioned): `EXCLUDE USING gist (tenant_id =, doc_id =, valid_range &&) WHERE upper_inf(sys_range)` (`btree_gist`); closed system-time history is not constrained, and upserts use a separate unique key because `ON CONFLICT DO UPDATE` cannot arbitrate on an exclusion constraint. `chunks` (LIST per tenant, ADR-003): the EXCLUDE goes into the per-tenant partition-creation migration on each leaf, with an L0 test that every leaf has it. Chunk identity includes `valid_from` and `parser_version`, so replay after a parser fix re-parses (no "same bytes = no-op") and A-B-A text is representable. `reconcile_lineage(doc)` is one idempotent transaction that derives the target chunk set from the ordered versions and swaps the old parse atomically; it covers late, out-of-order, withdrawn and replayed versions. Unchanged chunk hashes extend `valid_to` with no embed call. As-of: `as_of` comes from the deterministic date parser, the UI chip, or the Postgres date in UTC, never the model; half-open ranges; the answer echoes the parsed `as_of`; a post-generation check requires every cited chunk's `valid_range @> as_of`; CI checks every retrieval SQL carries the predicate. UK sources use `valid_from_basis='observed'` and refuse pre-observation dates. Cache key adds `as_of`, `embed_model`, `source_epoch`; any publish, supersede, retire, withdraw or erase bumps `corpus_version` in the same transaction and deletes `answer_cache` rows by `source_document_ids`. Conversations and messages are plain rows, not bitemporal.
+**Decision.** `document_versions` (unpartitioned): `EXCLUDE USING gist (tenant_id =, doc_id =, valid_range &&) WHERE upper_inf(system_range) AND status NOT IN ('ingesting', 'quarantined', 'erased')` (`btree_gist`); closed system-time history is not constrained, and upserts use a separate unique key because `ON CONFLICT DO UPDATE` cannot arbitrate on an exclusion constraint. `chunks` (LIST per tenant, ADR-003): the EXCLUDE goes into the per-tenant partition-creation migration on each leaf, with an L0 test that every leaf has it. Chunk identity includes `valid_from` and `parser_version`, so replay after a parser fix re-parses (no "same bytes = no-op") and A-B-A text is representable. `reconcile_lineage(doc)` is one idempotent transaction that derives the target chunk set from the ordered versions and swaps the old parse atomically; it covers late, out-of-order, withdrawn and replayed versions. Unchanged chunk hashes extend `valid_to` with no embed call. As-of: `as_of` comes from the deterministic date parser, the UI chip, or the Postgres date in UTC, never the model; half-open ranges; the answer echoes the parsed `as_of`; a post-generation check requires every cited chunk's `valid_range @> as_of`; CI checks every retrieval SQL carries the predicate. UK sources use `valid_from_basis='observed'` and refuse pre-observation dates. Cache key adds `as_of`, `embed_model`, `source_epoch`; any publish, supersede, retire, withdraw or erase bumps `corpus_version` in the same transaction and deletes `answer_cache` rows by `source_document_ids`. Conversations and messages are plain rows, not bitemporal.
 
 **Dissent.** P-learning: native `WITHOUT OVERLAPS` is cleaner and teaches more. Rejected for the PG16 binding. P-simplicity: current text only. Counter: the first corpus has the versions that make "as of" real.
 
@@ -286,6 +329,8 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 **Proved by.** #3 (cached answer, then a new version: miss and new text; hit inside the publish transaction re-verified). #8, #11 (versions v3, v1, v2 in all permutations, plus an A-B-A reversion: identical final line). #9 (boundary days, app clock +/-2 h, DST). #13 (silent edit). #25 (FCA question as of 2019 refused). L0 every-leaf EXCLUDE test. Bump parser, replay: no chunk of the old parse is retrievable. As-of echo present in the answer.
 
 **Trigger to revisit.** Recall or p95 miss in the superseded-row spike; a decision to move to PG18.
+
+**Amended 2026-11-07 (validation).** The system-time column is `system_range` everywhere (not `sys_range`), and the EXCLUDE predicate carries the `status NOT IN ('ingesting', 'quarantined', 'erased')` clause of deep-dive 05-1 §5.9 (V-consistency.md S2).
 
 ## ADR-026: Source connector framework, listing-diff change capture and source classes (retire vs erase)
 
@@ -301,15 +346,17 @@ Cost (R4-D16): Sonnet 5.5 at $2/$10 per MTok; steady delta about $22-30/month, f
 
 **Evidence.** https://handbook.fca.org.uk/footer-widget/terms-and-conditions ; https://www.finra.org/terms-of-use ; https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data ; https://www.ecfr.gov/api/versioner/v1 ; https://eur-lex.europa.eu/content/legal-notice/legal-notice.html ; https://www.esma.europa.eu/about-esma/legal-notice-and-data-protection ; https://legislation.github.io/data-documentation/reuse-licence.html ; evidence-r4.md §1, §2.1.
 
-**Decision.** Sources: eCFR 17 CFR 275 (versioner API, gzip, 1 rps), SEC RR quarterly datasets (structured facts) plus 497K (2 rps, declared User-Agent), EUR-Lex CELLAR PRIIPs and MiFID in EN/DE/FR (1 rps), legislation.gov.uk (1 rps), FCA Handbook API (current only). ESMA Q&As optional, with the ESMA transformed-text disclaimer. Publisher documents (KIDs, 497K, ADV brochures) are `private_demo`: firm tenant only, never in the public repo or public eval sets. One interface (`list`, `changes`, `fetch`, `classify`). `source_observations` is append-only on `(source_id, external_id, version_key, content_sha256)` with the cursor in `source_state` updated in the same transaction; incremental reads overlap by 48 h; ordering uses the source's version key. Same bytes is a no-op; same `version_key` with new bytes is a `silent_edit` event and alert. Withdrawal needs two consecutive listings without the item; mass-delete breaker (more than 5 items or 10% of a source) freezes the connector; an empty listing is a failure. Source classes: law and Q&A are RETIRED (`valid_to` set, text kept for as-of); FCA API and publisher documents are ERASED (ADR-029). FCA content lives only in the PUBLIC tenant and never enters Kafka or BigQuery. `purge_source('fca_api')` runs as the PUBLIC owner role, bumps `source_epoch`, and fans out one erase job per firm tenant under that tenant's own role for messages and cached answers quoting FCA text; no cross-tenant role (ADR-002 D13a stands). The connector suspends on 401 or 403 and the purge is drilled quarterly.
+**Decision.** Sources: eCFR 17 CFR 275 (versioner API, gzip, 1 rps), SEC RR quarterly datasets (structured facts) plus 497K (2 rps, declared User-Agent), EUR-Lex CELLAR PRIIPs and MiFID in EN/DE/FR (1 rps), legislation.gov.uk (1 rps), FCA Handbook API (current only). ESMA Q&As optional, with the ESMA transformed-text disclaimer. Publisher documents (KIDs, 497K, ADV brochures) are `private_demo`: firm tenant only, never in the public repo or public eval sets. One interface (`list`, `changes`, `fetch`, `classify`). `source_observations` is append-only on `(source_id, external_id, version_key, content_sha256)` with the cursor, overlap and `last_listing_at` on `source_registry` updated in the same transaction (there is no `source_state` table); incremental reads overlap by 48 h; ordering uses the source's version key. Same bytes is a no-op; same `version_key` with new bytes is a `silent_edit` event and alert. Withdrawal needs two consecutive listings without the item; mass-delete breaker (more than 5 items or 10% of a source) freezes the connector; an empty listing is a failure. Source classes: law and Q&A are RETIRED (`valid_to` set, text kept for as-of); FCA API and publisher documents are ERASED (ADR-029). FCA content lives only in the PUBLIC tenant and never enters Kafka or BigQuery. `purge_source('fca_api')` runs as the PUBLIC owner role, bumps `source_epoch`, and writes a row to the PUBLIC `source_purges` table; each firm tenant's `erasure-worker` pulls it under its own role and enqueues its own erase job for messages and cached answers quoting FCA text; no cross-tenant write (ADR-002 D13a stands; amended 2026-11-07). The connector suspends on 401 or 403 and the purge is drilled quarterly.
 
 **Dissent.** Skip FCA until written consent (revocable API, conflicting licence texts); the kill switch bounds exposure and K-R4-2 chose to include it.
 
 **What it makes harder later.** Listing diffs double read volume (seconds at this size); a revocation mid-demo removes UK COBS; legal view on publisher documents is pending (evidence-r4.md §0.3); each source adds a fixture set.
 
-**Proved by.** #12 (listing returns 0 or drops 30%: nothing applied, connector frozen, page). #13 (silent edit). #15 with fan-out (purge on fixtures empties PUBLIC; firm messages and cache rows quoting FCA text are erased under each tenant's own role; leak matrix shows no cross-tenant role; FCA content absent from Kafka and BigQuery). Retire vs erase policy test per source class.
+**Proved by.** #12 (listing returns 0 or drops 30%: nothing applied, connector frozen, page). #13 (silent edit). #15 with the pull model (purge on fixtures empties PUBLIC and writes a `source_purges` row; each firm tenant's erasure-worker enqueues and erases its own messages and cache rows quoting FCA text; leak matrix shows `fa_etl_public` has no write on any firm table; FCA content and chat answer or excerpt text absent from Kafka and BigQuery). Retire vs erase policy test per source class.
 
 **Trigger to revisit.** FCA grants consent or changes the API terms; counsel rules on publisher documents; a second revocable source.
+
+**Amended 2026-11-07 (validation).** `purge_source` is a pull model: it erases the PUBLIC rows, bumps `source_epoch` and writes one row to a PUBLIC `source_purges` table that every tenant may read; each firm tenant's `erasure-worker` run, under that tenant's own role, polls it and inserts its own `deletion_requests`. `fa_etl_public` gets no INSERT on firm tables, and ADR-002 D13a stands. Chat events carry no answer or excerpt text, so FCA text cannot reach Kafka or BigQuery through them (ADR-013 amended). No `source_state` table exists; cursor, overlap and `last_listing_at` live on `source_registry`. R4-D19 M5, M6; V-consistency.md S3.
 
 ## ADR-025: Planning resolutions for the v2 tickets
 
@@ -402,7 +449,7 @@ E6 (ETL)
 
 E7 (eval)
 - R62 E7-T16 owns the `eval.sample.v1` outbox row; E4 owns the feedback endpoint.
-- R63 Judge acceptance: Cohen's kappa >= 0.6 against human labels.
+- R63 Judge acceptance: Cohen's kappa >= 0.6 against human labels. SUPERSEDED 2026-11-07 by the judge-human rho^2 >= 0.4 gate of ADR-017 (amended) and ADR-037.
 - R64 PR gate uses the point estimate; the weekly full run uses the CI lower bound.
 - R65 Baselines live in `data/eval/` in the repo.
 
@@ -445,6 +492,8 @@ Inputs from Keshav (accounts and money, not design)
 
 **Trigger to revisit.** A spike ADR (R1) records a fallback; the R16 or R25 pass lines fail; the R47 default budget does not fit the measured demo load; the SPA bucket gains non-static content.
 
+**Amended 2026-11-07 (validation).** R63 (Cohen's kappa >= 0.6) is superseded by judge-human rho^2 >= 0.4 (ADR-017 amended, ADR-037). R78: RPO 5 min and RTO 1 h are ESTIMATES; the prod 7-day PITR log retention is the Cloud SQL Enterprise maximum (range 1-7 d, default 7). R82: the Kong Valkey keys `KONG_VALKEY_HOST` and `KONG_VALKEY_PORT` are listed in deep-dive 06 §6.6 (V-consistency.md S6, S24).
+
 ## ADR-024: VPC egress mode: Direct VPC egress private-ranges-only, no Cloud NAT
 
 **Status.** Accepted 2026-11-01. decided-by: researcher (orchestrator rulings D15.2, D16.12). Resolves G-11 (wiring) and keeps G-26 closed.
@@ -486,6 +535,8 @@ Inputs from Keshav (accounts and money, not design)
 **What it makes harder later.** Gateway audit rows carry no verified tenant (Kong cannot see it); correlation to a tenant goes through `X-Request-Id` and the application audit. The whitelist is a security control that must be reviewed when plugins change.
 
 **Trigger to revisit.** Per-tenant gateway audit is required; log volume exceeds the free logging allowance.
+
+**Amended 2026-11-07 (validation).** BigQuery `chat_audit` and `eval_events` receive ids, hashes, scores and flags only, never answer, question or excerpt text (R4-D19 M5; ADR-013). Gateway audit is unchanged.
 
 ## ADR-022: Asynchronous ACL changes through acl_change_requests and an acl-applier worker
 
@@ -597,6 +648,8 @@ Inputs from Keshav (accounts and money, not design)
 **What it makes harder later.** Traces live at a third party: acceptable only for synthetic data. SDK 5.x needs server v4 (self-hosting would too); Cloud compatibility is confirmed when the wrapper is built in E0. Hobby retention is 30 days.
 
 **Trigger to revisit.** "Real firm data": self-host Langfuse v4 in the project or drop third-party tracing; Hobby unit cap reached.
+
+**Amended 2026-11-07 (validation).** The trigger "real firm data" reads, as ADR-038 states: real public documents and private demo publisher documents are allowed; real client data is still not. Langfuse keeps metadata, hashes and redacted text only, and trace erasure is provider-bound (ADR-029). This block is the amendment that ADR-038 refers to (V-consistency.md S16).
 
 ## ADR-017: Evaluation strategy and deploy gate
 
@@ -715,6 +768,8 @@ Inputs from Keshav (accounts and money, not design)
 
 **Amended 2026-11-02 (round 4).** Kafka keeps analytics and audit events only; the original decision above stands for those. Kafka is no longer on the delete path (`deletion_requests` in Postgres, ADR-029) or the ACL path (ADR-022 amendment, polling), and FCA content never enters Kafka (ADR-026). Subject-bearing topics are delete-policy with `retention.ms` 7 d and `segment.ms` set (1 d; Confluent minimum 4 h), payloads minimised to ids and `pseudonym_id`, so the window is about 8 d (ADR-029). `source_observations`, `docs.*` and `chunks.*` events are Schema Registry contracts, BACKWARD (ADR-034). The "real firm data" trigger now reads: real public documents and private demo publisher documents are allowed; real client data is still not (ADR-038).
 
+**Amended 2026-11-07 (validation).** Payloads are ids, hashes, scores and flags. `chat.audit.v1` and `eval.sample.v1` carry no answer, question or excerpt text (the "redacted text" wording is withdrawn): text stays in erasable Postgres `messages`, and the `eval-judge` reads it by `message_id`. The outbox writer enforces this and test #15 checks Kafka and BigQuery (R4-D19 M5; V-consistency.md M5). The "real firm data" trigger reads as in ADR-038.
+
 ## ADR-012: Edge: external ALB + Cloud Armor, same origin
 
 **Status.** Accepted 2026-11-01. decided-by: researcher. Resolves G-02, G-13, G-46.
@@ -779,6 +834,8 @@ Inputs from Keshav (accounts and money, not design)
 
 **Trigger to revisit.** SSO requirement; > 50 tenants; enterprise customer needs a different IdP.
 
+**Amended 2026-11-07 (validation).** `auth` verifies the ID token at project level and requires the `firebase.tenant` claim to equal the tenant in the URL and the signed `cells.json` entry (ADR-032); the tenant-aware `auth_for_tenant(...).verify_id_token` procedure of the decision text is dropped (V-consistency.md S23).
+
 ## ADR-009: Guardrails (OWASP LLM Top 10 2025)
 
 **Status.** Accepted 2026-11-01. decided-by: researcher. Resolves G-04, G-17, G-23, G-37, G-38, G-41, G-42, G-45, G-55.
@@ -802,6 +859,8 @@ Inputs from Keshav (accounts and money, not design)
 
 **Amended 2026-11-02 (round 4).** Real third-party documents add layers; the original decision above stands. Added (see ADR-036): an ingest scan (parse-time sanitiser, deterministic pattern list, Model Armor document screening with `EXECUTION_SKIPPED` failing closed into quarantine, ADR-034); JSON-encode spotlighting plus a per-request nonce (datamarking is an ablation arm only); a locale-aware numeric grounding gate per sentence; deterministic compliance checks (licence footer, jurisdiction label, as-of validity); role policy as data, default deny. The fixed 500 ms Model Armor timeout is replaced by a timeout set from latency measured from the Cloud Run region (none was found, evidence-r4.md §0.10). Presidio DE/FR recall is measured before any claim. First visible text is the first complete sentence, so the TTFT budget is measured that way.
 
+**Amended 2026-11-07 (validation).** Model Armor is behind a feature flag with a documented fallback, because no GA status, SLA or latency is published (see ADR-036). The "fail closed, 500 ms" input screen of the decision above is replaced by that rule.
+
 ## ADR-008: Hybrid retrieval, rerank, confidence gate and chunking
 
 **Status.** Accepted 2026-11-01. decided-by: researcher. Resolves G-33, G-34, G-35, G-36, G-52, G-62.
@@ -817,13 +876,15 @@ Inputs from Keshav (accounts and money, not design)
 
 **Evidence.** pgvector README (HNSW defaults m 16, ef_construction 64, ef_search 40; iterative scan; halfvec <= 4,000 dims) https://github.com/pgvector/pgvector ; practitioner 52/400 queries returned 0 rows with default HNSW https://dev.to/ji_ai/pgvector-hnsw-filtering-returned-0-rows-for-52-of-my-400-queries-ghp ; AWS Aurora iterative scan https://aws.amazon.com/blogs/database/supercharging-vector-search-performance-and-relevance-with-pgvector-0-8-0-on-amazon-aurora-postgresql/ ; Voyage https://docs.voyageai.com/docs/embeddings ; Cloud SQL extensions https://docs.cloud.google.com/sql/docs/postgres/extensions ; rerank price $0.05/M and Tier-1 2M TPM (D13e).
 
-**Decision.** Voyage `voyage-4` with `input_type` query / document; `halfvec(1024)`; HNSW (m 16, ef_construction 64) with `SET LOCAL hnsw.iterative_scan = relaxed_order`, `hnsw.max_scan_tuples = 20000`, `ef_search` ~80-100; `tsvector` + GIN FTS leg (`websearch_to_tsquery`) for rule ids and tickers; RRF `k = 60` in one SQL statement with RLS on both legs; Voyage `rerank-2.5-lite` (or `rerank-2.5`) with timeout; a rerank timeout or 429 falls back to RRF order and marks the turn degraded (SSE `meta {retrieval_degraded: true}` and `messages.retrieval_degraded`), increments `rerank_fallback_total{reason}`, and alerts when > 5% of turns in 15 min are degraded (visible, so not silent; D14.2); kept or dropped by the eval ablation on recall and latency; `RERANK_CANDIDATES` default 15 (range 10-30), set by the L1 ablation (D14.1); CRAG-style gate yields "no firm documentation" + escalate offer without an LLM call; parent expansion; staleness computed server-side from today's date. Chunking: structure-aware 256-512-token children, ~1k-token parents, title then section heading prefix. Latency targets (estimates): TTFT p50 < 2.0 s, p95 < 3.5 s; first stage p95 < 300 ms; rerank p95 < 700 ms; full answer p95 < 8 s.
+**Decision.** Voyage `voyage-4` with `input_type` query / document; `halfvec(1024)`; HNSW (m 16, ef_construction 64) with `SET LOCAL hnsw.iterative_scan = relaxed_order`, `hnsw.max_scan_tuples = 20000`, `ef_search` ~80-100; `tsvector` + GIN FTS leg (`websearch_to_tsquery`) for rule ids and tickers; RRF `k = 60` in one SQL statement with RLS on both legs; Voyage `rerank-3-lite` (arm 3 compares `rerank-3`; amended 2026-11-07) with timeout; a rerank timeout or 429 falls back to RRF order and marks the turn degraded (SSE `meta {retrieval_degraded: true}` and `messages.retrieval_degraded`), increments `rerank_fallback_total{reason}`, and alerts when > 5% of turns in 15 min are degraded (visible, so not silent; D14.2); kept or dropped by the eval ablation on recall and latency; `RERANK_CANDIDATES` default 15 (range 10-30), set by the L1 ablation (D14.1); CRAG-style gate yields "no firm documentation" + escalate offer without an LLM call; parent expansion; staleness computed server-side from today's date. Chunking: structure-aware 256-512-token children, ~1k-token parents, title then section heading prefix. Latency targets (estimates): TTFT p50 < 2.0 s, p95 < 3.5 s; first stage p95 < 300 ms; rerank p95 < 700 ms; full answer p95 < 8 s.
 
 **Dissent.** None recorded. The skeptic replaced rerank-2 with rerank-2.5-lite and relaxed the earlier latency targets (D13e).
 
 **What it makes harder later.** FTS is not BM25; rerank is single-vendor (Voyage) and rate limited (about 5 QPS on Tier 1); the gate threshold must be tuned by evals; ANN with RLS needs iterative scan tests.
 
 **Trigger to revisit.** BM25 available on managed Postgres (PG17+); recall regression; ANN p95 > 100 ms; rerank latency or TPM unmet.
+
+**Amended 2026-11-07 (validation).** The rerank default is `rerank-3-lite` (current on Voyage's page, 4M TPM, 2,000 RPM, $0.02 per 1M tokens, lower latency); `rerank-3` is 2M TPM and $0.05; `rerank-2.5` and `rerank-2.5-lite` are "older" and leave the design (R4-D18 V1; https://docs.voyageai.com/docs/reranker , https://docs.voyageai.com/docs/rate-limits ; V-docs-ai.md Q2). The first-stage retrieval target is p95 <= 600 ms, not 300 ms: embed (0.25 s) then hybrid SQL (0.30 s) are serial, 0.55 s in the estimate, measured in the E3 spike; TTFT targets 2.0 s p50 and 3.5 s p95 are unchanged (R4-D19 M3). The 2M TPM figure of the original text belonged to the full models, not the default.
 
 ## ADR-007: Retrieve-first orchestration and conversation state
 
@@ -951,6 +1012,8 @@ Inputs from Keshav (accounts and money, not design)
 **What it makes harder later.** One RLS or code bug can expose all tenants, so the leak matrix is a permanent gate; six roles multiply pools and secrets; no per-tenant CMEK or performance isolation (noisy neighbours); `SECURITY DEFINER` is banned except `fa_tenant_lookup`.
 
 **Trigger to revisit.** A tenant requires CMEK or performance isolation, "real firm data", or > 50 tenants: silo through `tenants.shard_id`.
+
+**Amended 2026-11-07 (validation).** D13a stands unchanged: INSERT, UPDATE and DELETE are own-tenant only and only `fa_etl_public` writes PUBLIC. The FCA purge needs no exception because it is a pull model (a PUBLIC `source_purges` row; each firm tenant's `erasure-worker` inserts its own `deletion_requests` under its own role). The grant "`fa_etl_public` INSERT on firm tenants' `deletion_requests`" in deep-dive 05 §5.3 and 05-1 §5.13 is removed, and the L0 leak matrix asserts that `fa_etl_public` has no write on any firm tenant table (R4-D19 M6; ADR-026, ADR-039).
 
 ## ADR-001: As-built MVP is the baseline
 

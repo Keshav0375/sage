@@ -144,3 +144,42 @@ E12 Data lifecycle and deletion (incl. reconciliation), E13 Regional cells and m
   rejected by K-R4-1.
 - Crypto-shredding with per-subject KMS keys: dissent "provable delete in backups"; rejected for
   the undocumented backup effect and cost per key.
+
+## Stage 3 validation decisions (2026-11-07)
+
+Inputs: V-docs-db.md, V-docs-ai.md, V-consistency.md (this folder). Each item below gets an ADR
+(new or an amendment block) through the arch-writer.
+
+R4-D18 Validation verdicts:
+  V1 Reranker: default `rerank-3-lite` (current, 4M TPM, 2000 RPM, $0.02/M, lower latency). Arm 3
+     is rerank-3 vs rerank-3-lite: the full model enters only with a measured gain (D-R4-3).
+     rerank-2.5 is "older" on Voyage's page and leaves the design. (V-docs-ai #2; fixes M2, M4.)
+  V2 BigQuery: project default `default_max_time_travel_hours=48` (ALTER PROJECT), plus the
+     per-dataset setting as a check; dbt does not set dataset options. (V-docs-db #2.)
+  V3 Model Armor: behind a feature flag with a documented fallback (Presidio + heuristics,
+     fail-closed for ingest quarantine, fail-open with an audit flag for prompts) because no GA,
+     SLA or latency is published. (V-docs-ai #3.)
+  V4 llm_egress_ack wording: Voyage zero-day retention only after an org-admin opt-out, which is
+     irreversible; Voyage publishes no data region; Anthropic first-party is US/global.
+     (V-docs-ai #5.)
+  V5 Spikes: Cloud SQL backup expiry while the instance is stopped (E12); Identity Platform same
+     email in two tenants (E1, gate). PITR log retention: Enterprise 1-7 d, set 7. (V-docs-db #3.)
+
+R4-D19 Consistency must-fix decisions (V-consistency.md M1-M8):
+  M1 Chunk identity is the 05-1 identity key (incl. valid_from and parser_version); embedding
+     generations are unique on (that identity, embed_model). Fix ADR-035, 07, plan E6.
+  M3 First-stage retrieval target: p95 ≤ 600 ms (embed then hybrid SQL is serial: 0.25 + 0.30 s
+     estimated), measured in the E3 spike; TTFT targets 2.0 s p50 / 3.5 s p95 unchanged; recompute
+     the latency budget in 02 and the E3 gate. Dissent: the MVP's 300 ms; rejected, the arch's own
+     estimate cannot meet it.
+  M5 chat.audit.v1 and eval.sample.v1 carry ids, chunk ids, hashes, scores and flags only, never
+     answer or excerpt text. Text stays in Postgres messages (erasable). Fix 06 §6.4, ADR-013/023
+     amendments.
+  M6 FCA purge is a PULL model: purge_source writes a row to a PUBLIC `source_purges` table that
+     every tenant may read; each firm tenant's erasure-worker run, under that tenant's own role,
+     polls it and inserts its own deletion_requests. `fa_etl_public` gets no INSERT on firm
+     tenants' tables; ADR-002 D13a stands.
+  M7 05-1 §5.7: cache purge on document delete is done by the erasure-worker, not acl-applier.
+  M8 Section pointers to the split deep-dive files: fixed by script (74 pointers, 44 files).
+  Should-fix S1-S24 in V-consistency.md: apply all as written there, unless one conflicts with
+  R4-D1..D19 (then follow the decision and note it).

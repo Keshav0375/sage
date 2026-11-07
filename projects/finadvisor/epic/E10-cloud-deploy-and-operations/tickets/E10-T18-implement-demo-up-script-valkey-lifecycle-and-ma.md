@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E10-T1", "E10-T2", "E10-T16", "E10-T17"]
-arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.14 Flow 5", "deep-dive/04-components-and-responsibilities.md#4.6", "deep-dive/06-interfaces-and-contracts.md#6.6 VALKEY_INSTANCE_NAME", "ADR-020", "ADR-024"]
+arch_refs: ["deep-dive/04-1-key-flows.md#4.14 Flow 5", "deep-dive/04-components-and-responsibilities.md#4.6", "deep-dive/06-interfaces-and-contracts.md#6.6 VALKEY_INSTANCE_NAME", "ADR-020", "ADR-024"]
 issue: null
 branch: null
 pr: null

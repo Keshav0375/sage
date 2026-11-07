@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E1-T2", "E1-T4"]
-arch_refs: ["deep-dive/05-data-model-and-storage.md#5.2", "deep-dive/05-data-model-and-storage.md#5.5", "decision-logs.md#adr-003"]
+arch_refs: ["deep-dive/05-data-model-and-storage.md#5.2", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.5", "decision-logs.md#adr-003"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 21, "id": 6155593763, "url": "https://github.com/Keshav0375/FinAdvisor/issues/21"}
 branch: null
 pr: null

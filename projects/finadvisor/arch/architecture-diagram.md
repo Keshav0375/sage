@@ -21,11 +21,11 @@ flowchart TB
         AGENT["agent, guardrails, llm<br/>04-1"]
         RETR["retrieval (as_of, hybrid SQL, rerank)<br/>05-1"]
     end
-    MARM["Model Armor<br/>08"]
+    MARM["Model Armor (flag, fallback)<br/>08"]
     subgraph store["Cloud SQL Postgres 16 + pgvector (RLS)"]
         SQL[("chunks, documents,<br/>versions, answer_cache<br/>05")]
         OUTBOX[("outbox rows<br/>04")]
-        DELQ[("deletion_requests<br/>05-1")]
+        DELQ[("deletion_requests,<br/>source_purges (PUBLIC)<br/>05-1")]
         ACLQ[("acl_change_requests<br/>05-1")]
         LEDGER[("erasure_ledger<br/>05-1")]
     end
@@ -77,8 +77,8 @@ flowchart TB
     BRONZE --> SCAN
     SCAN -->|"pass"| SILVER
     SILVER --> IDX
-    IDX -->|"one tx per version, doc lock"| SQL
-    SILVER -->|"embed"| VOY
+    IDX -->|"one tx per document, doc lock"| SQL
+    IDX -->|"embed"| VOY
     IDX -->|"tombstone check"| LEDGER
 
     OUTBOX --> RELAY
@@ -88,6 +88,7 @@ flowchart TB
     BQSINK --> BQ
 
     DELQ -->|"poll, SKIP LOCKED"| EW
+    EW -->|"pull source_purges, enqueue own requests"| DELQ
     EW -->|"tombstone first"| LEDGER
     EW -->|"physical delete"| SQL
     EW -->|"delete objects"| BRONZE
@@ -110,10 +111,10 @@ flowchart TB
 | auth, principal, admin | `deep-dive/04-components-and-responsibilities.md` (4.5) | ADR-002, ADR-004, ADR-010 |
 | agent, guardrails, llm | `deep-dive/04-1-key-flows.md` (flow 1), `deep-dive/04-2-source-lifecycle-and-cells.md` (4.25, 4.26) | ADR-005, ADR-006, ADR-007, ADR-009, ADR-036 |
 | retrieval | `deep-dive/05-1-rls-indexes-versioning-and-deletion.md` (5.6, 5.7) | ADR-004, ADR-008, ADR-015, ADR-027 |
-| Model Armor | `deep-dive/08-security-and-privacy.md` (8.6) | ADR-009, ADR-036 |
+| Model Armor | `deep-dive/08-security-and-privacy.md` (8.6) | ADR-009, ADR-036, ADR-039 |
 | Cloud SQL, chunks, answer_cache | `deep-dive/05-data-model-and-storage.md` | ADR-002, ADR-003, ADR-027, ADR-035 |
 | outbox rows, outbox-relay | `deep-dive/04-components-and-responsibilities.md` (4.7) | ADR-013 |
-| deletion_requests, acl_change_requests, erasure_ledger | `deep-dive/05-1-rls-indexes-versioning-and-deletion.md` (5.11) | ADR-022, ADR-029, ADR-030 |
+| deletion_requests, source_purges, acl_change_requests, erasure_ledger | `deep-dive/05-1-rls-indexes-versioning-and-deletion.md` (5.11) | ADR-022, ADR-029, ADR-030 |
 | Source publishers, Source connectors | `deep-dive/03-system-context-and-boundaries.md`, `deep-dive/04-2-source-lifecycle-and-cells.md` (4.15) | ADR-026 |
 | GCS bronze, Ingest scan and quarantine | `deep-dive/04-2-source-lifecycle-and-cells.md` (4.15, 4.25) | ADR-014, ADR-034, ADR-036 |
 | Silver worker, Indexer | `deep-dive/04-2-source-lifecycle-and-cells.md` (4.16, 4.17) | ADR-014, ADR-027, ADR-028, ADR-035 |

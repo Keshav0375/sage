@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E6-T8", "E3-T3", "E3-T4", "E1-T8"]
-arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.7", "deep-dive/04-components-and-responsibilities.md#4.14", "deep-dive/05-data-model-and-storage.md#5.2", "decision-logs.md#adr-014"]
+arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.7", "deep-dive/04-1-key-flows.md#4.14", "deep-dive/05-data-model-and-storage.md#5.2", "decision-logs.md#adr-014"]
 issue: null
 branch: null
 pr: null

@@ -51,14 +51,14 @@ Structured JSON to stdout, redacted before writing: `ts`, `severity`, `trace`, `
 |---|---|---|
 | Availability (one SLO, with burn-rate alert) | 99.5% monthly of chat requests not failing | `prod` profile only |
 | Latency | TTFT p95 < 3.5 s (p50 < 2.0 s), full answer p95 < 8 s | `demo` and `prod` (measured; estimates) |
-| Retrieval | first stage p95 < 300 ms, rerank p95 < 700 ms | both |
+| Retrieval | first stage p95 <= 600 ms, rerank p95 < 700 ms | both |
 
 Alert thresholds (ADR-025 R72): outbox oldest age > 300 s; ACL apply lag > 120 s; consumer lag > 1000 for 10 min; availability burn rate 14.4x over 1 h and 6x over 6 h. The DEFAULT-partition alert window is 30 min, and the `maintenance` job runs every 15 min in demo mode (R76, R21). Notification channel: email to `alert_email` (R75).
 
 Alerts: availability burn rate (thresholds above), degraded turns > 5% in 15 min, rerank 429 > 0, LLM fallback in use, outbox oldest age, ACL applier lag, consumer lag, DLQ non-empty, DEFAULT partition non-empty, readiness failing, model retirement soon, the reconciliation alerts of §9.7, `erasure_oldest_pending_age_s` > 4 h, `tombstone_violations_total` > 0, a frozen connector, a Langfuse delete not honoured after 24 h, and the budget alerts: a **$180/month total alert guards the $200 ceiling** (R4-D16, `BUDGET_ALERT_USD`), plus the LLM share (`LLM_MONTHLY_BUDGET_USD` 75) from GCP billing and `llm_cost_usd_total`; eval runs are capped by `EVAL_BUDGET_USD`. Dashboards in Cloud Monitoring (one per concern: chat, retrieval, events, cost, data lifecycle). Epic E9, with E12 for the lifecycle alerts.
 
 ### 9.6 Evaluation signals
-Offline: Langfuse datasets and `run_experiment`. Online (L4): `chat-api` writes an `eval.sample.v1` outbox row for a `EVAL_SAMPLE_RATE` fraction (5-10%) of completed turns; the `eval-judge` worker consumes the topic, scores the redacted question / answer / cited excerpts with `claude-haiku-5-5` (judge differs from the answer model), and writes the scores to Langfuse and to the `eval_scores` table (tenant RLS). Thumbs feedback is stored in `feedback` and sent as `FeedbackRecorded`. Results flow to BigQuery through `eval.events.v1`. Langfuse-side evaluators are not used.
+Offline: Langfuse datasets and `run_experiment`. Online (L4): `chat-api` writes an `eval.sample.v1` outbox row (ids, chunk ids, hashes and flags, no text) for a `EVAL_SAMPLE_RATE` fraction (5-10%) of completed turns; the `eval-judge` worker consumes the topic, reads the redacted question / answer / cited excerpts from Postgres `messages` by `message_id` under the tenant's role (a message that has been erased is skipped), scores them with `claude-haiku-5-5` (judge differs from the answer model), and writes the scores to Langfuse and to the `eval_scores` table (tenant RLS). Thumbs feedback is stored in `feedback` and sent as `FeedbackRecorded`. Results flow to BigQuery through `eval.events.v1`. Langfuse-side evaluators are not used.
 
 ### 9.7 Reconciliation alerts (ADR-034)
 

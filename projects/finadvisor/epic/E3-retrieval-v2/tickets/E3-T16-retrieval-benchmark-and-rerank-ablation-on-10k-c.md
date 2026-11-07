@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E3-T1", "E3-T2", "E3-T9"]
-arch_refs: ["deep-dive/02-quality-attributes.md#2.1", "deep-dive/05-data-model-and-storage.md#5.6", "decision-logs.md#adr-008", "deep-dive/06-interfaces-and-contracts.md#6.6"]
+arch_refs: ["deep-dive/02-quality-attributes.md#2.1", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.6", "decision-logs.md#adr-008", "deep-dive/06-interfaces-and-contracts.md#6.6"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 76, "id": 6155660458, "url": "https://github.com/Keshav0375/FinAdvisor/issues/76"}
 branch: null
 pr: null

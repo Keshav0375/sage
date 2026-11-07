@@ -60,7 +60,7 @@ One idempotent function `reconcile_lineage(document_id)`, called by the tenant p
 
 ### 4.17 Indexer atomic publish and lock order (R4-D5; ADR-028)
 
-- The indexer is the only writer of `chunks`. It embeds first, outside any transaction, then runs ONE transaction per document version: (1) `pg_advisory_xact_lock(hash(tenant_id, doc_id))`; (2) check there is no ledger tombstone for `(tenant_id, doc_key, sha256)` (uncached point read) and that the version has `contract_passed AND scan_passed`; (3) apply the `reconcile_lineage` diff; (4) set the version `active`; (5) delete `answer_cache` rows whose `source_document_ids` contain the document; (6) write `processed_events`; (7) bump the tenant's `corpus_version` row last. A chunk that exists therefore means its version passed every gate; Dagster blocking checks are advisory only, because their behaviour across runs is undocumented (evidence-r4.md §2.2).
+- The indexer is the only writer of `chunks`. It embeds first, outside any transaction, then runs ONE transaction per document: (1) `pg_advisory_xact_lock(hash(tenant_id, doc_id))`; (2) check there is no ledger tombstone for `(tenant_id, doc_key, sha256)` (uncached point read) and that the version has `contract_passed AND scan_passed`; (3) apply the `reconcile_lineage` diff; (4) set the version `active`; (5) delete `answer_cache` rows whose `source_document_ids` contain the document; (6) write `processed_events`; (7) bump the tenant's `corpus_version` row last. A chunk that exists therefore means its version passed every gate; Dagster blocking checks are advisory only, because their behaviour across runs is undocumented (evidence-r4.md §2.2).
 - **Lock order for publish and erasure alike: one document per transaction, advisory lock first, tenant `corpus_version` row last,** retry with jitter. `pg_advisory_xact_lock` only (safe under pooling). A multi-document erasure is a series of single-document transactions, so it cannot deadlock with an indexer waiting on the `corpus_version` row (S-skeptic-3 #10). The `acl-applier` takes the same lock.
 - Delete during ingest has two outcomes only: the indexer wins the lock (rows exist, the erasure then deletes them) or the erasure wins (the indexer sees the tombstone and writes nothing); the silver worker checks before and after writing Parquet.
 
@@ -80,7 +80,7 @@ Role `erasure-worker` in `fa-worker` (role `fa_worker` plus DELETE on the extra 
 
 ```mermaid
 flowchart TB
-    REQ["Request: admin API, operator command, source withdrawal (erase class), purge_source fan-out"] --> QUEUE[("deletion_requests (Postgres queue)")]
+    REQ["Request: admin API, operator command, source withdrawal (erase class), source_purges pull (each tenant's erasure-worker)"] --> QUEUE[("deletion_requests (Postgres queue)")]
     QUEUE -->|"poll, FOR UPDATE SKIP LOCKED"| EW["erasure-worker"]
     EW -->|"advisory lock, then tombstone first"| LEDGER[("erasure_ledger (tenant_id, doc_key, sha256)")]
     EW --> PG["Postgres: cache, chunks, versions, subject rows, VACUUM"]
@@ -117,12 +117,13 @@ flowchart TB
 
 Evidence: store windows evidence-r4.md §2.3; BigQuery https://docs.cloud.google.com/bigquery/docs/time-travel ; GCS https://cloud.google.com/storage/docs/soft-delete ; Cloud SQL https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/backups ; Confluent https://docs.confluent.io/cloud/current/topics/manage.html . Model providers (Anthropic, Voyage) retain under their own terms and are outside the promise; text already shown to an advisor is not recalled.
 
-### 4.20 purge_source('fca_api') fan-out (R4-D8; ADR-026, ADR-029)
+### 4.20 purge_source('fca_api'): pull model with a PUBLIC `source_purges` table (R4-D8, R4-D19 M6; ADR-026, ADR-029)
 
 - Runs as the PUBLIC owner role (`fa_etl_public`, job `purge-source`): erases every FCA version, chunk, bronze and silver object, found through `lineage_edges`, with a receipt; suspends the connector (it also auto-suspends on 401 / 403 or a revocation notice).
-- Bumps `source_epoch` on the PUBLIC tenant row in the same transaction, which makes every earlier cached answer unreachable (cache key, §5.7).
-- Fans out one `deletion_requests` row per firm tenant (scope `source`, source `fca_api`); each is executed by the `erasure-worker` under THAT tenant's own role and deletes the messages and cached answers that quote FCA text. There is no cross-tenant role (keeps ADR-002 D13a).
-- FCA content never entered Kafka or BigQuery (§4.15), so those stores need no step. A quarterly drill runs the purge on fixtures and checks every store.
+- In the same transaction it bumps `source_epoch` on the PUBLIC tenant row, which makes every earlier cached answer unreachable (cache key, §5.7), and writes one row to the PUBLIC table `source_purges` (`purge_id`, `source_id`, `requested_at`; §5.11). Every tenant may read PUBLIC rows (SELECT own-or-PUBLIC).
+- Pull, not push: each firm tenant's `erasure-worker` run, under THAT tenant's own role (`fa_worker`), polls `source_purges` for purges it has not yet handled and inserts its own `deletion_requests` row (scope `source`, source `fca_api`, `subject_ref` = `purge_id`; idempotent on `(tenant_id, purge_id)`), then executes it as any other request: it deletes the messages and cached answers that quote FCA text. A stopped tenant catches up at its next run (`demo-up` runs the erasure job first).
+- `fa_etl_public` has no INSERT on firm tenants' tables and there is no cross-tenant role (ADR-002 D13a stands unchanged; the one-exception alternative was rejected, ADR-039).
+- FCA content never entered Kafka or BigQuery (§4.15), and chat events carry no answer or excerpt text (§6.4), so those stores need no step. A quarterly drill runs the purge on fixtures and checks every store.
 
 ### 4.21 acl-applier, polling (R4-D7; ADR-022 amended)
 
@@ -141,8 +142,8 @@ Job `reconcile`, hourly only while the system runs. It compares only versions id
 | index | ANN self-hit canary: 50 sampled chunks queried with their own vectors return themselves in the top 5; `ann_selfhit_rate >= 0.99` | page below 0.95 |
 | Postgres to BigQuery | per day `count` and `md5(string_agg(event_id ORDER BY event_id))` of published outbox rows vs `ingest_events` | ticket |
 | cell to cell | PUBLIC manifest (document count + `chunk_set_hash` per version) equal across cells | ticket |
-| tombstones | `tombstone_violations_total` is 0: absence in Postgres, GCS, BigQuery (current), cache | page |
-| BigQuery settings | every dataset has `max_time_travel_hours = 48` | page |
+| tombstones | `tombstone_violations_total` is 0: absence in Postgres, GCS, BigQuery (current), Langfuse and cache | page |
+| BigQuery settings | the project default `default_max_time_travel_hours` and every dataset have `max_time_travel_hours = 48` | page |
 
 Quality rules that quarantine a version instead of indexing it (dbt contracts and tests, Pandera, Dagster blocking checks): licence class and attribution non-null; jurisdiction and tier non-null; eCFR part has the expected section ids; every CELEX arrives with all language versions or none; chunk token bounds; no empty `provision_path`; scan passed. More than 5% of a batch quarantined pauses the connector. OpenLineage is dropped (stale package); `lineage_edges` is our own table.
 

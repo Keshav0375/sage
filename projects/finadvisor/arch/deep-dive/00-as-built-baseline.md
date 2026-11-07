@@ -220,7 +220,7 @@ sequenceDiagram
     B->>N: POST /api/chat/stream, X-User-Id, {message}
     N->>A: proxy to localhost:8000
     A->>A: get_current_user: header lookup in MOCK_USERS (401 if unknown)
-    A->>D: autobegin; SET ROLE finadvisor_app; SET app.user_tier; SET app.user_jurisdictions
+    A->>D: autobegin, SET ROLE finadvisor_app, SET app.user_tier, SET app.user_jurisdictions
     A->>A: build ToolRegistry(session) + FinAdvisorAgent
     A-->>B: 200 text/event-stream opened
     loop iteration 0..4 (max_iterations=5)
@@ -277,7 +277,7 @@ sequenceDiagram
     S->>S: cost estimate = words*1.3 /1e6 * 0.06
     S->>V: embed_texts(all chunks), batch 128, input_type=document
     V-->>S: 1024-d vectors
-    S->>D: BEGIN; INSERT documents (raw_content UNREDACTED); INSERT chunks; COMMIT
+    S->>D: BEGIN, INSERT documents (raw_content UNREDACTED), INSERT chunks, COMMIT
     Note over S,D: plain INSERT, no unique key: re-run duplicates everything. suitability_rules never written.
 ```
 

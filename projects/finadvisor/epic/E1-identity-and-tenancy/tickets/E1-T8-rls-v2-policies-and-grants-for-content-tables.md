@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E1-T3", "E1-T5"]
-arch_refs: ["deep-dive/05-data-model-and-storage.md#5.4", "deep-dive/05-data-model-and-storage.md#5.3", "decision-logs.md#adr-002", "decision-logs.md#adr-004"]
+arch_refs: ["deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.4", "deep-dive/05-data-model-and-storage.md#5.3", "decision-logs.md#adr-002", "decision-logs.md#adr-004"]
 issue: {"repo": "Keshav0375/FinAdvisor", "number": 24, "id": 6155597838, "url": "https://github.com/Keshav0375/FinAdvisor/issues/24"}
 branch: null
 pr: null
@@ -17,7 +17,7 @@ updated: "2026-11-01"
 documents, chunks, suitability_rules and ingest_rejects have the own-or-PUBLIC read policies, own-tenant-only write policies, column grants and the fa_etl_public-only PUBLIC write.
 
 ## Description
-Add an Alembic revision implementing deep-dive/05-data-model-and-storage.md §5.4 and the 5.3 grants for the content tables. `<PUBLIC>` is the `PUBLIC_TENANT_ID` uuid literal substituted by the migration; `fa_eval` policies use the `EVAL_TENANT_ID` literal. Policies call `current_setting('app.x')` without `missing_ok`, so an unset setting raises (fail closed).
+Add an Alembic revision implementing deep-dive/05-1-rls-indexes-versioning-and-deletion.md §5.4 and the 5.3 grants for the content tables. `<PUBLIC>` is the `PUBLIC_TENANT_ID` uuid literal substituted by the migration; `fa_eval` policies use the `EVAL_TENANT_ID` literal. Policies call `current_setting('app.x')` without `missing_ok`, so an unset setting raises (fail closed).
 
 Policies (policy text for `chunks` is the arch text; `documents` and `suitability_rules` are identical in shape, `suitability_rules` uses `min_tier_required`):
 - `*_select_app TO fa_app FOR SELECT`: `(tenant_id = current_setting('app.tenant_id')::uuid OR tenant_id = '<PUBLIC>'::uuid) AND tier_required <= current_setting('app.tier')::int AND jurisdiction = ANY (string_to_array(current_setting('app.jurisdictions'), ','))`.

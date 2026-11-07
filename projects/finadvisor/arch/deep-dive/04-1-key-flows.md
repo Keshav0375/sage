@@ -18,7 +18,7 @@ sequenceDiagram
     E->>K: WAF, DDoS and geo rules passed
     K->>K: strip identity headers, set X-RL-Key and X-Serverless-Authorization, rate-limit IP and session, size limit, correlation-id
     K->>C: proxy via VPC, no buffering
-    C->>C: auth: tenant-aware ID token verify (firebase.tenant)
+    C->>C: auth: verify ID token at project level, firebase.tenant must equal the URL tenant (ADR-032)
     C->>C: principal: home_cell from cells.json must equal this cell, else 421 with cell hint and no tenant read
     C->>D: principal: fa_tenant_lookup, load advisors row (60 s cache)
     C->>D: short tx: insert turn_events seq 0 (ON CONFLICT DO NOTHING), insert user message
@@ -26,13 +26,13 @@ sequenceDiagram
     C->>D: as_of resolve: date parser, else UI chip, else current_date (UTC) from Postgres
     C->>D: answer_cache lookup (key incl. corpus, acl, entitlement versions, as_of, embed_model, source_epoch)
     par guard-in screen
-        C->>M: screen redacted input (fail closed, timeout from measured latency)
+        C->>M: screen redacted input (feature flag, timeout from measured latency, fallback Presidio + heuristics with audit flag)
     and embed
         C->>V: embed query (voyage-4, input_type query)
     end
     C->>D: short tx: set_config, hybrid SQL (FTS leg + dense leg, RRF k=60, valid_range @> as_of, active embed_model, RLS on both)
     D-->>C: candidates
-    C->>V: rerank-2.5-lite (timeout)
+    C->>V: rerank-3-lite (timeout)
     V-->>C: top 6, or timeout/429 then RRF order with retrieval_degraded
     C-->>B: SSE meta (retrieval_degraded, as_of)
     C->>C: confidence gate
@@ -49,7 +49,7 @@ sequenceDiagram
         C->>C: licence footers from document_versions.attribution_text
         C-->>B: SSE delta and citation events, each with id
     end
-    C->>D: short tx: persist assistant message, turn_events, outbox rows (chat.audit, chat.usage, sampled eval.sample)
+    C->>D: short tx: persist assistant message, turn_events, outbox rows (chat.audit, chat.usage, sampled eval.sample: ids, hashes, scores, flags, no text)
     C-->>B: SSE done
 ```
 
@@ -97,7 +97,7 @@ sequenceDiagram
         W->>K: chunks.contextualized.v1
         K->>W: indexer: reconcile_lineage plan keyed by chunk identity
         W->>V: embed only chunk hashes without a vector for the active embed_model
-        W->>D: one tx per document: advisory lock, tombstone and gate check, range merge, version active, corpus_version bump last, cache purge, processed_events
+        W->>D: one tx per document: advisory lock, tombstone and gate check, range merge, version active, cache purge, processed_events, corpus_version bump last
         W->>K: chunks.indexed.v1
     end
     T->>D: gold models (security_invoker views or incremental)

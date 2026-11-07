@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E4-T27", "E6-T19"]
-arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.14", "deep-dive/06-interfaces-and-contracts.md#6.4", "deep-dive/09-observability.md#9.6", "ADR-017"]
+arch_refs: ["deep-dive/04-1-key-flows.md#4.14", "deep-dive/06-interfaces-and-contracts.md#6.4", "deep-dive/09-observability.md#9.6", "ADR-017"]
 issue: null
 branch: null
 pr: null

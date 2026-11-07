@@ -6,7 +6,7 @@ repo: "FinAdvisor"
 size: "M"
 status: "todo"
 depends_on: ["E10-T6", "E10-T8", "E10-T9", "E10-T12", "E1-T12", "E5-T13"]
-arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.14 Flow 6", "deep-dive/06-interfaces-and-contracts.md#6.6 OUTBOX_DRAIN_TIMEOUT_MIN, VALKEY_INSTANCE_NAME", "ADR-020"]
+arch_refs: ["deep-dive/04-1-key-flows.md#4.14 Flow 6", "deep-dive/06-interfaces-and-contracts.md#6.6 OUTBOX_DRAIN_TIMEOUT_MIN, VALKEY_INSTANCE_NAME", "ADR-020"]
 issue: null
 branch: null
 pr: null
