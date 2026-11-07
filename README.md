@@ -35,8 +35,9 @@ is good enough, and a stronger agent checks every cheap step:
 
 The brain mod enforces these tiers on every model request (`projects/routing.json`), and a project can
 override them in its own `routing.json`. Token controls: waves of at most 3 agents, replies of at most
-8 lines with the detail in files, one continuous run per goal, and a budget guard that compacts the orchestrator
-to hand off when its context passes 50% or the usage window passes 75%.
+8 lines with the detail in files, and one continuous run per goal: a budget guard compacts the
+orchestrator when its context passes 50% and drops to one agent at a time when the usage window
+passes 75%.
 
 ## Project layout
 
