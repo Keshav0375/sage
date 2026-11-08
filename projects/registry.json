@@ -15,5 +15,10 @@
         "FinAdvisor": "~/Projects/FinAdvisor"
       }
     }
+  },
+  "github": {
+    "owner": "Keshav0375",
+    "template_project": 6,
+    "_doc": "sage-template board (copied from Sentinel #4): views, grouping and workflows; project_board.py copies it for each project"
   }
 }

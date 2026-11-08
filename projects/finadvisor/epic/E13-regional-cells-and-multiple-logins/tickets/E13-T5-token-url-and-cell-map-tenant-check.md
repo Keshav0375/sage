@@ -7,7 +7,7 @@ size: "S"
 status: "todo"
 depends_on: ["E13-T4", "E1-T13"]
 arch_refs: ["deep-dive/08-security-and-privacy.md#8.2", "deep-dive/06-interfaces-and-contracts.md#6.11", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.4", "decision-logs.md#adr-032"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 325, "id": 6263831064, "url": "https://github.com/Keshav0375/FinAdvisor/issues/325"}
 branch: null
 pr: null
 updated: "2026-11-07"

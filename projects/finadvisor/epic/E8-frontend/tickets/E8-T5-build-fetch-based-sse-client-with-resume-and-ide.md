@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E8-T4", "E4-T27"]
 arch_refs: ["deep-dive/06-interfaces-and-contracts.md#6.2", "deep-dive/06-interfaces-and-contracts.md#6.1", "deep-dive/04-components-and-responsibilities.md#4.4"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 202, "id": 6263592991, "url": "https://github.com/Keshav0375/FinAdvisor/issues/202"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

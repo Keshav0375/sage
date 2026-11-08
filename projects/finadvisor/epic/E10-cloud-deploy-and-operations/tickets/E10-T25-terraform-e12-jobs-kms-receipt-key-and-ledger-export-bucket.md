@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E10-T4", "E10-T6", "E10-T10"]
 arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.8", "deep-dive/04-components-and-responsibilities.md#4.12", "deep-dive/06-interfaces-and-contracts.md#6.9", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.2", "decision-logs.md#adr-030", "decision-logs.md#adr-029", "decision-logs.md#adr-039"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 247, "id": 6263665026, "url": "https://github.com/Keshav0375/FinAdvisor/issues/247"}
 branch: null
 pr: null
 updated: "2026-11-07"

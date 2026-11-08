@@ -7,7 +7,7 @@ size: "S"
 status: "todo"
 depends_on: ["E6-T10", "E6-T21", "E5-T7", "E5-T9", "E5-T11"]
 arch_refs: ["deep-dive/04-1-key-flows.md#4.14", "deep-dive/05-1-rls-indexes-versioning-and-deletion.md#5.10", "decision-logs.md#adr-014", "decision-logs.md#adr-027", "decision-logs.md#adr-022"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 144, "id": 6263495357, "url": "https://github.com/Keshav0375/FinAdvisor/issues/144"}
 branch: null
 pr: null
 updated: "2026-11-07"

@@ -13,3 +13,6 @@ argument-hint: "<project>"
 4. Update the status table in `epic/README.md`.
 5. Report per epic: done/total, blocked tickets with reasons, and the ready tickets
    (`todo` with all `depends_on` done). Suggest the next `/builder:build <project> <epic>`.
+
+After syncing the ticket files, run `/researcher:board <project>` so the GitHub board's Status,
+Priority and Size match the files.

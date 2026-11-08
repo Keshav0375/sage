@@ -1,5 +1,5 @@
 ---
-github: {"owner": "Keshav0375", "status_field": "Status", "project_number": 5, "project_url": "https://github.com/users/Keshav0375/projects/5", "project_id": "PVT_kwHOBTMg2M4Bpxms", "linked": true, "status_options_set": true, "milestones": {"0": 1, "1": 2, "2": 3, "3": 4, "4": 5}}
+github: {"owner": "Keshav0375", "status_field": "Status", "project_number": 7, "project_url": "https://github.com/users/Keshav0375/projects/7", "project_id": "PVT_kwHOBTMg2M4BqpYO", "linked": true, "status_options_set": true, "milestones": {"0": 1, "1": 2, "2": 3, "3": 4, "4": 5}, "previous_project_number": 5, "board_number": 7}
 updated: "2026-11-01"
 ---
 

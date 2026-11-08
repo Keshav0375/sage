@@ -7,7 +7,7 @@ size: "S"
 status: "todo"
 depends_on: ["E4-T19", "E11-T14"]
 arch_refs: ["deep-dive/08-security-and-privacy.md#8.7", "deep-dive/04-components-and-responsibilities.md#4.5", "decision-logs.md#adr-038", "decision-logs.md#adr-039"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 138, "id": 6263484957, "url": "https://github.com/Keshav0375/FinAdvisor/issues/138"}
 branch: null
 pr: null
 updated: "2026-11-07"

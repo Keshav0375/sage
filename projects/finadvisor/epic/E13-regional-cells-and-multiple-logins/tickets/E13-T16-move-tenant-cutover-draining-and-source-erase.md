@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E13-T15", "E13-T4", "E13-T2", "E12-T8", "E12-T16"]
 arch_refs: ["deep-dive/04-2-source-lifecycle-and-cells.md#4.24", "deep-dive/04-2-source-lifecycle-and-cells.md#4.19", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.6", "decision-logs.md#adr-033", "decision-logs.md#adr-029"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 321, "id": 6263826643, "url": "https://github.com/Keshav0375/FinAdvisor/issues/321"}
 branch: null
 pr: null
 updated: "2026-11-07"

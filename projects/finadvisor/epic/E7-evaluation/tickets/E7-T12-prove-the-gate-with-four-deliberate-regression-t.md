@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E7-T11"]
 arch_refs: ["ADR-017"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 167, "id": 6263531794, "url": "https://github.com/Keshav0375/FinAdvisor/issues/167"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

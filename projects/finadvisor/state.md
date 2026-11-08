@@ -1,6 +1,12 @@
 # finadvisor: state
 
 ## Now
+- 2026-11-07 PUBLISHED and BOARD READY. GitHub board: https://github.com/users/Keshav0375/projects/7
+  (copy of the sage template #6, Sentinel style: 16 views incl. prioritized backlog by priority,
+  status board, roadmap, epics & phases and one view per phase; 6 workflows on). 329 items (14 epics,
+  315 tickets) with Status, Priority, Size, Estimate, Level, Phase, Epic, Task ID set. Round-4 diff
+  applied on GitHub: 6 epics + 36 tickets updated, 8 epics + 212 tickets created and linked as
+  sub-issues. Old board #5 closed (not deleted). NEXT: build starts when Keshav says so.
 - 2026-11-07 ROUND 4 RESEARCH COMPLETE (stages 1-4; no build, no publish). Arch: ADR-026..039 with
   amendments, architecture.md + architecture-diagram.md + 15 deep-dive files, validation folded
   (library/research/r4/V-*.md), decisions R4-D1..D20 in library/research/r4/decision-r4.md.
@@ -74,7 +80,6 @@
   - K3 A domain for the ALB managed certificate. Gates E2-T8 and E10.
   - K4 Golden-set labelling by Keshav: 30-item pilot (E7-T19), items 31-60 (E7-T20), 140 items + 30-item intra-rater relabel (E7-T21); about 46-63 h in total. Gates E7.
   - K5 Enable branch protection on `main` after E0-T14 (R14). Gates the required-check acceptance of E0-T14.
-  - K6 Approve the round-4 publish diff (library/research/r4/publish-diff.md) before /researcher:publish.
 
 ## Blockers
 - (none)

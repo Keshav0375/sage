@@ -7,10 +7,10 @@ size: "S"
 status: "todo"
 depends_on: ["E6-T2"]
 arch_refs: ["deep-dive/04-1-key-flows.md#4.14", "decision-logs.md#adr-014"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 157, "id": 6263517061, "url": "https://github.com/Keshav0375/FinAdvisor/issues/157"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

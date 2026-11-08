@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E9-T2", "E5-T6", "E5-T7", "E5-T10"]
 arch_refs: ["deep-dive/09-observability.md#9.1", "ADR-018"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 224, "id": 6263627909, "url": "https://github.com/Keshav0375/FinAdvisor/issues/224"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

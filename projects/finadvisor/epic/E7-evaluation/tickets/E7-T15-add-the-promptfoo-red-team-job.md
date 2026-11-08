@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E7-T5", "E4-T27"]
 arch_refs: ["deep-dive/08-security-and-privacy.md#8.1", "deep-dive/04-components-and-responsibilities.md#4.8", "ADR-017"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 170, "id": 6263539029, "url": "https://github.com/Keshav0375/FinAdvisor/issues/170"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

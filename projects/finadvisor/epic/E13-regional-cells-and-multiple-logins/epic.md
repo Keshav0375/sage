@@ -7,7 +7,7 @@ repo: "FinAdvisor"
 status: "todo"
 depends_on: ["E1", "E2", "E4", "E5", "E6", "E12"]
 arch_refs: ["deep-dive/04-2-source-lifecycle-and-cells.md#4.24", "deep-dive/04-2-source-lifecycle-and-cells.md#4.22", "deep-dive/06-interfaces-and-contracts.md#6.11", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.4", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.6", "deep-dive/08-security-and-privacy.md#8.2", "deep-dive/08-security-and-privacy.md#8.7", "decision-logs.md#adr-031", "decision-logs.md#adr-032", "decision-logs.md#adr-033", "decision-logs.md#adr-038", "decision-logs.md#adr-039"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 117, "id": 6263450377, "url": "https://github.com/Keshav0375/FinAdvisor/issues/117"}
 updated: "2026-11-07"
 ---
 

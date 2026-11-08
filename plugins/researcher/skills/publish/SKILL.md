@@ -24,4 +24,6 @@ has no remote or its owner is not his account.
 4. **Verify (main session).** Read the epic and ticket files back: every one has an `issue` with
    a URL. Spot-check with `gh project item-list <number> --owner <owner> --format json` that the
    item count matches.
-5. **Record.** Add the project URL to `state.md` (`## Now`). Report the URL and the counts.
+5. **Board.** Run `/researcher:board <project>` (the `project_board.py` script): the first publish
+   copies the sage template board; later publishes sync fields and views.
+6. **Record.** Add the board URL to `state.md` (`## Now`). Report the URL and the counts.

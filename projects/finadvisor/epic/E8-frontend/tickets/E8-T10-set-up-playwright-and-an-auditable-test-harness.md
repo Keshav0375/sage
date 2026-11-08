@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E8-T9"]
 arch_refs: ["deep-dive/04-components-and-responsibilities.md#4.4"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 191, "id": 6263566976, "url": "https://github.com/Keshav0375/FinAdvisor/issues/191"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

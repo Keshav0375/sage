@@ -7,10 +7,10 @@ size: "S"
 status: "todo"
 depends_on: ["E0-T14"]
 arch_refs: ["deep-dive/10-open-questions.md#10 item 6", "ADR-020", "deep-dive/02-quality-attributes.md#2.5"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 230, "id": 6263638272, "url": "https://github.com/Keshav0375/FinAdvisor/issues/230"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

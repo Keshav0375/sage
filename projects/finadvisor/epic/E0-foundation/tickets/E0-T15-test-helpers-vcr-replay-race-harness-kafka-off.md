@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E0-T11", "E0-T12"]
 arch_refs: ["deep-dive/11-tech-stack.md#test-harnesses", "deep-dive/07-scaling-failure-modes-and-recovery.md#7.4", "decision-logs.md#adr-017", "decision-logs.md#adr-026", "decision-logs.md#adr-028"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 118, "id": 6263451186, "url": "https://github.com/Keshav0375/FinAdvisor/issues/118"}
 branch: null
 pr: null
 updated: "2026-11-07"

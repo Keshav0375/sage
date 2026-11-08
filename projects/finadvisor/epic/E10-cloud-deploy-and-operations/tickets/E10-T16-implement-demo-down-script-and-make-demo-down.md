@@ -7,10 +7,10 @@ size: "M"
 status: "todo"
 depends_on: ["E10-T6", "E10-T8", "E10-T9", "E10-T12", "E1-T12", "E5-T13"]
 arch_refs: ["deep-dive/04-1-key-flows.md#4.14 Flow 6", "deep-dive/06-interfaces-and-contracts.md#6.6 OUTBOX_DRAIN_TIMEOUT_MIN, VALKEY_INSTANCE_NAME", "ADR-020"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 237, "id": 6263649729, "url": "https://github.com/Keshav0375/FinAdvisor/issues/237"}
 branch: null
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-07"
 ---
 
 ## Summary

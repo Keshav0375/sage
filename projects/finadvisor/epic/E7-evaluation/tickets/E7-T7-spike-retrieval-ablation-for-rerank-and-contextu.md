@@ -7,7 +7,7 @@ size: "M"
 status: "todo"
 depends_on: ["E7-T6", "E7-T21", "E7-T23", "E7-T24", "E7-T27", "E3-T16", "E5-T14", "E6-T8", "E11-T17", "E11-T21", "E6-T22", "E4-T34"]
 arch_refs: ["decision-logs.md#adr-037", "decision-logs.md#adr-016", "decision-logs.md#adr-008", "decision-logs.md#adr-017", "decision-logs.md#adr-039", "deep-dive/02-quality-attributes.md#2.10", "deep-dive/06-interfaces-and-contracts.md#6.6"]
-issue: null
+issue: {"repo": "Keshav0375/FinAdvisor", "number": 187, "id": 6263563195, "url": "https://github.com/Keshav0375/FinAdvisor/issues/187"}
 branch: null
 pr: null
 updated: "2026-11-07"
