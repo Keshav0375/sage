@@ -14,6 +14,17 @@
       "repos": {
         "FinAdvisor": "~/Projects/FinAdvisor"
       }
+    },
+    "sentinel": {
+      "kind": "product",
+      "status": "active",
+      "summary": "Autonomous DevOps incident-response agent on Azure: Datadog alert to multi-agent diagnosis to a revert PR or escalation, with the PR as the human gate.",
+      "repos": {
+        "Sentinel": "~/Projects/Sentinel",
+        "Sentinel-deployment": "~/Projects/Sentinel-deployment",
+        "Sentinel-infra": "~/Projects/Sentinel-infra",
+        "sentinel-brain": "~/Projects/sentinel-brain"
+      }
     }
   },
   "github": {
