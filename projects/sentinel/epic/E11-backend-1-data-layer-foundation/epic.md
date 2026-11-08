@@ -2,7 +2,7 @@
 key: "E11"
 title: "Data layer foundation"
 phase: 3
-phase_name: "Backend (Phase 2 release)"
+phase_name: "Backend (MVP release)"
 repo: "Sentinel"
 status: "done"
 depends_on: ["E10"]
@@ -12,12 +12,12 @@ updated: "2026-11-08"
 ---
 
 ## Goal
-Phase-2 dependencies, the asyncpg pool, Alembic with the initial schema (3 tables + pgvector) and the seed migration.
+MVP dependencies, the asyncpg pool, Alembic with the initial schema (3 tables + pgvector) and the seed migration.
 
 Source: backend phase 1 · branch `dev/backend-phase-1-data-layer` · PR https://github.com/Keshav0375/Sentinel/pull/19 · signed 2026-10-12.
 
 ## Scope
-- E11-T1: Add Phase-2 deps (asyncpg, pgvector, alembic, langfuse)
+- E11-T1: Add MVP deps (asyncpg, pgvector, alembic, langfuse)
 - E11-T2: asyncpg pool infra/database.py
 - E11-T3: Alembic setup + 001_initial_schema
 - E11-T4: 002_seed_services migration

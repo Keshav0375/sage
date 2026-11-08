@@ -6,7 +6,7 @@ repo: "Sentinel"
 size: "S"
 status: "done"
 depends_on: ["E17-T1", "E15-T4", "E3-T1"]
-arch_refs: ["deep-dive/07-backend-hosting-and-ci.md#7.2", "deep-dive/07-backend-hosting-and-ci.md#7.3", "deep-dive/00-mvp-phase-1-and-the-pivot.md#0.4"]
+arch_refs: ["deep-dive/07-backend-hosting-and-ci.md#7.2", "deep-dive/07-backend-hosting-and-ci.md#7.3", "deep-dive/00-poc-and-the-pivot-to-mvp.md#0.4"]
 issue: {"repo": "Keshav0375/sentinel-brain", "number": 84, "id": 5695000908, "url": "https://github.com/Keshav0375/sentinel-brain/issues/84"}
 branch: "dev/backend-phase-7-container-and-k8s"
 pr: "https://github.com/Keshav0375/Sentinel/pull/26"

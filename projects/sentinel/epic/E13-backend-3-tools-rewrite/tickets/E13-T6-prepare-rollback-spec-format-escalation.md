@@ -14,7 +14,7 @@ updated: "2026-11-08"
 ---
 
 ## Summary
-Replace Phase-1 `draft_rollback_pr` (mock PR payload) with **output-only** tools — the
+Replace POC `draft_rollback_pr` (mock PR payload) with **output-only** tools — the
 
 ## Description
 Source: backend task 3.6 (`sentinel-brain/implementation/tasks/backend/phase-3-tools/task-6-remediation-and-escalation.md`).

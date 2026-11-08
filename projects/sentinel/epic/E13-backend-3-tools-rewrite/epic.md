@@ -2,7 +2,7 @@
 key: "E13"
 title: "Tools rewrite"
 phase: 3
-phase_name: "Backend (Phase 2 release)"
+phase_name: "Backend (MVP release)"
 repo: "Sentinel"
 status: "done"
 depends_on: ["E12"]
@@ -12,7 +12,7 @@ updated: "2026-11-08"
 ---
 
 ## Goal
-The six tools on real sources (Postgres, Datadog, GitHub) and removal of the Phase-1 comms and approval tools.
+The six tools on real sources (Postgres, Datadog, GitHub) and removal of the POC comms and approval tools.
 
 Source: backend phase 3 · branch `dev/backend-phase-3-tools` · PR https://github.com/Keshav0375/Sentinel/pull/21 · signed 2026-10-14.
 

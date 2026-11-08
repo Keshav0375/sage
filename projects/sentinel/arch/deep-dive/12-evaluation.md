@@ -13,7 +13,7 @@
   `claude-opus-4-1` when OpenAI is primary); a static check plus a runtime guard marks any run whose
   `models_used` contains the judge as `judge_conflict`. A judge failure is `judge_failed`. Both flags
   are stored and never aggregated. The judge has no fallback and is never cached.
-- History: the Phase-1 default judge was the triage model; the 2026-10-15 rule (judge = the other
+- History: the POC default judge was the triage model; the 2026-10-15 rule (judge = the other
   provider's `gpt-4o`) still self-graded because `gpt-4o` is the fallback model
   ([ADR-035](../decision-logs.md#adr-035)).
 

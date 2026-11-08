@@ -2,7 +2,7 @@
 
 > Part of [architecture](architecture.md) · deep-dive index: [deep-dive/README.md](deep-dive/README.md)
 
-The full flow of Sentinel Phase 2 in one picture. Each component node ends with the number of the
+The full flow of Sentinel MVP in one picture. Each component node ends with the number of the
 deep-dive file that holds its detail; the table below maps node, file and ADRs.
 
 ```mermaid

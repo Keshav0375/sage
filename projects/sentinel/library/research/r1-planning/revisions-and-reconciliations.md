@@ -1,4 +1,4 @@
-# r1: Phase-2 planning revisions and reconciliations
+# r1: MVP planning revisions and reconciliations
 
 Research note for sentinel. Source: `sentinel-brain/implementation/history.md` (change log, closed
 blockers, resolved R-items), `implementation/STATE.md`, `architecture/decisions.md`. Summarised; ids
@@ -8,10 +8,10 @@ redacted.
 
 | Rev | Date | What changed |
 |---|---|---|
-| (rounds) | 2026-06-29 to 07-12 | Phase-2 architecture written in the `Sentinel` repo on `planning/phase-2-e2e` (PRs #9-#13): three repos, agent loops, Postgres, Langfuse, AKS, the PR as the human gate |
+| (rounds) | 2026-06-29 to 07-12 | MVP architecture written in the `Sentinel` repo on `planning/phase-2-e2e` (PRs #9-#13): three repos, agent loops, Postgres, Langfuse, AKS, the PR as the human gate |
 | rev-5 | 2026-07-12 | Security and ground-truth overhaul: Entra-only Postgres, Key Vault rotation, backend Entra app and AKS workload identity, `ci_destroy_infra`, 30 scenario branches replace demo PRs, inbound Entra bearer. Several existing task bodies superseded and flagged |
 | rev-6 | 2026-07-26 | Build-loop repair: phases branch from `release-phase-2` with a `dev/` prefix; the branch-convention and source-guard checks accept it (previously every phase PR would have failed two checks) |
-| rev-7 | 2026-07-26 | Control plane split into `sentinel-brain`; code repos carry code and CI only; Phase-1 docs quarantined in an archive behind a hook and a permission deny rule; tracker commits straight to brain `main`; `reports/` added |
+| rev-7 | 2026-07-26 | Control plane split into `sentinel-brain`; code repos carry code and CI only; POC docs quarantined in an archive behind a hook and a permission deny rule; tracker commits straight to brain `main`; `reports/` added |
 | rev-8 | 2026-07-26 | Per-repo branch model (infra and deployment merge into their own `main`; backend keeps a release train); `planning/phase-2-e2e` retired (PR #14); build agents moved to Opus |
 | rev-9 | 2026-08-15 | Identity plane rebuilt on managed identities after discovering the subscription sits in a university tenant with no directory rights; region `canadacentral`; conflicts C1-C9 resolved before any code |
 | phases 5-6 | 2026-08-24 | Static estate replaced by a dynamic multi-deployment platform (14 new tasks) |

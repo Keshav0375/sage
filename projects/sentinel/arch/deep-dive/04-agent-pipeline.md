@@ -7,7 +7,7 @@ Built on the OpenAI Agents SDK (`openai-agents` 0.6.4) with LiteLLM models. Code
 ### 4.1 Pattern choice
 
 A linear chain (triage, analysis, resolution, judge) does not self-correct: a wrong hypothesis
-flows straight into remediation. Phase 2 combines three patterns
+flows straight into remediation. The MVP combines three patterns
 ([ADR-003](../decision-logs.md#adr-003)):
 - **Plan-execute.** The orchestrator plans before dispatching and branches on `signal_type`.
 - **Reflexion.** A self-critique after analysis loops back with guidance when confidence < 0.7.
@@ -56,13 +56,13 @@ flowchart TD
 | Agent | Job | Tools |
 |---|---|---|
 | `triage` | severity, service, duplicate check ("similar and within 2 h") | `get_service_metadata`, `search_past_incidents` |
-| `analysis` | hypothesis from logs and deploy data (merges Phase-1 log analyst + deploy correlator) | `fetch_logs`, `get_deploy_details` |
+| `analysis` | hypothesis from logs and deploy data (merges POC log analyst + deploy correlator) | `fetch_logs`, `get_deploy_details` |
 | `reflexion` | is the hypothesis well supported? confidence score | none |
 | `resolution` | rollback spec or escalation context | `prepare_rollback_spec`, `format_escalation` |
 | `reverification` | does the spec match the root cause? pass/fail | none |
 | `pr_content_generator` | revert PR title and body (text only; detects "done" claims) | none |
 
-The Phase-1 `comms` agent is deleted: GHA posts to Teams. The judge is not a pipeline agent; it runs
+The POC `comms` agent is deleted: GHA posts to Teams. The judge is not a pipeline agent; it runs
 in the eval pass ([12](12-evaluation.md)).
 
 ### 4.4 Tools

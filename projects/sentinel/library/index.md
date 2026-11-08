@@ -13,7 +13,7 @@ project). The code repos are linked, never copied. Licence "own" = Keshav's own 
 | S6 | Sentinel (backend, infra since phase 7, dashboard) | https://github.com/Keshav0375/Sentinel | code | 2026-11-08 | own | deep-dive 04-07, 09, 11, 12 |
 | S7 | Sentinel-deployment (target app, pipeline, scenario branches) | https://github.com/Keshav0375/Sentinel-deployment | code | 2026-11-08 | own | deep-dive/08 |
 | S8 | Sentinel-infra (Terraform, infra phases 1-6; read-only backup) | https://github.com/Keshav0375/Sentinel-infra | code | 2026-11-08 | own | deep-dive/09, 09-1 |
-| S9 | Sentinel PR #29: Phase 2 release | https://github.com/Keshav0375/Sentinel/pull/29 | PR | 2026-11-08 | own | epic/plan.md, deep-dive/07 |
+| S9 | Sentinel PR #29: MVP release | https://github.com/Keshav0375/Sentinel/pull/29 | PR | 2026-11-08 | own | epic/plan.md, deep-dive/07 |
 | S10 | Sentinel PR #32: infra phase 7, monorepo | https://github.com/Keshav0375/Sentinel/pull/32 | PR | 2026-11-08 | own | epic/E7-infra-7-monorepo |
 | S11 | Sentinel PR #33: backend phase 10, ops dashboard | https://github.com/Keshav0375/Sentinel/pull/33 | PR | 2026-11-08 | own | epic/E20-backend-10-ops-dashboard |
 | S12 | Sentinel PR #35: backend phase 11, memory hardening, eval, README | https://github.com/Keshav0375/Sentinel/pull/35 | PR | 2026-11-08 | own | epic/E21-backend-11-memory-hardening-and-eval |

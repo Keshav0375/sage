@@ -58,9 +58,9 @@ incident and scale workflows skip cleanly (PR #30); infra cloud jobs wait for `I
 
 ### 7.5 Branch model
 
-- During Phase 2, backend phases branched from `release-phase-2` and merged back into it; infra and
+- During the MVP build, backend phases branched from `release-phase-2` and merged back into it; infra and
   deployment phases merged straight into their own `main`.
 - 2026-10-25: `main` backed up as `main-backup`; `release-phase-2` merged into `main` with a merge
-  commit (PR #29); `release-phase-2` frozen as the Phase 2 record.
+  commit (PR #29); `release-phase-2` frozen as the MVP record.
 - After the release: work branches from `main` and PRs into `main`: `dev/<cat>-phase-<M>-*` for
   phase work, `fix/*` for out-of-phase repairs. `main` is protected (PR required).

@@ -3,8 +3,8 @@
 | Term | Meaning |
 |---|---|
 | `sentinel-brain` | the control plane repo: architecture, decisions, tracker, task specs, reports, agents and skills; no application code |
-| Phase 1 / MVP | the May 2026 local SQLite and synthetic-data prototype; replaced wholesale ([00](../arch/deep-dive/00-mvp-phase-1-and-the-pivot.md)) |
-| Phase 2 | the shipped system; released 2026-10-25 |
+| POC (proof of concept) | the May 2026 local SQLite and synthetic-data prototype; replaced wholesale ([00](../arch/deep-dive/00-poc-and-the-pivot-to-mvp.md)) |
+| MVP | the shipped system; released 2026-10-25 |
 | category | one code repo's track: infra, deployment, backend |
 | phase (source) | one branch + one PR in a code repo, e.g. backend phase 5; a Sage epic here |
 | task (source) | one PR-sized commit with tests; a Sage ticket here |
@@ -36,4 +36,4 @@
 | quality gate | `quality_gate.py`; green only on `VERDICT GREEN` from a full run |
 | wave | a layer of tasks with no dependencies between them, built in parallel |
 | ops ledger | the append-only `ops-ledger` branch behind the dashboard |
-| `release-phase-2` | the backend integration branch during Phase 2; frozen after the release |
+| `release-phase-2` | the backend integration branch during the MVP build; frozen after the release |

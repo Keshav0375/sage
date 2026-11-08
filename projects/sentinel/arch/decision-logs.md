@@ -40,14 +40,14 @@ GitHub Pages reads compacted snapshots. Observe-only, allow-listed data, summari
 **Rejected.** The Azure Postgres (destroyed with the estate); an external DB (vendor, secret, API).
 **Harder later.** Ledger growth; anything shown publicly must pass the allow-list.
 
-## ADR-042: Phase 2 release, post-release branch model, monorepo
+## ADR-042: MVP release, post-release branch model, monorepo
 
 **Status.** Accepted 2026-10-25 (owner).
 **Decision.** `main` backed up as `main-backup`; `release-phase-2` merged into `main` with a merge
 commit (PR #29) and frozen. New work branches from `main` (`dev/*` phases, `fix/*` repairs).
 `Sentinel-infra` comes into `Sentinel` as `infra/` with full history (infra phase 7); `Sentinel-deployment`
 stays separate because it is the monitored target and its revert PRs are the gate.
-**Supersedes.** The Phase-2 release-train branch model for `Sentinel`; ADR-039's "release-phase-2 as default branch".
+**Supersedes.** The MVP release-train branch model for `Sentinel`; ADR-039's "release-phase-2 as default branch".
 **Harder later.** The federated credentials must be re-bound to `Sentinel` by the owner before infra CI runs.
 
 ## ADR-041: Backend phase 9 contract (cleanup and end-to-end)
@@ -243,7 +243,7 @@ resources, not directory objects); two direct Postgres Entra admins replace the 
 
 **Status.** Accepted 2026-07-26 (owner, rev-7 and rev-8).
 **Decision.** Architecture, tracker, agents, skills and reports move out of `Sentinel` into
-`sentinel-brain`; code repos carry code and CI only; Phase-1 docs are quarantined in an archive behind
+`sentinel-brain`; code repos carry code and CI only; POC docs are quarantined in an archive behind
 a hook; tracker commits go straight to brain `main`; infra and deployment phases merge into their own
 `main`, the backend keeps a release train; build agents move to Opus.
 **Why.** Planning documents in a code repo were read as current and caused wrong builds.
