@@ -14,13 +14,13 @@ updated: "2026-11-08"
 ---
 
 ## Summary
-> **Amended 2026-10-10 (decision "Backend phase 1"):** seed exactly ONE row, `sentinel-watchtower` (team `sentinel`, tier `standard`, deps `[]`, metadata repo/platform, runbook = the revert-PR rollback procedure + pointer to `Sentinel-deployment/scenarios/README.md`, embedding at seed time). The Phase-1 acme-corp `service_map.json` is NOT seeded; it may only back test fixtures.
+> **Amended 2026-10-10 (decision "Backend phase 1"):** seed exactly ONE row, `sentinel-watchtower` (team `sentinel`, tier `standard`, deps `[]`, metadata repo/platform, runbook = the revert-PR rollback procedure + pointer to `Sentinel-deployment/scenarios/README.md`, embedding at seed time). The POC acme-corp `service_map.json` is NOT seeded; it may only back test fixtures.
 
 ## Description
 Source: backend task 1.4 (`sentinel-brain/implementation/tasks/backend/phase-1-data-layer/task-4-seed-services-migration.md`).
 
-Seed the `services` table (replaces Phase-1 `data/services/*.json` + `seed.py`). Source the
-service registry from the Phase-1 `service_map.json` content, mapped to columns: name, team,
+Seed the `services` table (replaces POC `data/services/*.json` + `seed.py`). Source the
+service registry from the POC `service_map.json` content, mapped to columns: name, team,
 tier, dependencies (JSONB), runbook (markdown), metadata, embedding(384).
 
 **Files created:** `alembic/versions/002_seed_services.py`

@@ -33,5 +33,5 @@ automatic fallback on rate-limit/timeout/API error (§4.7).
 - [x] Fake mode returns canned outputs, no network.
 
 ## Outcome
-Built the provider router (role map by `sentinel_primary_provider`, Anthropic/OpenAI only; judge on the non-primary provider with a guard; `call_with_fallback` returns `model_used`), `SENTINEL_FAKE_LLM` deterministic Model, R14 token bridge (generation spans to Langfuse, per-incident totals, 50K warning), and `set_trace_processors` with only our processors (`trace_include_sensitive_data=False`). `PUT /api/config` removed. Interim: agents keep Phase-1 shape until 4.2.
+Built the provider router (role map by `sentinel_primary_provider`, Anthropic/OpenAI only; judge on the non-primary provider with a guard; `call_with_fallback` returns `model_used`), `SENTINEL_FAKE_LLM` deterministic Model, R14 token bridge (generation spans to Langfuse, per-incident totals, 50K warning), and `set_trace_processors` with only our processors (`trace_include_sensitive_data=False`). `PUT /api/config` removed. Interim: agents keep POC shape until 4.2.
 Commits (Sentinel): db70a9f, a0f4458, c37f70d, 75e113d. Per decision 2026-10-15 + amendment 52a5f7f.

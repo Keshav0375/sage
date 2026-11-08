@@ -5,7 +5,7 @@
 One component or concern per file. Ported from `sentinel-brain/architecture/` (binding there);
 section numbers here are this project's own. Agents read by section.
 
-- [00-mvp-phase-1-and-the-pivot.md](00-mvp-phase-1-and-the-pivot.md): the Phase-1 MVP, why it was replaced, what Phase 2 changed, the migration order.
+- [00-poc-and-the-pivot-to-mvp.md](00-poc-and-the-pivot-to-mvp.md): the POC (proof of concept), why it was replaced, what the MVP changed, the migration order.
 - [01-context-and-goals.md](01-context-and-goals.md): problem, motivation, goals, owner constraints, non-goals.
 - [02-quality-attributes.md](02-quality-attributes.md): cost, cold start, agent caps, reliability, eval and delivery targets.
 - [03-system-context-and-boundaries.md](03-system-context-and-boundaries.md): the repos and control plane, the end-to-end flow, trust boundaries, external services.

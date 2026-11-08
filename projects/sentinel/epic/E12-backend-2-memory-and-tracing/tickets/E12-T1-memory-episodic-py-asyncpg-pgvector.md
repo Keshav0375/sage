@@ -6,7 +6,7 @@ repo: "Sentinel"
 size: "S"
 status: "done"
 depends_on: ["E11-T2", "E12-T3"]
-arch_refs: ["deep-dive/05-data-and-memory.md#5.1", "deep-dive/00-mvp-phase-1-and-the-pivot.md#0.4"]
+arch_refs: ["deep-dive/05-data-and-memory.md#5.1", "deep-dive/00-poc-and-the-pivot-to-mvp.md#0.4"]
 issue: {"repo": "Keshav0375/sentinel-brain", "number": 55, "id": 5694996543, "url": "https://github.com/Keshav0375/sentinel-brain/issues/55"}
 branch: "dev/backend-phase-2-memory-and-tracing"
 pr: "https://github.com/Keshav0375/Sentinel/pull/20"

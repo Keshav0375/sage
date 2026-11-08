@@ -9,7 +9,7 @@
   fail-closed pre-destroy backup, data-only restore), in-cluster eval (`ci_eval.yml`), the README.
 - 2026-10-28 Infra phase 7 (monorepo, PR #32, dabf404) and backend phase 10 (ops dashboard, PR #33,
   ef6ccf0) merged.
-- 2026-10-25 PHASE 2 RELEASED: `release-phase-2` merged into `main` (PR #29, merge commit);
+- 2026-10-25 MVP RELEASED: `release-phase-2` merged into `main` (PR #29, merge commit);
   `main-backup` keeps the old `main`; `release-phase-2` frozen. 18/18 tracked phases signed,
   71/72 tracked tasks verified (infra 6.8 Pause/Resume shipped but never executed).
 - NOT RUN LIVE: the end-to-end demo, real LLM calls, the live eval, the backend on AKS, Pause/Resume,
@@ -33,6 +33,8 @@
   `gha-plan` once; add infra 7 and backend 10-11 to the tracker with `/new-ticket`.
 
 ## Open decisions
+- Production readiness (multi-tenancy, HA, TLS, GitHub App, SSO, SLOs, DR, model governance) is a roadmap, not
+  built: [arch/path-to-production.md](arch/path-to-production.md).
 - Should the four repos stay public? Subscription and tenant ids appear in old docs and run logs
   (neither authenticates anything).
 

@@ -34,7 +34,7 @@ isolated asyncio task per incident, returns 202 immediately.
 
 ## Outcome
 Built `POST /webhooks/incident` (backend commit ac630a0, plus 360496a `fix(deps): certifi 2026.10.19` for unrelated advisory PYSEC-2026-4320). 25 files, ~41 tests.
-- Replaces the Phase-1 `/webhooks/alert`, AlertDeduplicator and AlertAck.
+- Replaces the POC `/webhooks/alert`, AlertDeduplicator and AlertAck.
 - `IncidentPayload` requires signal_type/correlation_id/title; tags as object or comma string; severity/alert_id/service default "unknown".
 - Duplicate correlation_id -> 202 with the original incident_id, status `duplicate`.
 - One task per incident with its own STM; fast path pinned to `context.pr_details.sha` (7-char prefix rule); on rollback_proposed `deployments.incident_id` is backfilled.

@@ -33,5 +33,5 @@ enrich with GitHub API (PR/commit) — this is the deploy↔incident correlation
 ## Outcome
 Built (commit 453e1d2, `refactor: get_deploy_details reads deployments from Postgres with optional GitHub PR enrichment`): get_deploy_details is the single LLM-visible name (list_recent_deploys retired). Read-only Postgres query (window/limit bounded, failed rows included, no incident_id backfill). Optional read-only GitHub PR enrichment: GET only, repo from services.metadata.repo, capped at 5, failure does not fail the tool, token never output. ToolDeps drops scenario and gains pool; main.py no longer loads scenarios in the pipeline; eval runner takes pool.
 Files: tools/deploy_checker.py, models/tools.py, tools/registry.py, agents/deploy_correlator.py, prompts/deploy_correlator.txt, main.py, eval/runner.py, dashboard/index.html, tests.
-Follow-up: DeployCorrelation output still uses the Phase-1 Deploy model (phase 4).
+Follow-up: DeployCorrelation output still uses the POC Deploy model (phase 4).
 Tests/gate: 36 tests incl. pipeline's verbatim INSERT; gate VERDICT GREEN (7 ran, 1667 tests).

@@ -1,20 +1,20 @@
 # sentinel: architecture
 
-Binding (as ported). Top-down view of Sentinel Phase 2: an autonomous DevOps incident-response agent
+Binding (as ported). Top-down view of Sentinel MVP (built as Phase 2): an autonomous DevOps incident-response agent
 across three code repos, where Datadog detects a failure, a multi-agent pipeline diagnoses it, and the
 result is a revert PR or an escalation that a human reviews. It restates what the deep-dive files and
 ADRs decide and adds nothing. Map: [architecture-diagram.md](architecture-diagram.md). Detail:
 [deep-dive/README.md](deep-dive/README.md). Decisions: [decision-logs.md](decision-logs.md)
-(ADR-001 to ADR-045). Status: [state.md](state.md). Build order: [../epic/plan.md](../epic/plan.md).
+(ADR-001 to ADR-045). Status: [state.md](state.md). Beyond the MVP: [path-to-production.md](path-to-production.md). Build order: [../epic/plan.md](../epic/plan.md).
 Source of truth: the `sentinel-brain` control plane (`architecture/`, `implementation/`, `reports/`).
 
 ## 1. Goal and Keshav's decisions
 Automate the mechanical first half of incident response (notice, correlate to a deploy, read the logs,
 decide rollback vs escalate, write it up) and stop before acting. Credibility comes from real ground
 truth (a real app with 30 labelled failure branches), a human gate by construction, no stored cloud
-secrets, self-correcting agents with caps in code, and near-zero idle cost. Phase 1 (a local SQLite,
-synthetic-data MVP) was replaced wholesale.
-Detail: [00](deep-dive/00-mvp-phase-1-and-the-pivot.md), [01](deep-dive/01-context-and-goals.md). ADRs: ADR-001, ADR-018, ADR-022.
+secrets, self-correcting agents with caps in code, and near-zero idle cost. The POC (a local SQLite,
+synthetic-data proof of concept) was replaced wholesale by the MVP.
+Detail: [00](deep-dive/00-poc-and-the-pivot-to-mvp.md), [01](deep-dive/01-context-and-goals.md). ADRs: ADR-001, ADR-018, ADR-022.
 
 ## 2. Quality targets
 Infra about $0 at idle, LLM about $5-12/month (+ Redis B0 about $13 while up); cold start 3-7 min +
@@ -93,7 +93,12 @@ a read-only eval runner, run in-cluster under the backend's workload identity.
 Detail: [11](deep-dive/11-observability-and-ops-dashboard.md), [12](deep-dive/12-evaluation.md). ADRs: ADR-009, ADR-037, ADR-043, ADR-045.
 
 ## 13. Delivery
-21 phases (infra 1-7, deployment 1-3, backend 1-11), 83 tasks, all merged by 2026-10-30; the Phase 2
+21 build phases (infra 1-7, deployment 1-3, backend 1-11), 83 tasks, all merged by 2026-10-30; the MVP
 release merged `release-phase-2` into `main` on 2026-10-25 (PR #29). Built by the `/implement-phase`
 agent DAG under per-phase human sign-off. Nothing has run live end to end yet.
 Detail: [../epic/plan.md](../epic/plan.md), [15](deep-dive/15-open-questions.md). Stack: [14](deep-dive/14-tech-stack.md).
+
+## 14. Path to production
+The MVP is not production. Multi-tenancy, HA, TLS and private networking, a GitHub App, dashboard SSO,
+CODEOWNERS and change windows, SLOs, spend caps, retention, DR drills and eval gates are listed, and
+not built, in [path-to-production.md](path-to-production.md).

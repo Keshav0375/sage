@@ -2,7 +2,7 @@
 key: "E17"
 title: "Container and K8s"
 phase: 3
-phase_name: "Backend (Phase 2 release)"
+phase_name: "Backend (MVP release)"
 repo: "Sentinel"
 status: "done"
 depends_on: ["E16"]

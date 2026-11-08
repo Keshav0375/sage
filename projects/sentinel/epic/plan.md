@@ -11,7 +11,7 @@ High level. Epics and tickets live in `epic/<E>-<slug>/` (epic.md and tickets/).
 |---|---|---|---|
 | 1. Infra | E1-E6 | infra phases 1-6, `Sentinel-infra` PRs #1-#15, 2026-08-15 to 2026-09-13 | A Terraform estate on free grants with an OIDC/Entra identity plane, rebuilt as a dynamic platform: apply, destroy and pause whole deployments from workflow inputs, proven live from an empty subscription |
 | 2. Deployment | E8-E10 | deployment phases 1-3, `Sentinel-deployment` PRs #1-#4, 2026-10-04 to 2026-10-07 | The `sentinel-watchtower` target app, its deploy pipeline with an Entra-token record stage, the Datadog triggers and 30 deterministic scenario branches |
-| 3. Backend (Phase 2 release) | E11-E19 | backend phases 1-9, `Sentinel` PRs #19-#28 into `release-phase-2`, 2026-10-12 to 2026-10-25; release PR #29 | Postgres memory, Langfuse, six tools, the orchestrator and six agents, the API with Entra auth, eval, container and K8s, CI/CD, Phase-1 cleanup and an offline e2e |
+| 3. Backend (MVP release) | E11-E19 | backend phases 1-9, `Sentinel` PRs #19-#28 into `release-phase-2`, 2026-10-12 to 2026-10-25; release PR #29 | Postgres memory, Langfuse, six tools, the orchestrator and six agents, the API with Entra auth, eval, container and K8s, CI/CD, POC cleanup and an offline e2e |
 | 4. Post-release | E7, E20, E21 | infra phase 7, backend phases 10-11, `Sentinel` PRs #32, #33, #35, 2026-10-25 to 2026-10-30 | The monorepo, the public ops dashboard, memory hardening, in-cluster eval and the README |
 
 **Epic order (acyclic).** Infra first so the other repos build on real, provisioned ground truth:
@@ -31,14 +31,14 @@ flowchart LR
 
 | Date | Milestone |
 |---|---|
-| 2026-05-10 to 05-24 | Phase-1 MVP built (`Sentinel` PRs #1-#8) |
-| 2026-06-29 to 07-26 | Phase-2 planning rounds up to rev-8 (`Sentinel` PRs #9-#14); control plane split into `sentinel-brain` |
+| 2026-05-10 to 05-24 | POC built (`Sentinel` PRs #1-#8) |
+| 2026-06-29 to 07-26 | MVP planning rounds up to rev-8 (`Sentinel` PRs #9-#14); control plane split into `sentinel-brain` |
 | 2026-08-15 | Infra phase 1 signed; rev-9 identity plane, two tenants |
 | 2026-08-24 to 08-25 | Infra phases 3-5; the static estate replaced by the dynamic platform |
 | 2026-09-13 | Infra category complete |
 | 2026-10-07 | Deployment category complete |
 | 2026-10-12 to 10-25 | Backend phases 1-9 |
-| 2026-10-25 | Phase 2 release (PR #29); infra phase 7 monorepo (PR #32) |
+| 2026-10-25 | MVP release (PR #29); infra phase 7 monorepo (PR #32) |
 | 2026-10-28 | Backend phase 10, ops dashboard (PR #33) |
 | 2026-10-30 | Backend phase 11, memory hardening and in-cluster eval (PR #35) |
 
@@ -48,7 +48,7 @@ The build was driven from `sentinel-brain` (no app code) by Claude Code agents, 
 with Keshav signing off every phase. Rules that applied to every agent (the "ground rules"):
 architecture is law and a silent spec halts and asks; an open reconciliation item (R-item) is a
 decision the owner owes and is never defaulted; no backend tool modifies external state; never open
-the Phase-1 archive; no AI attribution in any commit, PR or merge; green means `VERDICT GREEN` from a
+the POC archive; no AI attribution in any commit, PR or merge; green means `VERDICT GREEN` from a
 full gate run; the backend must boot after dependency changes; never put planning docs in code repos;
 the board is a mirror.
 
