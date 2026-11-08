@@ -61,6 +61,9 @@ projects/
 
 Example: [projects/finadvisor](projects/finadvisor), a multi-tenant compliance RAG assistant for
 financial advisors (US, EU, UK), with 38 ADRs, real-source research and 203 tickets.
+[projects/sentinel](projects/sentinel) is a built one: an autonomous DevOps incident-response agent on
+Azure (Datadog alert to multi-agent diagnosis to a revert PR that a human reviews), ported from its own
+control plane with 45 ADRs, 21 epics and 83 tickets, all merged.
 
 ## Repository
 
