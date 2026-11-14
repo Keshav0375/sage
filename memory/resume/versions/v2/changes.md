@@ -35,9 +35,17 @@ Titles, employers, dates and every number are unchanged unless a fact id says ot
 |---|---|
 | fact_gate | PASS (script + semantic; 2 blocks fixed) |
 | lint | PASS |
-| ats | PASS |
+| ats | FAIL (skills row clipped: 'Observability (LangFuse)') — found by the new ATS check after judging |
 | keyword_coverage | 0.753 |
 | pages | 2 |
+
+## Blind judge
+
+Score **7.1** / 10 → LOOP (round job: Senior Applied AI Engineer @ Bloomberg)
+
+- Seniority: ~2 yrs vs Bachelor's+5 / Master's+4 for Senior
+- No model training / SFT / RLHF, no code-gen over structured data, no publications
+- Harness, compaction, Kong bullets have scope but no results; skills list cut off ('O')
 
 ## Jobs used
 

@@ -1,0 +1,38 @@
+{
+  "score": 7.1,
+  "verdict": "LOOP",
+  "job_id": "151023ad6588a66e",
+  "job_title": "Senior Applied AI Engineer",
+  "job_company": "Bloomberg",
+  "criteria": {
+    "Requirement coverage": 2.2,
+    "Evidence strength": 1.9,
+    "Relevance and order": 1.2,
+    "Clarity / 6-second scan": 1.1,
+    "Seniority fit": 0.3,
+    "ATS readability": 0.4
+  },
+  "reasons": [
+    "Seniority: ~2 yrs vs Bachelor's+5 / Master's+4 for Senior",
+    "No model training / SFT / RLHF, no code-gen over structured data, no publications",
+    "Harness, compaction, Kong bullets have scope but no results; skills list cut off ('O')"
+  ],
+  "fixes": [
+    "Numbers on harness adoption (blocked: no fact)",
+    "Bring FinAdvisor financial RAG + eval higher",
+    "Trim skills, fix truncation; clearer Kinaxis tenure"
+  ],
+  "holdout_score": 7.0,
+  "holdout_id": "a30716e346cc1cf4",
+  "holdout_title": "AI Engineer - Applied AI, Data & LLM Systems (247Labs)",
+  "holdout_reasons": [
+    "~2 yrs vs 4+",
+    "Data engineering (ETL, ingestion) not shown at work",
+    "Best RAG/eval evidence in projects; Education above Experience"
+  ],
+  "holdout_fixes": [
+    "Production data-ingestion bullet (blocked: no fact)",
+    "Move Education below Experience and Projects",
+    "Show FastAPI/REST work in a job bullet"
+  ]
+}
