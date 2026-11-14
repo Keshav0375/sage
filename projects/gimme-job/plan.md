@@ -97,7 +97,12 @@ plugins/gimme-job/
       greenhouse.py lever.py ashby.py workday.py smartrecruiters.py workable.py ...
     scan.py               run enabled providers in parallel (thread pool, per-host limits) → jobs.jsonl
     composio_ingest.py    normalise Composio JSON (LinkedIn, JSearch, Glassdoor, Indeed, Google Jobs) → jobs.jsonl
+    inbox_scan.py  linkedin_import.py  hn_scan.py  telegram_scan.py  sitemap_scan.py  browser_scan.py
     discover_ats.py       careers URL → ATS type + slug (fills companies.yaml)
+    discover_companies.py  company_funded.py  audit_portals.py  dead_boards.py  robots_check.py
+    extract/              fetch_jd · html_to_text · title · location · salary · years · skills · education ·
+                          work_auth · employment · dates · contacts · benefits · company · fingerprint ·
+                          detect_reposts · closing_soon · jd_archive
     dedupe.py             source id, then fingerprint(title, company, city) → unique jobs
     liveness.py           HTTP status + "no longer accepting" patterns → live / dead / unknown
     rank.py               deterministic pre-score (section 7) → top K for LLM evaluation
@@ -238,12 +243,18 @@ Job = {id, source, url, title, company, location, workplace, employment, posted_
 ```
 Rules: stdlib HTTP only; robots.txt check; per-host crawl delay; retry 4× with backoff; recorded-fixture test per provider; knob filters applied in `scan.py` after fetch.
 
-### Waves (target 150+ over time; each provider = one small ticket)
-| Wave | Providers | Why first |
-|---|---|---|
-| W1 (E2) | Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Recruitee, BambooHR, Teamtailor, Personio, BuiltIn, **Job Bank Canada**, Hacker News (Who is hiring), RemoteOK, Remotive, WeWorkRemotely, Himalayas, Jobicy, Getro (VC job boards) | Covers most Canadian AI / tech employers and VC portfolios |
-| W2 | iCIMS, Taleo, SuccessFactors, Oracle Cloud, Phenom, Eightfold, Jobvite, Dover, Gem, Rippling, Breezy, JazzHR, Pinpoint, Comeet, Polymer, UltiPro, Paylocity, ADP, Avature, Pageup | Big enterprise ATSs (banks, telcos, Kinaxis-type firms) |
-| W3 | Regional / niche boards on demand | Only when knobs target those markets |
+### Full catalogue: **157 sources** → see [`providers.md`](providers.md)
+**145 in-house scanners** (every active career-ops provider, ported) + **11 Composio API sources** + **Gmail alerts**.
+
+| Wave | Count | Default | What |
+|---|---|---|---|
+| W1 | 20 | on | Core Canada + global tech (Greenhouse, Lever, Ashby, Workday, BuiltIn, Job Bank Canada, Dayforce, HN, Getro …) |
+| W2 | 25 | on | Enterprise ATS (iCIMS, Taleo, SuccessFactors, Oracle, Phenom, Eightfold, UltiPro, ADP …) |
+| W3 | 23 | on | AI / startup / remote boards + big-tech direct (agentic-jobs, a16z, Amazon, Google, Apple …) |
+| W4 | 25 | off | Small / mid ATS (HiBob, Deel, Homerun, Zoho Recruit …) |
+| W5 | 35 | off | Regional boards (EU, LatAm, Asia, Africa) |
+| W6 | 17 | off | Single-company non-tech, public sector, K-12 |
+Waves are knobs. All 145 get built; only W1–W3 run by default (68 scanners), so scans stay fast and on-target.
 
 ### API sources (Composio `job_search`, via source-worker) — filters verified 2026-11-14
 - **LinkedIn search** `JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS`: `query`, `location`, `date_posted` (day/week/month), `workplace_types` (remote;hybrid;onSite), `employment_types` (contractor;fulltime;parttime;intern;temporary), `experience_levels` (intern;entry;associate;midSenior;director), `organization_ids`, `token`. Detail: `..._LINKEDIN_GET_JOB` (`id`).
@@ -253,6 +264,57 @@ Rules: stdlib HTTP only; robots.txt check; per-host crawl delay; retry 4× with 
 - **Indeed** `..._JOBS_API_INDEED_SEARCH_JOBS`: `query`, `location`, `country_code`, `radius`, `radius_type`, `sort_type`, `token`.
 - **Google Jobs** `..._GOOGLE_JOBS_LIST_JOBS` (+ BY_TECHNOLOGY_STACK, ENTRY_LEVEL, REMOTE, VISA_SPONSORSHIP, …).
 - **Reddit** `REDDIT_SEARCH_ACROSS_SUBREDDITS`, `REDDIT_RETRIEVE_POST_COMMENTS` (signals, not jobs).
+
+### All scan modes (ported from career-ops mechanisms, our own Python)
+| Script | Mode | What it does |
+|---|---|---|
+| `scan.py --waves` | Provider scan | Runs enabled scanners from `providers.md` in parallel, per-host limits |
+| `scan.py --full-ats` | Full ATS sweep | Every company in `companies.yaml`, all its open roles (career-ops `scan-ats-full`) |
+| `scan.py --company <name>` | One company | All roles at one employer (direct careers page or its ATS) |
+| `scan.py --url <url>` | One job | Paste a job link → fetch, extract, score |
+| `scan.py --search` | Web search fallback | `site:` queries over boards when no feed exists (stale-aware) |
+| `composio_ingest.py` | API scan | LinkedIn, JSearch, Glassdoor, Indeed, Google Jobs, ZipRecruiter, Bing, Xing, Remote jobs, Daily Intl |
+| `inbox_scan.py` | Inbox scan | Gmail LinkedIn / Indeed / Glassdoor alert emails → job URLs; `.eml` / `.mbox` drop folder too |
+| `linkedin_import.py` | Export import | LinkedIn saved-jobs / data-export CSV → job URLs (no scraping) |
+| `hn_scan.py` | Thread scan | HN "Who is hiring" monthly thread, comment-level parse (company, role, location, remote, visa) |
+| `telegram_scan.py` | Channel scan | Public job channels via `t.me/s/<channel>` |
+| `sitemap_scan.py` | Sitemap scan | Careers sitemap.xml for employers with no API |
+| `browser_scan.py` | JS pages | page-worker + Playwright for JS-only career sites (read only) |
+
+### Discovery (find new employers and boards)
+| Script | What it does |
+|---|---|
+| `discover_ats.py` | careers URL → ATS type + tenant slug (Greenhouse / Lever / Ashby / Workday / …) |
+| `discover_companies.py` | new employers from scan results, HN, VC boards (Getro, a16z, Consider) → add to `companies.yaml` |
+| `company_funded.py` | recent funding news (Exa) → companies likely hiring |
+| `audit_portals.py` | checks every tracked careers URL still resolves; flags moved ATS |
+| `dead_boards.py` | marks boards that stopped returning jobs; auto-disables after N empty scans |
+| `robots_check.py` | robots.txt + crawl delay per host, cached |
+
+### Extraction (job page → clean structured job)
+| Script | Output field(s) |
+|---|---|
+| `fetch_jd.py` | full JD text from URL (HTTP first, page-worker fallback), archived by hash |
+| `html_to_text.py` | clean text from HTML (entities, lists, headings kept) |
+| `extract_title.py` / `title_keywords.py` | normalised title, level (junior / mid / senior / staff), family (AI eng, ML eng, platform, FDE) |
+| `extract_location.py` | city, province / state, country, `workplace` (remote / hybrid / onsite), remote region limits |
+| `extract_salary.py` | min, max, currency, period (year / hour), base vs total |
+| `extract_years.py` | years asked (min, max), "or equivalent" flag |
+| `extract_skills.py` | skills mapped to `skills-taxonomy.yaml` (required vs nice-to-have) |
+| `extract_education.py` | degree asked, "or equivalent experience" flag |
+| `extract_work_auth.py` | sponsorship offered / refused, clearance (e.g. Reliability Status), citizenship rules |
+| `extract_employment.py` | full-time / contract / intern / temp, contract length |
+| `extract_dates.py` | posted date, closing date ("closes Nov 23") |
+| `extract_contacts.py` | recruiter / hiring manager names and public emails in the JD (for referral list) |
+| `extract_benefits.py` | benefits, bonus, equity mentions |
+| `extract_company.py` | company name, size, industry, HQ (from JD + ATS metadata) |
+| `fingerprint.py` | listing fingerprint (title + company + city + text hash) for de-dupe |
+| `detect_reposts.py` | same role reposted (new id, same fingerprint) → "ghost job" signal |
+| `liveness.py` | open / closed / unknown (HTTP status, "no longer accepting", ATS state) |
+| `closing_soon.py` | jobs closing within N days → bumped in ranking |
+| `jd_archive.py` | keeps the JD text even after the post is taken down |
+
+`extract-worker` (Haiku) is used **only** where rules can't decide (messy free text). Rules first, model second, cached by hash.
 
 ### Other MCPs
 | Use | MCP | Phase |
@@ -377,7 +439,23 @@ Each ticket: files, acceptance criteria (AC), depends_on. Tests run with `python
 
 ### E2 — Scan (in-house providers)
 | E2-T1 | `_base.py`, `_http.py` (stdlib, robots, delay, retry), `_registry.py`, `scan.py` | fixture provider → normalised Job rows | E0-T3 |
-| E2-T2…T20 | One ticket per W1 provider (Greenhouse … Getro), fixture test each | provider returns ≥ 1 normalised job from fixture; live smoke optional | E2-T1 |
+| E2-T2…T6 | W1 scanners, 5 tickets of 4 (families from `providers.md`) | each returns ≥ 1 normalised job from fixture | E2-T1 |
+| E2-T7…T11 | W2 scanners, 5 tickets of 5 | same | E2-T1 |
+| E2-T12…T16 | W3 scanners, 5 tickets of 4–5 | same | E2-T1 |
+| E2-T17…T21 | W4 scanners, 5 tickets of 5 | same | E2-T1 |
+| E2-T22…T28 | W5 scanners, 7 tickets of 5 | same | E2-T1 |
+| E2-T29…T32 | W6 scanners, 4 tickets of 4–5 | same | E2-T1 |
+| E2-T33 | Spike: GC Jobs, Talent.com, Eluta.ca public feeds | add or reject each, with reason | E2-T1 |
+| E2-T34 | Coverage test: registry has 145 scanners, each with a fixture test | `test_registry_count == 145` | E2-T2…T32 |
+| E2-T35 | Scan modes: `--full-ats`, `--company`, `--url`, `--search` | each mode returns normalised jobs from fixtures | E2-T1 |
+| E2-T36 | `inbox_scan.py` (Gmail + `.eml`/`.mbox`) + `linkedin_import.py` (CSV) | fixture email / CSV → job URLs | E2-T1 |
+| E2-T37 | `hn_scan.py` comment parser + `telegram_scan.py` + `sitemap_scan.py` | fixture thread → company, role, location, remote, visa | E2-T1 |
+| E2-T38 | `browser_scan.py` + page-worker (Playwright, read only) | JS fixture page → JD text | E0-T6 |
+| E2-T39 | Discovery: `discover_companies.py`, `company_funded.py`, `audit_portals.py`, `dead_boards.py`, `robots_check.py` | new company added; dead board auto-disabled after N empty scans | E2-T21 |
+| E2-T40 | `fetch_jd.py` + `html_to_text.py` + `jd_archive.py` | URL → clean text, archived by hash | E2-T1 |
+| E2-T41 | Extractors: title, location, salary, years, education, employment, dates | fixture JDs → exact fields | E2-T40 |
+| E2-T42 | Extractors: skills (taxonomy), work auth, contacts, benefits, company | fixture JDs → exact fields | E2-T40, E3-T1 |
+| E2-T43 | `fingerprint.py` + `detect_reposts.py` + `closing_soon.py` | repost flagged; closing-soon bumped | E2-T24 |
 | E2-T21 | `discover_ats.py` + seed `companies.yaml` (Canadian AI / tech list) | 20 careers URLs → ATS + slug | E2-T1 |
 | E2-T22 | `composio_ingest.py` + `source-worker` for LinkedIn / JSearch / Glassdoor / Indeed / Google Jobs, concurrency 3, 429 backoff | 30 LinkedIn rows ingested; ledger shows ok/failed | E0-T4, E0-T6 |
 | E2-T23 | `mail-worker` (Gmail alerts → URLs), `signal-worker` (Reddit + HN) | alert email fixture → URLs | E0-T6 |
@@ -392,7 +470,6 @@ Each ticket: files, acceptance criteria (AC), depends_on. Tests run with `python
 | E3-T5 | `evidence-worker` (sage projects + GitHub → fact candidates) | new facts carry a proof link | E1-T6 |
 | E3-T6 | `gap-analyst` → `gaps.md` (wording / skill gap / blocked by facts) | each gap cites job ids and fact ids | E3-T4, E3-T5 |
 | E3-T7 | `trend.py` market snapshot | snapshot with counts + delta | E3-T1 |
-
 ### E4 — Rewrite and gates
 | E4-T1 | `resume-writer` (Edit on one .tex only) + `writer-lead` | change plan → edited v{n} tex | E1-T5, E3-T6 |
 | E4-T2 | `fact-checker` with the honesty table (section 5) | invented / rounded-up number → BLOCK | E1-T6 |
