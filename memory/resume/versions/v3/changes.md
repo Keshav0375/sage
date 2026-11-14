@@ -31,6 +31,14 @@ Titles, employers, dates and every number are unchanged unless a fact id says ot
 | keyword_coverage | 0.753 |
 | pages | 2 |
 
+## Blind judge
+
+Score **6.8** / 10 → STOP — blocked by facts (best version) (round job: AI Engineer, Innovation @ MNP)
+
+- 5+ yrs asked vs ~2
+- Azure AI Foundry / Document Intelligence not in facts
+- No document-processing pipeline in facts
+
 ## Jobs used
 
 - Selected: —

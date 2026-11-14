@@ -1,0 +1,39 @@
+{
+  "score": 6.8,
+  "verdict": "STOP — blocked by facts (best version)",
+  "job_id": "b5729698d052fcba",
+  "job_title": "AI Engineer, Innovation",
+  "job_company": "MNP",
+  "criteria": {
+    "Requirement coverage": 1.9,
+    "Evidence strength": 2.0,
+    "Relevance and order": 1.2,
+    "Clarity / 6-second scan": 1.1,
+    "Seniority fit": 0.3,
+    "ATS readability": 0.3
+  },
+  "reasons": [
+    "5+ yrs asked vs ~2",
+    "Azure AI Foundry / Document Intelligence not in facts",
+    "No document-processing pipeline in facts"
+  ],
+  "fixes": [
+    "Azure AI Foundry work (no fact)",
+    "Document ingestion bullet (no fact)",
+    "Move eval/guardrail results into work bullets with numbers (no numbers in facts)"
+  ],
+  "holdout_score": 7.7,
+  "holdout_id": "b7886a49f0543311",
+  "holdout_title": "AI Engineer, Trust & Evaluation (Equinix) — same job as v1 holdout: 7.0 → 7.7",
+  "holdout_reasons": [
+    "No eval statistics / judge-vs-human agreement",
+    "Eval work mostly in projects; Kinaxis eval wording has no metrics",
+    "Bullets lead with orchestration, not evaluation"
+  ],
+  "holdout_fixes": [
+    "Eval statistics bullet (no fact)",
+    "Quantify Kinaxis eval work (no fact)",
+    "Lead roles with trust/eval bullets"
+  ],
+  "stop_reason": "All remaining judge asks need facts not in facts.json (years, eval statistics, red-teaming, dataset sizes, fine-tuning, ETL, Document Intelligence). Loop rule: blocked by facts → keep best version."
+}

@@ -54,7 +54,8 @@ def card_jobs(rd: Path) -> str:
     lv = f.get("liveness", {})
     rows = ["### 📥 Card 2 — Jobs found", "",
             f"**{f.get('found', 0)}** found → **{f.get('unique', 0)}** unique → **{f.get('after_filters', 0)}** after knob filters → "
-            f"**{f.get('kept', 0)}** live (dead {lv.get('dead', 0)}, unknown {lv.get('unknown', 0)}) → "
+            (f"**{f.get('kept', 0)}** kept (liveness not checked) → " if lv.get("skipped") else
+             f"**{f.get('kept', 0)}** live (dead {lv.get('dead', 0)}, unknown {lv.get('unknown', 0)}) → ") +
             f"**{len(r.get('top_k', []))}** pre-ranked for A–H", ""]
     if f.get("dropped"):
         rows.append("Dropped: " + ", ".join(f"{k} {v}" for k, v in f["dropped"].items()))
