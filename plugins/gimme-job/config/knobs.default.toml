@@ -1,0 +1,138 @@
+# gimme-job knobs — defaults. Override order: this file → preset → memory/resume/knobs.toml → CLI flags.
+# `/gimme-job:knobs show` prints the effective value of every knob and where it came from.
+# Every key here is documented in knobs.schema.json.
+
+[profile]
+target_titles = ["AI Engineer", "Applied AI Engineer", "Agentic AI Engineer", "LLM Engineer", "AI Platform Engineer", "Forward Deployed Engineer", "AI Developer", "Software Engineer, AI"]
+exclude_titles = ["Principal", "Director", "Manager", "Head of", "VP", "Data Scientist", "Sales", "Account Executive", "Recruiter"]
+years_experience = 2
+work_auth = "PGWP"
+needs_sponsorship = false
+min_base = 95000
+currency = "CAD"
+
+[search]
+keywords = ["AI Engineer", "Applied AI Engineer", "Agentic AI", "LLM Engineer"]
+locations = ["Ottawa, Ontario, Canada", "Toronto, Ontario, Canada", "Canada"]
+countries = ["CA"]
+remote_regions = ["Canada"]
+date_posted = "week"                 # day | week | month
+workplace = ["remote", "hybrid", "onsite"]
+employment = ["fulltime", "contract"]
+seniority = ["entry", "associate"]   # intern | entry | associate | midSenior | director
+experience_buckets = ["0-2", "2-5"]
+exclude_agencies = true
+include_companies = []
+exclude_companies = []
+must_have_any = ["LLM", "agent", "agentic", "RAG", "MCP", "GenAI", "generative AI", "large language"]
+must_not_have = []
+
+[sources.ats_scanners]
+enabled = true
+waves = ["W1", "W2", "W3"]
+max_jobs_per_target = 300
+workers = 8
+
+[sources.linkedin_search]
+enabled = true
+max_results = 30
+get_details_top = 15
+
+[sources.linkedin_active_jobs]
+enabled = false
+limit = 100
+time_frame = "7d"
+
+[sources.jsearch]
+enabled = true
+num_pages = 2
+country = "ca"
+
+[sources.glassdoor]
+enabled = true
+
+[sources.indeed]
+enabled = false
+country_code = "CA"
+
+[sources.google_jobs]
+enabled = false
+
+[sources.ziprecruiter]
+enabled = false
+
+[sources.bing]
+enabled = false
+
+[sources.xing]
+enabled = false
+
+[sources.remote_jobs]
+enabled = false
+
+[sources.daily_international]
+enabled = false
+
+[sources.gmail_alerts]
+enabled = true
+query = "from:(jobalerts-noreply@linkedin.com OR alert@indeed.com OR noreply@glassdoor.com) newer_than:14d"
+
+[sources.reddit]
+enabled = true
+subreddits = ["cscareerquestionsCAD", "MachineLearningJobs", "LangChain", "ITManagers"]
+time_filter = "month"
+
+[sources.hackernews]
+enabled = true
+
+[ranking]
+pre_rank_top_k = 12
+select_top_n = 5
+select_min = 4.0
+fresh_days = 30
+
+[ranking.weights]
+title = 20
+skills = 30
+years = 15
+fit = 10
+pay = 10
+fresh = 10
+tier = 5
+
+[loop]
+pass_score = 8.5
+holdout = true
+max_iterations = 4
+plateau_rounds = 2
+seed = "auto"
+
+[resume]
+data_root = "memory/resume"
+max_pages = 2
+min_keyword_coverage = 0.70
+
+[resume.lint]
+max_tools_per_bullet = 3
+require_number = true
+max_lines = 2
+chars_per_line = 115
+ban = [" \\& ", "Startup-trained"]
+
+[budget]
+max_usd_per_run = 0.50
+max_composio_calls = 80
+concurrency = 3
+retry_attempts = 4
+
+[models]
+main = "opus"
+coordinator = "sonnet"
+reasoner = "sonnet"
+worker = "haiku"
+judge = "opus"
+
+[privacy]
+block_patterns = ["\\(\\d{3}\\)\\s*\\d{3}-\\d{4}", "[A-Za-z0-9._%+-]+@gmail\\.com"]
+block_extensions = [".pdf"]
+allow_paths = ["plugins/gimme-job/tests/"]

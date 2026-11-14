@@ -1,0 +1,90 @@
+# Tracked companies for tenant scanners (scan.py --full-ats / --company / --waves).
+# Fill `ats` + `slug` with `discover.py ats <careers_url>` — never guess them.
+# tier: 0-3 (3 = top target; feeds the 'tier' ranking weight). enabled = false to skip.
+#
+# Seeded with Canadian AI / tech employers seen in the 2026-11-14 market review. careers_url left empty
+# until discover.py confirms it, so a first scan never hits a wrong tenant.
+
+[[company]]
+name = "Cohere"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 3
+
+[[company]]
+name = "Thomson Reuters"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 3
+
+[[company]]
+name = "Kinaxis"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 3
+
+[[company]]
+name = "Shopify"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 3
+
+[[company]]
+name = "Wealthsimple"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 2
+
+[[company]]
+name = "Ada"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 2
+
+[[company]]
+name = "MindBridge AI"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 2
+
+[[company]]
+name = "First National Financial"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 2
+
+[[company]]
+name = "Softchoice"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 1
+
+[[company]]
+name = "CGI"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 1
+
+[[company]]
+name = "Ericsson"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 1
+
+[[company]]
+name = "WSP"
+careers_url = ""
+ats = ""
+slug = ""
+tier = 1

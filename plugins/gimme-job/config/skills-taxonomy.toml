@@ -1,0 +1,457 @@
+# Canonical skill names and aliases (case-insensitive, word-boundary match).
+# Used by extract/skills.py, rank.py, keyword_score.py, trend.py. Add a skill: copy one block.
+
+[skills.python]
+name = "Python"
+group = "language"
+aliases = ["python", "python3"]
+
+[skills.typescript]
+name = "TypeScript"
+group = "language"
+aliases = ["typescript", "ts"]
+
+[skills.javascript]
+name = "JavaScript"
+group = "language"
+aliases = ["javascript", "js", "node.js", "nodejs", "node"]
+
+[skills.csharp]
+name = "C#"
+group = "language"
+aliases = ["c#", "csharp", ".net", "dotnet"]
+
+[skills.java]
+name = "Java"
+group = "language"
+aliases = ["java"]
+
+[skills.go]
+name = "Go"
+group = "language"
+aliases = ["golang", "go"]
+
+[skills.rust]
+name = "Rust"
+group = "language"
+aliases = ["rust"]
+
+[skills.sql]
+name = "SQL"
+group = "language"
+aliases = ["sql"]
+
+[skills.bash]
+name = "Bash"
+group = "language"
+aliases = ["bash", "shell scripting"]
+
+[skills.lua]
+name = "Lua"
+group = "language"
+aliases = ["lua"]
+
+[skills.cpp]
+name = "C++"
+group = "language"
+aliases = ["c++", "cpp"]
+
+[skills.scala]
+name = "Scala"
+group = "language"
+aliases = ["scala"]
+
+[skills.kotlin]
+name = "Kotlin"
+group = "language"
+aliases = ["kotlin"]
+
+[skills.llm]
+name = "LLM"
+group = "llm"
+aliases = ["llm", "llms", "large language model", "large language models"]
+
+[skills.rag]
+name = "RAG"
+group = "llm"
+aliases = ["rag", "retrieval augmented generation", "retrieval-augmented generation"]
+
+[skills.prompt_engineering]
+name = "Prompt Engineering"
+group = "llm"
+aliases = ["prompt engineering", "prompt design"]
+
+[skills.fine_tuning]
+name = "Fine-tuning"
+group = "llm"
+aliases = ["fine-tuning", "fine tuning", "finetuning", "lora", "peft", "rlhf", "dpo"]
+
+[skills.embeddings]
+name = "Embeddings"
+group = "llm"
+aliases = ["embeddings", "embedding models"]
+
+[skills.vector_search]
+name = "Vector Search"
+group = "llm"
+aliases = ["vector search", "vector database", "vector databases", "vector store", "vector stores", "pgvector", "pinecone", "weaviate", "qdrant", "milvus", "chroma", "faiss"]
+
+[skills.llm_evaluation]
+name = "LLM Evaluation"
+group = "llm"
+aliases = ["evals", "evaluation framework", "evaluation frameworks", "llm evaluation", "llm-as-a-judge", "llm as a judge", "llm judge", "eval harness", "golden set"]
+
+[skills.guardrails]
+name = "Guardrails"
+group = "llm"
+aliases = ["guardrails", "content safety", "prompt injection", "hallucination mitigation", "responsible ai", "pii redaction", "pii protection"]
+
+[skills.openai_api]
+name = "OpenAI API"
+group = "llm"
+aliases = ["openai", "gpt-4", "gpt-4o", "azure openai"]
+
+[skills.anthropic_api]
+name = "Anthropic API"
+group = "llm"
+aliases = ["anthropic", "claude"]
+
+[skills.gemini]
+name = "Gemini"
+group = "llm"
+aliases = ["gemini", "vertex ai"]
+
+[skills.bedrock]
+name = "Bedrock"
+group = "llm"
+aliases = ["bedrock", "amazon bedrock", "bedrock agentcore"]
+
+[skills.azure_ai_foundry]
+name = "Azure AI Foundry"
+group = "llm"
+aliases = ["azure ai foundry", "ai foundry"]
+
+[skills.azure_ai_search]
+name = "Azure AI Search"
+group = "llm"
+aliases = ["azure ai search", "cognitive search"]
+
+[skills.document_processing]
+name = "Document Processing"
+group = "llm"
+aliases = ["document intelligence", "document processing", "ocr", "document extraction", "unstructured data"]
+
+[skills.multimodal]
+name = "Multimodal"
+group = "llm"
+aliases = ["multimodal", "vision language", "vlm"]
+
+[skills.speech]
+name = "Speech"
+group = "llm"
+aliases = ["speech-to-text", "stt", "tts", "text-to-speech", "voice agents", "asr"]
+
+[skills.ai_agents]
+name = "AI Agents"
+group = "agents"
+aliases = ["agentic", "agentic ai", "ai agents", "llm agents", "autonomous agents", "agent workflows", "agentic workflows"]
+
+[skills.multi_agent]
+name = "Multi-agent"
+group = "agents"
+aliases = ["multi-agent", "multi agent", "orchestrator", "sub-agent", "subagent", "agent orchestration"]
+
+[skills.tool_calling]
+name = "Tool Calling"
+group = "agents"
+aliases = ["tool calling", "function calling", "tool use"]
+
+[skills.mcp]
+name = "MCP"
+group = "agents"
+aliases = ["mcp", "model context protocol"]
+
+[skills.langgraph]
+name = "LangGraph"
+group = "agents"
+aliases = ["langgraph"]
+
+[skills.langchain]
+name = "LangChain"
+group = "agents"
+aliases = ["langchain"]
+
+[skills.llamaindex]
+name = "LlamaIndex"
+group = "agents"
+aliases = ["llamaindex", "llama index"]
+
+[skills.crewai]
+name = "CrewAI"
+group = "agents"
+aliases = ["crewai", "crew ai"]
+
+[skills.autogen]
+name = "AutoGen"
+group = "agents"
+aliases = ["autogen"]
+
+[skills.openai_agents_sdk]
+name = "OpenAI Agents SDK"
+group = "agents"
+aliases = ["openai agents sdk", "agents sdk"]
+
+[skills.claude_agent_sdk]
+name = "Claude Agent SDK"
+group = "agents"
+aliases = ["claude agent sdk"]
+
+[skills.microsoft_agent_framework]
+name = "Microsoft Agent Framework"
+group = "agents"
+aliases = ["microsoft agent framework", "semantic kernel"]
+
+[skills.google_adk]
+name = "Google ADK"
+group = "agents"
+aliases = ["google adk", "agent development kit"]
+
+[skills.strands]
+name = "Strands"
+group = "agents"
+aliases = ["strands", "strands agents"]
+
+[skills.llmops]
+name = "LLMOps"
+group = "llmops"
+aliases = ["llmops", "llm ops", "mlops"]
+
+[skills.observability]
+name = "Observability"
+group = "llmops"
+aliases = ["observability", "opentelemetry", "otel", "tracing", "langsmith", "langfuse", "braintrust", "datadog", "arize", "phoenix"]
+
+[skills.llm_gateway]
+name = "LLM Gateway"
+group = "llmops"
+aliases = ["llm gateway", "ai gateway", "kong", "litellm", "model routing", "fallback routing"]
+
+[skills.prompt_versioning]
+name = "Prompt Versioning"
+group = "llmops"
+aliases = ["prompt versioning", "prompt registry", "prompt management"]
+
+[skills.cost_optimization]
+name = "Cost Optimization"
+group = "llmops"
+aliases = ["cost optimization", "token cost", "cost and latency"]
+
+[skills.ci_cd]
+name = "CI/CD"
+group = "llmops"
+aliases = ["ci/cd", "ci cd", "continuous integration", "github actions", "gitlab ci", "jenkins", "argocd", "argo cd"]
+
+[skills.aws]
+name = "AWS"
+group = "cloud"
+aliases = ["aws", "amazon web services", "ecs", "lambda", "sagemaker", "s3"]
+
+[skills.azure]
+name = "Azure"
+group = "cloud"
+aliases = ["azure"]
+
+[skills.gcp]
+name = "GCP"
+group = "cloud"
+aliases = ["gcp", "google cloud", "cloud run", "bigquery"]
+
+[skills.kubernetes]
+name = "Kubernetes"
+group = "cloud"
+aliases = ["kubernetes", "k8s", "aks", "eks", "gke", "helm"]
+
+[skills.docker]
+name = "Docker"
+group = "cloud"
+aliases = ["docker", "containers", "containerization"]
+
+[skills.terraform]
+name = "Terraform"
+group = "cloud"
+aliases = ["terraform", "infrastructure as code", "iac", "pulumi", "bicep"]
+
+[skills.linux]
+name = "Linux"
+group = "cloud"
+aliases = ["linux"]
+
+[skills.serverless]
+name = "Serverless"
+group = "cloud"
+aliases = ["serverless", "azure functions", "cloud functions"]
+
+[skills.postgresql]
+name = "PostgreSQL"
+group = "data"
+aliases = ["postgresql", "postgres"]
+
+[skills.redis]
+name = "Redis"
+group = "data"
+aliases = ["redis"]
+
+[skills.mongodb]
+name = "MongoDB"
+group = "data"
+aliases = ["mongodb", "mongo"]
+
+[skills.snowflake]
+name = "Snowflake"
+group = "data"
+aliases = ["snowflake"]
+
+[skills.databricks]
+name = "Databricks"
+group = "data"
+aliases = ["databricks", "spark", "pyspark"]
+
+[skills.kafka]
+name = "Kafka"
+group = "data"
+aliases = ["kafka", "event streaming"]
+
+[skills.etl]
+name = "ETL"
+group = "data"
+aliases = ["etl", "data pipelines", "data pipeline"]
+
+[skills.knowledge_graphs]
+name = "Knowledge Graphs"
+group = "data"
+aliases = ["knowledge graph", "knowledge graphs", "neo4j", "sparql", "cypher"]
+
+[skills.pytorch]
+name = "PyTorch"
+group = "ml"
+aliases = ["pytorch"]
+
+[skills.tensorflow]
+name = "TensorFlow"
+group = "ml"
+aliases = ["tensorflow", "keras"]
+
+[skills.scikit_learn]
+name = "scikit-learn"
+group = "ml"
+aliases = ["scikit-learn", "sklearn"]
+
+[skills.machine_learning]
+name = "Machine Learning"
+group = "ml"
+aliases = ["machine learning", "ml fundamentals"]
+
+[skills.deep_learning]
+name = "Deep Learning"
+group = "ml"
+aliases = ["deep learning", "neural networks", "transformers"]
+
+[skills.nlp]
+name = "NLP"
+group = "ml"
+aliases = ["nlp", "natural language processing", "entity extraction", "entity resolution", "ner"]
+
+[skills.computer_vision]
+name = "Computer Vision"
+group = "ml"
+aliases = ["computer vision", "cv models"]
+
+[skills.recommender_systems]
+name = "Recommender Systems"
+group = "ml"
+aliases = ["recommender systems", "recommendation systems"]
+
+[skills.hugging_face]
+name = "Hugging Face"
+group = "ml"
+aliases = ["hugging face", "huggingface"]
+
+[skills.fastapi]
+name = "FastAPI"
+group = "backend"
+aliases = ["fastapi"]
+
+[skills.django]
+name = "Django"
+group = "backend"
+aliases = ["django"]
+
+[skills.flask]
+name = "Flask"
+group = "backend"
+aliases = ["flask"]
+
+[skills.asp_net_core]
+name = "ASP.NET Core"
+group = "backend"
+aliases = ["asp.net core", "asp.net"]
+
+[skills.react]
+name = "React"
+group = "backend"
+aliases = ["react", "react.js", "nextjs", "next.js"]
+
+[skills.rest_apis]
+name = "REST APIs"
+group = "backend"
+aliases = ["rest api", "rest apis", "restful", "api development"]
+
+[skills.graphql]
+name = "GraphQL"
+group = "backend"
+aliases = ["graphql"]
+
+[skills.microservices]
+name = "Microservices"
+group = "backend"
+aliases = ["microservices", "microservice architecture"]
+
+[skills.pydantic]
+name = "Pydantic"
+group = "backend"
+aliases = ["pydantic"]
+
+[skills.testing]
+name = "Testing"
+group = "backend"
+aliases = ["pytest", "unit testing", "integration testing", "playwright"]
+
+[skills.oauth_oidc]
+name = "OAuth/OIDC"
+group = "security"
+aliases = ["oauth", "oauth2", "oidc", "openid connect", "entra id", "azure ad"]
+
+[skills.secrets_management]
+name = "Secrets Management"
+group = "security"
+aliases = ["vault", "hashicorp vault", "key vault", "secrets manager"]
+
+[skills.security_clearance]
+name = "Security Clearance"
+group = "security"
+aliases = ["reliability status", "secret clearance", "security clearance"]
+
+[skills.communication]
+name = "Communication"
+group = "soft"
+aliases = ["communication skills", "stakeholder", "stakeholders", "client-facing", "customer-facing"]
+
+[skills.mentoring]
+name = "Mentoring"
+group = "soft"
+aliases = ["mentoring", "mentor", "code reviews", "design reviews"]
+
+[skills.product_judgment]
+name = "Product Judgment"
+group = "soft"
+aliases = ["product judgment", "product sense", "product thinking"]

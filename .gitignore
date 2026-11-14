@@ -19,3 +19,13 @@ node_modules/
 .env.*
 *.pem
 *.key
+
+# Personal resume files: never publish (contact info)
+memory/resume/*.pdf
+memory/resume/out/
+memory/resume/contact.tex
+memory/resume/**/*.pdf
+memory/resume/runs/
+memory/resume/market/jobs-index.jsonl
+memory/resume/**/build.log
+memory/resume/**/resume.cls

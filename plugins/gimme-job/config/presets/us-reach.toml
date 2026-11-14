@@ -1,0 +1,18 @@
+# Reach: US remote roles open to Canada. Off by default; turn on with --preset us-reach.
+[search]
+locations = ["United States"]
+countries = ["US"]
+workplace = ["remote"]
+remote_regions = ["US", "North America", "Americas"]
+seniority = ["entry", "associate", "midSenior"]
+
+[profile]
+currency = "USD"
+min_base = 110000
+
+[sources.jsearch]
+country = "us"
+
+[sources.indeed]
+enabled = true
+country_code = "US"
