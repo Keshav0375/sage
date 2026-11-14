@@ -29,3 +29,4 @@ memory/resume/runs/
 memory/resume/market/jobs-index.jsonl
 memory/resume/**/build.log
 memory/resume/**/resume.cls
+memory/resume/**/*.log
