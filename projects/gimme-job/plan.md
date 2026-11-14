@@ -1,6 +1,10 @@
 # gimme-job — plan (v2, for builder)
 
-> Status: **ready to split into tickets** (2026-11-14).
+> Status: **built** on branch `plugin/gimme-job` (2026-11-14) — see `plugins/gimme-job/README.md`.
+> Build notes vs this plan: knobs/config use **TOML** (stdlib `tomllib`) instead of YAML, to stay dependency-free;
+> discovery scripts are one CLI (`discover.py ats|companies|audit|dead|robots`); HN / Telegram / sitemap / JS pages run as
+> scanners (`scan.py --provider ...`) and the page-worker; inbox + LinkedIn CSV import share `inbox_scan.py`.
+> Previous status: ready to split into tickets (2026-11-14).
 > Next: `/researcher:plan gimme-job` turns section 12 into `epic/E*/tickets/`, then `/builder:build gimme-job E0`.
 > Everything is built in-house. No runtime dependency on career-ops or any other job tool.
 > We study career-ops (MIT, v1.40.0) for *mechanisms* and write our own code. Credit it in the README.

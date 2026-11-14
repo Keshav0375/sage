@@ -1,0 +1,599 @@
+{
+  "type": "object",
+  "properties": {
+    "profile": {
+      "type": "object",
+      "properties": {
+        "target_titles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Titles to look for (title match in pre-score)"
+        },
+        "exclude_titles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hard drop when title contains any"
+        },
+        "years_experience": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50,
+          "description": "Your years; compared with years asked"
+        },
+        "work_auth": {
+          "type": "string",
+          "description": "Shown on resume / form answers"
+        },
+        "needs_sponsorship": {
+          "type": "boolean",
+          "description": "True drops jobs that refuse sponsorship"
+        },
+        "min_base": {
+          "type": "integer",
+          "description": "Minimum base pay for full pay score",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "search": {
+      "type": "object",
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "countries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "remote_regions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "date_posted": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month"
+          ],
+          "description": "Max posting age"
+        },
+        "workplace": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "remote",
+              "hybrid",
+              "onsite"
+            ]
+          }
+        },
+        "employment": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "fulltime",
+              "contract",
+              "parttime",
+              "intern",
+              "temporary"
+            ]
+          }
+        },
+        "seniority": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "intern",
+              "entry",
+              "associate",
+              "midSenior",
+              "director"
+            ]
+          }
+        },
+        "experience_buckets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "0-2",
+              "2-5",
+              "5-10",
+              "10+"
+            ]
+          }
+        },
+        "exclude_agencies": {
+          "type": "boolean"
+        },
+        "include_companies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude_companies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_have_any": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Job text must contain at least one"
+        },
+        "must_not_have": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hard drop when job text contains any"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "type": "object",
+      "properties": {
+        "ats_scanners": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "waves": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "W1",
+                  "W2",
+                  "W3",
+                  "W4",
+                  "W5",
+                  "W6"
+                ]
+              },
+              "description": "Scanner waves to run (see projects/gimme-job/providers.md)"
+            },
+            "max_jobs_per_target": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "workers": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "linkedin_search": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "max_results": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "get_details_top": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "linkedin_active_jobs": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "time_frame": {
+              "type": "string",
+              "enum": [
+                "1h",
+                "24h",
+                "7d",
+                "6m"
+              ]
+            }
+          }
+        },
+        "jsearch": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "num_pages": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "country": {
+              "type": "string"
+            }
+          }
+        },
+        "glassdoor": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "indeed": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "country_code": {
+              "type": "string"
+            }
+          }
+        },
+        "google_jobs": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "ziprecruiter": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "bing": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "xing": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "remote_jobs": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "daily_international": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "gmail_alerts": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "query": {
+              "type": "string"
+            }
+          }
+        },
+        "reddit": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "subreddits": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "time_filter": {
+              "type": "string",
+              "enum": [
+                "hour",
+                "day",
+                "week",
+                "month",
+                "year",
+                "all"
+              ]
+            }
+          }
+        },
+        "hackernews": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "ranking": {
+      "type": "object",
+      "properties": {
+        "pre_rank_top_k": {
+          "type": "integer",
+          "description": "Jobs sent to A-H evaluation after free pre-score",
+          "minimum": 0
+        },
+        "select_top_n": {
+          "type": "integer",
+          "description": "Jobs selected for the resume loop",
+          "minimum": 0
+        },
+        "select_min": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Minimum A-H score (1-5) to be selected"
+        },
+        "fresh_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "weights": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skills": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "years": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fit": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pay": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fresh": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tier": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "loop": {
+      "type": "object",
+      "properties": {
+        "pass_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Blind judge pass mark (0-10)"
+        },
+        "holdout": {
+          "type": "boolean"
+        },
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Max resume versions per run"
+        },
+        "plateau_rounds": {
+          "type": "integer",
+          "description": "Stop after this many rounds with no gain",
+          "minimum": 0
+        },
+        "seed": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "resume": {
+      "type": "object",
+      "properties": {
+        "data_root": {
+          "type": "string"
+        },
+        "max_pages": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "min_keyword_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lint": {
+          "type": "object",
+          "properties": {
+            "max_tools_per_bullet": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "require_number": {
+              "type": "boolean"
+            },
+            "max_lines": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "chars_per_line": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ban": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "max_usd_per_run": {
+          "type": "number",
+          "description": "Hard stop for paid API calls",
+          "minimum": 0
+        },
+        "max_composio_calls": {
+          "type": "integer",
+          "description": "Hard stop for Composio calls per run",
+          "minimum": 0
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "retry_attempts": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "models": {
+      "type": "object",
+      "properties": {
+        "main": {
+          "type": "string",
+          "enum": [
+            "opus",
+            "sonnet",
+            "haiku"
+          ]
+        },
+        "coordinator": {
+          "type": "string",
+          "enum": [
+            "opus",
+            "sonnet",
+            "haiku"
+          ]
+        },
+        "reasoner": {
+          "type": "string",
+          "enum": [
+            "opus",
+            "sonnet",
+            "haiku"
+          ]
+        },
+        "worker": {
+          "type": "string",
+          "enum": [
+            "opus",
+            "sonnet",
+            "haiku"
+          ]
+        },
+        "judge": {
+          "type": "string",
+          "enum": [
+            "opus",
+            "sonnet",
+            "haiku"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "block_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "block_extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allow_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "gimme-job knobs"
+}

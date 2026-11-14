@@ -1,0 +1,8 @@
+# Ottawa first, junior/intermediate AI roles, onsite/hybrid OK.
+[search]
+locations = ["Ottawa, Ontario, Canada", "Gatineau, Quebec, Canada"]
+seniority = ["entry", "associate"]
+experience_buckets = ["0-2", "2-5"]
+
+[ranking]
+select_top_n = 5

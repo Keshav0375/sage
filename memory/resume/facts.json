@@ -1,0 +1,341 @@
+{
+  "_doc": "Fact bank for gimme-job. The writer may only reword these; fact-checker blocks anything else. Add facts with a source + proof.",
+  "skills": [
+    ".NET 8",
+    "ASP.NET Core",
+    "AWS",
+    "ArgoCD",
+    "Azure",
+    "Azure AI Search",
+    "Azure OpenAI",
+    "Bash",
+    "C#",
+    "CI/CD Eval Gates",
+    "Cosmos DB",
+    "Datadog",
+    "Django",
+    "Docker",
+    "FastAPI",
+    "GCP",
+    "GitHub Actions",
+    "Helm",
+    "Java",
+    "JavaScript",
+    "Kong AI Gateway",
+    "Kubernetes",
+    "LLM Evaluation",
+    "LangChain",
+    "LangGraph",
+    "Linux",
+    "LiteLLM",
+    "Lua",
+    "MCP",
+    "Microsoft Agent Framework",
+    "MongoDB",
+    "Node.js",
+    "OpenAI Agents SDK",
+    "OpenTelemetry",
+    "PostgreSQL",
+    "Prompt Versioning",
+    "Pydantic",
+    "Python",
+    "RAG",
+    "ReAct",
+    "React",
+    "Redis",
+    "SQL",
+    "SQLite",
+    "Snowflake",
+    "Terraform",
+    "TypeScript",
+    "Vertex AI"
+  ],
+  "locked": {
+    "titles": [
+      "Developer, Intelligence & Automation",
+      "Developer, Machine Learning",
+      "Software Engineer, AI Backend Technologies"
+    ],
+    "employers": [
+      "Kinaxis",
+      "Slideoo AI",
+      "University of Windsor",
+      "GNDEC"
+    ],
+    "dates": [
+      "Aug 2026 - Present",
+      "Jan 2026 - Aug 2026",
+      "Jan 2024 - Dec 2024",
+      "Jan 2025 - Aug 2026",
+      "Sept 2020 - Sept 2024"
+    ]
+  },
+  "allowed_numbers": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "0.15",
+    "4pt",
+    "8"
+  ],
+  "facts": [
+    {
+      "id": "F001",
+      "claim": "AI Engineer with 2 years building production agentic AI, RAG, and LLM gateway systems on Azure, GCP, and AWS. Startup-trained to own systems from architecture to production; now designs reusable agent platforms built around cost, safety, and team adoption.",
+      "metrics": [
+        "2"
+      ],
+      "section": "summary",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F002",
+      "claim": "Built an orchestrator-subagent SDLC system turning Jira epics into research, plans, code, and Playwright tests over GitHub, Bitbucket, Atlassian, and Microsoft MCP; tiered model routing cut token cost 48% at task success.",
+      "metrics": [
+        "48%"
+      ],
+      "section": "exp:kinaxis-intern",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F003",
+      "claim": "Generalized it into a team shared agentic harness and plugin marketplace with custom orchestration, lazy tool loading, declarative sandbox policies, and eval-driven tuning, porting legacy code to a UI/UX-driven web client.",
+      "metrics": [],
+      "section": "exp:kinaxis-intern",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F004",
+      "claim": "Built rolling LLM conversation compaction for MAF agents in C#/.NET, replacing 100-message truncation with summarization triggered past 120K tokens, bounding context while retaining history in unbounded sessions.",
+      "metrics": [
+        "100",
+        "120k"
+      ],
+      "section": "exp:kinaxis-intern",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F005",
+      "claim": "Hardened Kong AI Gateway as the control layer for LLM traffic with AI Prompt Guard allow/deny policies, content-safety guardrails, and token-based rate limiting, plus custom Lua plugins for per-user token metrics.",
+      "metrics": [],
+      "section": "exp:kinaxis-intern",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F006",
+      "claim": "Debugged a failing GCP Cloud SQL backup pipeline (0/21 exports) across GitHub Actions CI/CD, Kubernetes, ArgoCD, and IAM; added alerting cutting failure detection from 30 min to ~15s, fixed in Terraform.",
+      "metrics": [
+        "0",
+        "15s",
+        "21",
+        "30min"
+      ],
+      "section": "exp:kinaxis-coop",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F007",
+      "claim": "Built zero-downtime credential rotation for a multi-tenant Kong Konnect gateway with Azure Event Grid, HashiCorp Vault, and OIDC auth using dual-write grace periods, keeping tenant traffic live during rollovers.",
+      "metrics": [],
+      "section": "exp:kinaxis-coop",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F008",
+      "claim": "Engineered a self-hosted MCP server and Python/pytest framework that validates OAuth2 authorization across 5 integration scenarios in CI/CD, replacing a paid vendor with deterministic, reproducible tests.",
+      "metrics": [
+        "5"
+      ],
+      "section": "exp:kinaxis-coop",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F009",
+      "claim": "Decommissioned a retired data source from 3 RAG agents on Azure AI Search and GCP Vertex AI, removing ETL loaders and Helm/ArgoCD Kubernetes templates, with regression tests protecting retrieval quality.",
+      "metrics": [
+        "3"
+      ],
+      "section": "exp:kinaxis-coop",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F010",
+      "claim": "Owned the end-to-end architecture of Slideoo's AI document-generation backend with agent orchestration, LLM tool calling, & reasoning on Azure and AWS, scaling to 10x traffic & 2,000+ users while cutting cloud spend 35%.",
+      "metrics": [
+        "10x",
+        "2000+",
+        "35%"
+      ],
+      "section": "exp:slideoo",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F011",
+      "claim": "Rebuilt the multimodal LLM pipeline for PowerPoint generation by profiling bottlenecks and re-engineering prompt orchestration, cutting generation latency 77% (3+ min to 40s) & directly lifting subscription growth 43%.",
+      "metrics": [
+        "3+",
+        "40s",
+        "43%",
+        "77%"
+      ],
+      "section": "exp:slideoo",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F012",
+      "claim": "Benchmarked competing LLM candidates for production by analyzing evaluation results and datasets across generation, surfacing quality regressions early & driving data-backed prompt-tuning decisions as traffic scaled.",
+      "metrics": [],
+      "section": "exp:slideoo",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F013",
+      "claim": "Led a team of interns and partnered with company leadership to shape the AI document-generation product roadmap, driving sprint planning, reviews, & technical mentorship to ship features from prototype to production.",
+      "metrics": [],
+      "section": "exp:slideoo",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F014",
+      "claim": "Built a multi-agent incident responder: Datadog alerts flow through Azure Event Grid and Functions into GitHub Actions, which run agents on AKS (Claude, GPT fallback) to find the bad deploy and draft a revert PR.",
+      "metrics": [],
+      "section": "proj:sentinel",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F015",
+      "claim": "Kept a human in control: read-only agent tools, a revert PR as the only rollback, and code-enforced limits of 20 tool calls, 2 reflexion loops, and a 0.7 confidence gate per incident.",
+      "metrics": [
+        "0.7",
+        "2",
+        "20"
+      ],
+      "section": "proj:sentinel",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F016",
+      "claim": "Secured the FastAPI pod with Entra ID bearer tokens, app roles, workload identity, and Key Vault, so no Kubernetes Secret exists; CI signs in with GitHub OIDC and no client secrets.",
+      "metrics": [],
+      "section": "proj:sentinel",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F017",
+      "claim": "Cut idle cost with Terraform, one ARM64 node, and pod scale-to-zero; PRs must pass 2,693 pytest tests, strict pyright, tfsec, and gitleaks, and agent runs are scored on 30 test scenarios.",
+      "metrics": [
+        "2693",
+        "30"
+      ],
+      "section": "proj:sentinel",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F018",
+      "claim": "Built a wealth-advisor RAG agent (Anthropic SDK, FastAPI, 4 tools) over pgvector; PostgreSQL row-level security enforces tier and jurisdiction access, with zero-leakage tests for 4 user roles.",
+      "metrics": [
+        "4"
+      ],
+      "section": "proj:finadvisor",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F019",
+      "claim": "Added two-pass PII redaction (GCP DLP, regex fallback): one pass cleans documents before Voyage AI embedding, one checks each LLM answer, keeping personal data out of retrieval and responses.",
+      "metrics": [],
+      "section": "proj:finadvisor",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F020",
+      "claim": "Routed LLM calls through Kong (60 req/min per advisor, request logging) and LiteLLM fallback from Claude to GPT-4o to Gemini, with a circuit breaker that pulls a model for 5 min after 3 failures.",
+      "metrics": [
+        "3",
+        "5min",
+        "60"
+      ],
+      "section": "proj:finadvisor",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F021",
+      "claim": "Gated merges with a GitHub Actions eval: an LLM judge scores 50 golden Q&A pairs and fails the PR below 95% citation accuracy or 90% faithfulness; Terraform defines the GCP Cloud Run stack.",
+      "metrics": [
+        "50",
+        "90%",
+        "95%"
+      ],
+      "section": "proj:finadvisor",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F022",
+      "claim": "WinHacks 2025: built an AI scheduling assistant for student productivity and demoed it to 200+ attendees.",
+      "metrics": [
+        "200+"
+      ],
+      "section": "hackathon",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F023",
+      "claim": "InfoEdge AI Hackathon 2024: shipped a charting feature for an AI presentation platform in a 48-hour sprint.",
+      "metrics": [
+        "48"
+      ],
+      "section": "hackathon",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F024",
+      "claim": "Slideoo: 3+ min to 40s generation latency (77%).",
+      "metrics": [
+        "3+",
+        "40s",
+        "3 min",
+        "77%"
+      ],
+      "section": "exp:slideoo",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    },
+    {
+      "id": "F025",
+      "claim": "Kinaxis backup pipeline: 0/21 exports failing; detection 30 min to ~15s.",
+      "metrics": [
+        "0/21",
+        "21",
+        "30 min",
+        "15s"
+      ],
+      "section": "exp:kinaxis-coop",
+      "source": "resume v1 (2026-11-14)",
+      "proof": ""
+    }
+  ]
+}

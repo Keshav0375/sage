@@ -1,0 +1,27 @@
+{
+  "description": "gimme-job lifecycle hooks: knobs brief, Composio budget guard, PII guard on git, agent tier guard, tool-call ledger, resume auto-build, report-file guard, final cards.",
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/knobs.py\" brief 2>/dev/null || true" }] }
+    ],
+    "PreToolUse": [
+      { "matcher": "mcp__composio__.*",
+        "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/ledger.py\" --budget-check" }] },
+      { "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pii_guard.py\"" }] },
+      { "matcher": "Agent|Task",
+        "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/ledger.py\" --tier-check" }] }
+    ],
+    "PostToolUse": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/ledger.py\" --record" }] },
+      { "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/build.sh\" --hook >/dev/null 2>&1 || true" }] }
+    ],
+    "SubagentStop": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/ledger.py\" --report-check" }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cards.py\" --final" }] }
+    ]
+  }
+}

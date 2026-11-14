@@ -1,0 +1,9 @@
+{
+  "name": "gimme-job",
+  "displayName": "gimme-job",
+  "version": "0.1.0",
+  "description": "Job hunt loop: 145 in-house job scanners + Composio job APIs + Gmail alerts, A-H ranking, gap analysis, versioned resume rewrites with a fact gate, and a blind-judge loop to 8.5+.",
+  "author": { "name": "Keshav" },
+  "license": "MIT",
+  "dependencies": ["brain", "observe"]
+}

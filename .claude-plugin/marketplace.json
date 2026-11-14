@@ -30,6 +30,11 @@
       "name": "time",
       "source": "./plugins/ui",
       "description": "Status band above the prompt: clock, today's and all-time tokens and cost, context use, rate limits."
+    },
+    {
+      "name": "gimme-job",
+      "source": "./plugins/gimme-job",
+      "description": "Job hunt loop: 145 in-house scanners + Composio job APIs + Gmail alerts, A-H ranking, gap analysis, versioned resume rewrites with a fact gate, blind-judge loop to 8.5+."
     }
   ]
 }

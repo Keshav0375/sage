@@ -1,0 +1,5 @@
+# Anywhere in Canada, remote or hybrid only.
+[search]
+locations = ["Canada"]
+workplace = ["remote", "hybrid"]
+remote_regions = ["Canada"]

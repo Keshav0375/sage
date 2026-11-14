@@ -1,0 +1,162 @@
+\documentclass{resume}
+\usepackage[left=0.5in,top=0.4in,right=0.5in,bottom=0.4in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{enumitem}
+% ---- ATS / text-extraction layer (no visual effect) ----
+\input{glyphtounicode}\pdfgentounicode=1 % map every glyph to real Unicode
+\usepackage{accsupp}
+% \ats{shown}{extracted}: renders "shown", but copy/paste & parsers read "extracted"
+\newcommand{\ats}[2]{\BeginAccSupp{method=pdfstringdef,ActualText={#2}}#1\EndAccSupp{}}
+% ---- Spacing knobs (tune here only) ----
+\newcommand{\bulletgap}{-3pt}   % space between bullets
+\newcommand{\headergap}{-3pt}   % space between header and its bullets
+\renewcommand{\arraystretch}{1.12} % skills row height
+\linespread{1.07}                 % overall line height
+\def\sectionskip{\vspace{12pt}}     % space above each section heading (cls default: \medskip)
+\renewenvironment{rSection}[1]{%
+  \sectionskip
+  {\large\bfseries\MakeUppercase{#1}}%
+  \sectionlineskip
+  \hrule
+  \begin{list}{}{\setlength{\leftmargin}{0em}}
+  \item[]
+}{%
+  \end{list}
+  \vspace{-0.5em}
+}
+\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}} 
+\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
+\hypersetup{
+    pdfauthor={Keshav Arri},
+    pdftitle={Keshav Arri - AI Software Engineer Resume},
+    pdfsubject={AI Software Engineer - Agentic AI, LLMOps, RAG},
+    pdfkeywords={AI Software Engineer, Agentic AI, Multi-Agent, LLMOps, RAG, MCP, Python, C\#, .NET, Azure, GCP, AWS, Kubernetes, Terraform, Kong AI Gateway, OpenTelemetry}
+}
+\name{Keshav Arri}
+\input{contact} % phone + email live in memory/resume/contact.tex (gitignored)
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	PROFESSIONAL SUMMARY
+%----------------------------------------------------------------------------------------
+\begin{rSection}{Professional Summary}
+\begin{itemize}[leftmargin=0.15in]
+\itemsep \bulletgap {}
+    \item AI Engineer with 2 years building production agentic AI, RAG, and LLM gateway systems on Azure, GCP, and AWS. Startup-trained to own systems from architecture to production; now designs reusable agent platforms built around cost, safety, and team adoption.
+\end{itemize}
+\end{rSection}
+
+%----------------------------------------------------------------------------------------
+%	EDUCATION SECTION
+%----------------------------------------------------------------------------------------
+\begin{rSection}{Education}
+{\bf Master of Applied Computing (Artificial Intelligence)} \textbar{} University of Windsor \hfill Jan 2025 - Aug 2026\\
+{\bf Bachelor of Computer Science and Technology} \textbar{} GNDEC \hfill Sept 2020 - Sept 2024
+\end{rSection}
+
+%----------------------------------------------------------------------------------------
+% TECHNICAL STRENGTHS	
+%----------------------------------------------------------------------------------------
+\begin{rSection}{Skills}
+\begin{tabular}{ @{} >{\bfseries}l @{\hspace{2.5ex}} l }
+\ats{Languages}{Languages:} & Python, C\#, TypeScript, SQL, Lua, JavaScript, Java, Bash\\
+\ats{AI \& Agents}{AI \& Agents:} & Microsoft Agent Framework, OpenAI Agents SDK, LangGraph, LangChain, MCP\\
+\ats{LLM \& RAG}{LLM \& RAG:} & Azure OpenAI, Vertex AI, Azure AI Search, RAG, ReAct, LLM Evaluation\\
+\ats{LLMOps}{LLMOps:} & Kong AI Gateway, LiteLLM, OpenTelemetry, Datadog, Prompt Versioning, CI/CD Eval Gates\\
+\ats{Cloud}{Cloud:} & Azure, GCP, AWS, Kubernetes, Docker, Terraform, Helm, ArgoCD, GitHub Actions, Linux\\
+% Security & OAuth2, OIDC, Entra ID, HashiCorp Vault, Multi-Tenant Isolation, Prompt-Injection Defense\\
+% Testing & Playwright, pytest, NUnit, MSTest, Integration Testing, LLM-as-Judge\\
+\ats{Databases}{Databases:} & PostgreSQL, Redis, SQLite, Cosmos DB, MongoDB, Snowflake\\
+\ats{Frameworks}{Frameworks:} & FastAPI, ASP.NET Core, .NET 8, Pydantic, React, Node.js, Django\\
+\end{tabular}
+\end{rSection}
+%----------------------------------------------------------------------------------------
+%	EXPERIENCE
+%----------------------------------------------------------------------------------------
+
+\begin{rSection}{Experience}
+
+
+\textbf{Developer, Intelligence \& Automation} \hfill Aug 2026 - Present\\
+Kinaxis --- \textit{Internship} \hfill \textit{Ottawa, Ontario}%
+\vspace{\headergap}
+\begin{itemize}[leftmargin=0.15in]
+    \itemsep \bulletgap {}
+    \item Built an orchestrator-subagent SDLC system turning Jira epics into research, plans, code, and Playwright tests over GitHub, Bitbucket, Atlassian, and Microsoft MCP; tiered model routing cut token cost 48\% at task success.
+    \item Generalized it into a team shared agentic harness and plugin marketplace with custom orchestration, lazy tool loading, declarative sandbox policies, and eval-driven tuning, porting legacy code to a UI/UX-driven web client.
+    \item Built rolling LLM conversation compaction for MAF agents in C\#/.NET, replacing 100-message truncation with summarization triggered past 120K tokens, bounding context while retaining history in unbounded sessions.
+    \item Hardened Kong AI Gateway as the control layer for LLM traffic with AI Prompt Guard allow/deny policies, content-safety guardrails, and token-based rate limiting, plus custom Lua plugins for per-user token metrics.
+\end{itemize}
+
+\textbf{Developer, Machine Learning} \hfill Jan 2026 - Aug 2026\\
+Kinaxis --- \textit{Co-op} \hfill \textit{Ottawa, Ontario}%
+\vspace{\headergap}
+\vspace{\headergap}
+\begin{itemize}[leftmargin=0.15in]
+    \itemsep \bulletgap {}
+    \item Debugged a failing GCP Cloud SQL backup pipeline (0/21 exports) across GitHub Actions CI/CD, Kubernetes, ArgoCD, and IAM; added alerting cutting failure detection from 30 min to \ats{$\sim$}{\textasciitilde}15s, fixed in Terraform.
+    \item Built zero-downtime credential rotation for a multi-tenant Kong Konnect gateway with Azure Event Grid, HashiCorp Vault, and OIDC auth using dual-write grace periods, keeping tenant traffic live during rollovers.
+    \item Engineered a self-hosted MCP server and Python/pytest framework that validates OAuth2 authorization across 5 integration scenarios in CI/CD, replacing a paid vendor with deterministic, reproducible tests.
+    \item Decommissioned a retired data source from 3 RAG agents on Azure AI Search and GCP Vertex AI, removing ETL loaders and Helm/ArgoCD Kubernetes templates, with regression tests protecting retrieval quality.
+\end{itemize}
+
+\newpage
+\textbf{Software Engineer, AI Backend Technologies} \hfill Jan 2024 - Dec 2024\\
+Slideoo AI \hfill \textit{Remote}%
+\vspace{\headergap}
+\begin{itemize}[leftmargin=0.15in]
+    \itemsep \bulletgap {}
+    \item Owned the end-to-end architecture of Slideoo's AI document-generation backend with agent orchestration, LLM tool calling, \& reasoning on Azure and AWS, scaling to 10x traffic \& 2,000+ users while cutting cloud spend 35\%.
+    \item Rebuilt the multimodal LLM pipeline for PowerPoint generation by profiling bottlenecks and re-engineering prompt orchestration, cutting generation latency 77\% (3+ min to 40s) \& directly lifting subscription growth 43\%.
+    \item Benchmarked competing LLM candidates for production by analyzing evaluation results and datasets across generation, surfacing quality regressions early \& driving data-backed prompt-tuning decisions as traffic scaled.
+    \item Led a team of interns and partnered with company leadership to shape the AI document-generation product roadmap, driving sprint planning, reviews, \& technical mentorship to ship features from prototype to production.
+\end{itemize}
+%----------------------------------------------------------------------------------------
+%	PROJECTS
+%----------------------------------------------------------------------------------------
+\begin{rSection}{Projects}
+
+\textbf{Sentinel: Autonomous Incident Response} \textbar{} {\small \href{https://github.com/users/Keshav0375/projects/4}{\color{black}\ats{GitHub}{github.com/users/Keshav0375/projects/4}}} \hfill {\small \textit{OpenAI Agents SDK \textperiodcentered{} AKS \textperiodcentered{} Terraform \textperiodcentered{} LangFuse}}
+\vspace{\headergap}
+\begin{itemize}[leftmargin=0.15in]
+    \itemsep \bulletgap {}
+    \item Built a multi-agent incident responder: Datadog alerts flow through Azure Event Grid and Functions into GitHub Actions, which run agents on AKS (Claude, GPT fallback) to find the bad deploy and draft a revert PR.
+    \item Kept a human in control: read-only agent tools, a revert PR as the only rollback, and code-enforced limits of 20 tool calls, 2 reflexion loops, and a 0.7 confidence gate per incident.
+    \item Secured the FastAPI pod with Entra ID bearer tokens, app roles, workload identity, and Key Vault, so no Kubernetes Secret exists; CI signs in with GitHub OIDC and no client secrets.
+    \item Cut idle cost with Terraform, one ARM64 node, and pod scale-to-zero; PRs must pass 2,693 pytest tests, strict pyright, tfsec, and gitleaks, and agent runs are scored on 30 test scenarios.
+\end{itemize}
+
+\textbf{FinAdvisor: Regulated RAG Advisor} \textbar{} {\small \href{https://github.com/Keshav0375/FinAdvisor}{\color{black}\ats{GitHub}{github.com/Keshav0375/FinAdvisor}}} \hfill {\small \textit{Anthropic SDK \textperiodcentered{} FastAPI \textperiodcentered{} LiteLLM \textperiodcentered{} Kong \textperiodcentered{} GCP}}
+\vspace{\headergap}
+\begin{itemize}[leftmargin=0.15in]
+    \itemsep \bulletgap {}
+    \item Built a wealth-advisor RAG agent (Anthropic SDK, FastAPI, 4 tools) over pgvector; PostgreSQL row-level security enforces tier and jurisdiction access, with zero-leakage tests for 4 user roles.
+    \item Added two-pass PII redaction (GCP DLP, regex fallback): one pass cleans documents before Voyage AI embedding, one checks each LLM answer, keeping personal data out of retrieval and responses.
+    \item Routed LLM calls through Kong (60 req/min per advisor, request logging) and LiteLLM fallback from Claude to GPT-4o to Gemini, with a circuit breaker that pulls a model for 5 min after 3 failures.
+    \item Gated merges with a GitHub Actions eval: an LLM judge scores 50 golden Q\&A pairs and fails the PR below 95\% citation accuracy or 90\% faithfulness; Terraform defines the GCP Cloud Run stack.
+\end{itemize}
+\vspace{4pt}
+\end{rSection}
+
+%----------------------------------------------------------------------------------------
+%	HACKATHONS & EVENTS
+%----------------------------------------------------------------------------------------
+\begin{rSection}{Hackathons \& Events}
+\begin{itemize}[leftmargin=0.15in]
+    \itemsep \bulletgap {}
+    \item \textbf{WinHacks 2025:} Built an AI scheduling assistant for student productivity and demoed it to 200+ attendees.
+    \item \textbf{InfoEdge AI Hackathon 2024:} Shipped a charting feature for AI presentation platform in a 48-hour sprint.
+    \item \textbf{DevFest, Google Developer Groups Sep 2025:} Attended sessions on Gemini, GCP, and agentic AI. 
+\end{itemize}
+\end{rSection}
+%----------------------------------------------------------------------------------------
+%	Certification SECTION
+%----------------------------------------------------------------------------------------
+\begin{rSection}{Certifications \& Training}
+Anthropic Academy: Claude Code in Action, Introduction to MCP, MCP: Advanced Topics\\[2pt]
+Databricks: Generative AI Fundamentals, AI Agent Fundamentals 
+\end{rSection}
+\end{rSection}
+\end{document}
