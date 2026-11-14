@@ -53,7 +53,7 @@ def card_jobs(rd: Path) -> str:
     r = common.read_json(rd / "ranking.json", {}) or {}
     lv = f.get("liveness", {})
     rows = ["### 📥 Card 2 — Jobs found", "",
-            f"**{f.get('found', 0)}** found → **{f.get('unique', 0)}** unique → **{f.get('after_filters', 0)}** after knob filters → "
+            f"**{f.get('found', 0)}** found → **{f.get('unique', 0)}** unique → **{f.get('after_filters', 0)}** after knob filters → " +
             (f"**{f.get('kept', 0)}** kept (liveness not checked) → " if lv.get("skipped") else
              f"**{f.get('kept', 0)}** live (dead {lv.get('dead', 0)}, unknown {lv.get('unknown', 0)}) → ") +
             f"**{len(r.get('top_k', []))}** pre-ranked for A–H", ""]
@@ -134,15 +134,16 @@ def card_result(k: dict) -> str:
     for p in sorted(vroot.glob("v*"), key=lambda p: int(p.name[1:]) if p.name[1:].isdigit() else 0):
         j = common.read_json(p / "judge.json", {}) or {}
         sc = common.read_json(p / "scores.json", {}) or {}
-        hist.append((p.name, j.get("score"), sc.get("keyword_coverage")))
+        hist.append((p.name, j.get("score"), j.get("holdout_score"), sc.get("keyword_coverage"), (j.get("job_company") or "")))
     vd = _version_dir(k, None)
     if not vd:
         return "### 🏁 Card 6 — Result\n\n(no versions)"
     pdf = vd / f"resume-{vd.name}.pdf"
     rel = pdf.relative_to(common.repo_root()) if pdf.is_relative_to(common.repo_root()) else pdf
     rows = ["### 🏁 Card 6 — Result", "", f"**New resume:** [`{rel}`]({rel})" + ("" if pdf.exists() else " (PDF not built — run build.sh)"), "",
-            "| Version | Judge | Keyword coverage |", "|---|---:|---:|"]
-    rows += [f"| {v} | {s if s is not None else '—'} | {c if c is not None else '—'} |" for v, s, c in hist]
+            "| Version | Round judge (job) | Holdout judge | Keyword coverage |", "|---|---:|---:|---:|"]
+    rows += [f"| {v} | {s if s is not None else '—'} ({co or '—'}) | {h if h is not None else '—'} | {c if c is not None else '—'} |"
+             for v, s, h, c, co in hist]
     return "\n".join(rows)
 
 
