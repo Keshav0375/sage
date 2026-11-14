@@ -70,8 +70,10 @@ def card_selected(rd: Path) -> str:
     rows = [f"### 🎯 Card 3 — Selected jobs ({len(sel)})", "",
             "| # | Role | Company | Where | Pay | A–H | Pre | Why |", "|---:|---|---|---|---|---:|---:|---|"]
     for i, s in enumerate(sel, 1):
-        lo, hi, cur = (s.get("salary") or [None, None, ""]) + [None] * 0
-        pay = f"{cur} {int(lo or 0):,}–{int(hi or 0):,}" if hi else "—"
+        sal = list(s.get("salary") or []) + [None, None, "", ""]
+        lo, hi, cur, per = sal[0], sal[1], sal[2] or "", sal[3] or ""
+        unit = {"hour": "/hr", "month": "/mo"}.get(per, "")
+        pay = f"{cur} {int(lo or 0):,}–{int(hi or 0):,}{unit}".strip() if hi else "—"
         where = f"{s.get('location', '')} {('· ' + s['workplace']) if s.get('workplace') else ''}"
         rows.append(f"| {i} | [{_esc(s['title'], 40)}]({s['url']}) | {_esc(s['company'], 25)} | {_esc(where, 30)} | {pay} | "
                     f"{s.get('ah_score', '—')} | {s.get('pre_score', '—')} | {_esc(s.get('why', ''), 80)} |")

@@ -104,7 +104,7 @@ def cmd_rank(rd: Path, k: dict) -> dict:
         sc, why = pre_score(j, k, tax, mine)
         scored.append({"id": j["id"], "title": j["title"], "company": j.get("company", ""), "location": j.get("location", ""),
                        "url": j["url"], "source": j.get("source"), "workplace": j.get("workplace", ""),
-                       "salary": [j.get("salary_min"), j.get("salary_max"), j.get("currency", "")],
+                       "salary": [j.get("salary_min"), j.get("salary_max"), j.get("currency", ""), j.get("salary_period", "")],
                        "pre_score": sc, **why})
     scored.sort(key=lambda x: -x["pre_score"])
     # one slot per role: the same title at the same company in several cities counts once (best city kept)
