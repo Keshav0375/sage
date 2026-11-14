@@ -1,0 +1,38 @@
+{
+  "score": 6.5,
+  "verdict": "LOOP",
+  "job_id": "655f07473920532e",
+  "job_title": "AI Developer (LLM & Agentic Systems)",
+  "job_company": "WSP in Canada",
+  "criteria": {
+    "Requirement coverage": 1.9,
+    "Evidence strength": 1.8,
+    "Relevance and order": 1.1,
+    "Clarity / 6-second scan": 1.0,
+    "Seniority fit": 0.3,
+    "ATS readability": 0.4
+  },
+  "reasons": [
+    "Seniority gap: ~2 yrs vs 5+ yrs and 2+ yrs leading LLM systems",
+    "Missing NLP entity extraction/resolution, knowledge graphs, multi-env (dev/UAT/prod) deployments",
+    "Best RAG evidence is in personal projects; Kinaxis RAG bullet is a removal task; infra bullets dilute AI signal"
+  ],
+  "fixes": [
+    "Lead with Slideoo end-to-end AI architecture and name the stack",
+    "Show retrieval-quality work and env promotion if true",
+    "Trim skills tool soup; compress infra-only bullets"
+  ],
+  "holdout_score": 7.0,
+  "holdout_id": "b7886a49f0543311",
+  "holdout_title": "AI Engineer, Trust & Evaluation (Equinix)",
+  "holdout_reasons": [
+    "No eval statistics / judge-vs-human agreement / red-teaming shown",
+    "Eval work sits in projects at the bottom; Slideoo benchmarking bullet has no numbers",
+    "Summary never says evaluation or trust; skills list is tool soup"
+  ],
+  "holdout_fixes": [
+    "Order summary and bullets around evaluation and trust",
+    "Show calibration only if it was done",
+    "Reframe Prompt Guard / OAuth tests / RLS tests as adversarial and data-boundary tests"
+  ]
+}

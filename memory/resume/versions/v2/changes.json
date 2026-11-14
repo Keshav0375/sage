@@ -1,0 +1,189 @@
+{
+  "version": "v2",
+  "parent": "v1",
+  "date": "2026-11-14",
+  "run": "20261114-183721",
+  "why": "v1 judge 6.5 (WSP) / 7.0 (Equinix): evaluation and trust work hidden, summary vague, tool soup, '&' style, co-op reads like DevOps. gaps.md top-7 wording changes.",
+  "judge_reasons_addressed": [
+    "Summary now names agent platforms, guardrails, eval-driven tuning",
+    "Eval work moved up (FinAdvisor eval bullet first; LLM-as-Judge first in skills)",
+    "Co-op reordered AI-first; fewer tools per bullet",
+    "'&' replaced with 'and'",
+    "Sentinel framed as trust controls"
+  ],
+  "changes": [
+    {
+      "section": "Summary",
+      "before": "AI Engineer with 2 years building production agentic AI, RAG, and LLM gateway systems… Startup-trained…",
+      "after": "AI Engineer, 2 years shipping production agent platforms: multi-agent orchestration over MCP, RAG, LLM gateways with guardrails and eval-driven tuning. Cut token cost 48% at Kinaxis and latency 77% at a startup.",
+      "why": "All 5 jobs ask agents + evaluation + guardrails; drop filler",
+      "job_words": [
+        "agent platform",
+        "guardrails",
+        "evaluation"
+      ],
+      "fact_ids": [
+        "F001",
+        "F002",
+        "F003",
+        "F005",
+        "F011"
+      ],
+      "sources": [
+        "gaps.md W2",
+        "v1 judge"
+      ]
+    },
+    {
+      "section": "Kinaxis intern #1",
+      "before": "…over GitHub, Bitbucket, Atlassian, and Microsoft MCP; …",
+      "after": "…Playwright tests over MCP; tiered model routing cut token cost 48% at task success.",
+      "why": "Tool soup; 2-line limit",
+      "job_words": [
+        "MCP",
+        "orchestration"
+      ],
+      "fact_ids": [
+        "F002"
+      ],
+      "sources": [
+        "gaps.md W3"
+      ]
+    },
+    {
+      "section": "Kinaxis intern #2",
+      "before": "…porting legacy code to a UI/UX-driven web client.",
+      "after": "shared agentic harness and plugin marketplace for the team: custom orchestration, lazy tool loading, declarative sandbox policies and eval-driven tuning.",
+      "why": "Keep the platform signal, drop off-target clause",
+      "job_words": [
+        "agentic harness",
+        "tool routing"
+      ],
+      "fact_ids": [
+        "F003"
+      ],
+      "sources": [
+        "gaps.md W4"
+      ]
+    },
+    {
+      "section": "Kinaxis intern #3-4",
+      "before": "MAF agents … / Hardened Kong AI Gateway as the control layer…",
+      "after": "Microsoft Agent Framework agents … / Kong AI Gateway as the guardrail layer…",
+      "why": "Spell out framework; use guardrail wording the jobs use",
+      "job_words": [
+        "guardrails",
+        "content safety",
+        "memory management"
+      ],
+      "fact_ids": [
+        "F004",
+        "F005"
+      ],
+      "sources": [
+        "gaps.md W5"
+      ]
+    },
+    {
+      "section": "Kinaxis co-op",
+      "before": "Backup pipeline first; long tool lists",
+      "after": "MCP/OAuth2 framework → RAG agents → credential rotation → backup; ≤3 tools each",
+      "why": "Co-op read like DevOps; AI work first",
+      "job_words": [
+        "OAuth 2.0",
+        "MCP",
+        "retrieval quality"
+      ],
+      "fact_ids": [
+        "F006",
+        "F007",
+        "F008",
+        "F009"
+      ],
+      "sources": [
+        "gaps.md W6",
+        "resume review"
+      ]
+    },
+    {
+      "section": "Slideoo",
+      "before": "'&' in prose; 'Benchmarked competing LLM candidates…'",
+      "after": "'and'; 'Benchmarked candidate LLMs for production on evaluation datasets…'",
+      "why": "Style + evaluation wording",
+      "job_words": [
+        "evaluation datasets"
+      ],
+      "fact_ids": [
+        "F010",
+        "F011",
+        "F012",
+        "F013"
+      ],
+      "sources": [
+        "gaps.md W7"
+      ]
+    },
+    {
+      "section": "Projects",
+      "before": "FinAdvisor eval bullet last; Sentinel 'Kept a human in control'",
+      "after": "FinAdvisor eval bullet first; Sentinel 'Built trust controls into the agents'",
+      "why": "Equinix weights evaluation and trust",
+      "job_words": [
+        "LLM-as-judge",
+        "trust controls"
+      ],
+      "fact_ids": [
+        "F015",
+        "F021"
+      ],
+      "sources": [
+        "gaps.md W1, W8"
+      ]
+    },
+    {
+      "section": "Skills",
+      "before": "7 rows incl. Java, Django, MongoDB, Snowflake",
+      "after": "'LLM & Evaluation' row first (LLM-as-Judge, RAG, Vector Search, Tool Calling, Guardrails, Prompt Engineering, Observability); dropped 4 off-target items",
+      "why": "Tool soup; lead with what jobs ask",
+      "job_words": [
+        "LLM-as-judge",
+        "vector search",
+        "tool calling"
+      ],
+      "fact_ids": [
+        "F005",
+        "F010",
+        "F011",
+        "F014",
+        "F018",
+        "F021"
+      ],
+      "sources": [
+        "gaps.md W10"
+      ]
+    },
+    {
+      "section": "Hackathons",
+      "before": "DevFest attendance line",
+      "after": "(removed)",
+      "why": "No signal",
+      "job_words": [],
+      "fact_ids": [],
+      "sources": [
+        "resume review"
+      ]
+    }
+  ],
+  "locked_facts_kept": true,
+  "jobs_used": {
+    "selected": [
+      "b7886a49f0543311",
+      "a30716e346cc1cf4",
+      "b5729698d052fcba",
+      "655f07473920532e",
+      "151023ad6588a66e"
+    ],
+    "round_job": "151023ad6588a66e",
+    "holdout_job": "a30716e346cc1cf4"
+  }
+}

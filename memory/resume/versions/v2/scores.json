@@ -1,0 +1,7 @@
+{
+  "fact_gate": "PASS (script + semantic; 2 blocks fixed)",
+  "lint": "PASS",
+  "ats": "PASS",
+  "keyword_coverage": 0.753,
+  "pages": 2
+}

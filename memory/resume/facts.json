@@ -48,7 +48,14 @@
     "Snowflake",
     "Terraform",
     "TypeScript",
-    "Vertex AI"
+    "Vertex AI",
+    "LLM-as-Judge",
+    "Vector Search (pgvector)",
+    "Tool Calling",
+    "Guardrails",
+    "Prompt Engineering",
+    "Observability (LangFuse)",
+    "Multi-agent Orchestration"
   ],
   "locked": {
     "titles": [
@@ -337,5 +344,14 @@
       "source": "resume v1 (2026-11-14)",
       "proof": ""
     }
-  ]
+  ],
+  "skills_evidence": {
+    "LLM-as-Judge": "F021",
+    "Vector Search (pgvector)": "F018",
+    "Tool Calling": "F010",
+    "Guardrails": "F005",
+    "Prompt Engineering": "F011",
+    "Observability (LangFuse)": "F014",
+    "Multi-agent Orchestration": "F002"
+  }
 }

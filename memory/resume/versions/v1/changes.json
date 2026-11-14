@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "parent": "—",
+  "date": "2026-11-14",
+  "run": "20261114-183721",
+  "why": "Baseline: current resume imported from Overleaf, unchanged.",
+  "changes": [],
+  "locked_facts_kept": true,
+  "jobs_used": {
+    "selected": [],
+    "round_job": "655f07473920532e",
+    "holdout_job": "b7886a49f0543311"
+  }
+}

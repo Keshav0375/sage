@@ -116,7 +116,7 @@ min_keyword_coverage = 0.70
 max_tools_per_bullet = 3
 require_number = true
 max_lines = 2
-chars_per_line = 115
+chars_per_line = 105
 ban = [" \\& ", "Startup-trained"]
 
 [budget]

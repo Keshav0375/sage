@@ -1,0 +1,6 @@
+{
+  "fact_gate": "PASS",
+  "lint": "FAIL (5 errors, 12 tool-soup warnings)",
+  "ats": "PASS",
+  "pages": 2
+}
