@@ -139,8 +139,10 @@ class TestPiiGuard(unittest.TestCase):
         (d / "b.md").write_text("mail someone@gmail.com")
         (d / "c.md").write_text("clean text")
         (d / "r.pdf").write_bytes(b"%PDF")
-        hits = pii_guard.scan([str(d / x) for x in ("a.md", "b.md", "c.md", "r.pdf")])
-        self.assertEqual(len(hits), 3)
+        (d / "shot.png").write_bytes(b"\x89PNG\r\n")
+        hits = pii_guard.scan([str(d / x) for x in ("a.md", "b.md", "c.md", "r.pdf", "shot.png")])
+        self.assertEqual(len(hits), 4)
+        self.assertEqual(pii_guard.scan(["memory/resume/versions/v4/snapshots/page-1.png"]), [])
         self.assertFalse(any("c.md" in h for h in hits))
 
 
@@ -240,3 +242,48 @@ class TestRegistry(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestLayoutAndFixes(unittest.TestCase):
+    def test_layout_check_rules(self):
+        from scripts import layout
+        k, _ = knobs.load()
+        base = {"pages": 2, "right_margin_x": 576, "sections": ["SKILLS", "EXPERIENCE"],
+                "skills": [{"label": "Languages", "x1": 400}], "overflow": [], "bottom_gap_pt": {"1": 70, "2": 120},
+                "bullets": [{"section": "EXPERIENCE", "text": "• a", "lines": 2, "last_fill": 0.9, "first_chars": 110}]}
+        good = json.loads(json.dumps(base))
+        self.assertEqual(layout.check(good, base, k["layout"])["verdict"], "PASS")
+        bad = json.loads(json.dumps(base))
+        bad["bullets"][0].update(lines=3, last_fill=0.04)
+        bad["skills"][0]["x1"] = 600
+        bad["bottom_gap_pt"]["1"] = 150
+        bad["sections"] = ["EXPERIENCE", "SKILLS"]
+        r = layout.check(bad, base, k["layout"])
+        text = " ".join(r["errors"])
+        for want in ("3 lines", "right margin", "bottom gap", "section order"):
+            self.assertIn(want, text)
+        self.assertEqual(r["advice"][0]["action"], "cut")
+        short = json.loads(json.dumps(base))
+        short["bullets"][0]["last_fill"] = 0.3
+        r2 = layout.check(short, base, k["layout"])
+        self.assertEqual(r2["advice"][0]["action"], "add")
+        self.assertGreater(r2["advice"][0]["chars_min"], 0)
+
+    def test_auto_relax_selection(self):
+        rd = common.new_run()
+        common.write_json(rd / "ranking.json", {"top_k": [{"id": f"j{i}", "title": "t", "company": "c", "url": "https://x/%d" % i,
+                                                           "pre_score": 50} for i in range(4)]})
+        (rd / "evals").mkdir()
+        for i, s in enumerate([4.6, 3.8, 3.5, 2.0]):
+            common.write_json(rd / "evals" / f"j{i}.json", {"id": f"j{i}", "score": s})
+        k, _ = knobs.load()
+        out = rank.cmd_select(rd, k)
+        self.assertEqual(out["selected"], 3)          # 4.6, 3.8, 3.5 (2.0 stays out: floor 3.0)
+        self.assertEqual(out["select_min_used"], 3.5)
+
+    def test_ingest_compact_jsonl(self):
+        d = Path(tempfile.mkdtemp())
+        f = d / "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS-compact.jsonl"
+        f.write_text('{"id":"1","title":"AI Engineer","companyName":"Acme","linkedinUrl":"https://www.linkedin.com/jobs/view/1"}\n')
+        rows = composio_ingest.ingest([str(f)])
+        self.assertEqual(rows[0]["company"], "Acme")

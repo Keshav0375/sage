@@ -1,0 +1,27 @@
+{
+  "title": "AI Engineering Intern",
+  "level": "intern",
+  "family": "ai_engineer",
+  "city": "Toronto",
+  "region": "ON",
+  "country": "CA",
+  "workplace": "hybrid",
+  "required": [
+    "Python",
+    "TypeScript",
+    "Java",
+    "LLM",
+    "ETL",
+    "Anthropic API",
+    "Testing"
+  ],
+  "nice_to_have": [
+    "OpenAI API",
+    "Prompt Engineering"
+  ],
+  "degree": "bachelor",
+  "employment": "intern",
+  "posted_at": "2026-11-12T00:00:00",
+  "company_size": "startup",
+  "rules_confidence": 0.7777777777777778
+}

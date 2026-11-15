@@ -1,0 +1,40 @@
+{
+  "title": "Senior Applied AI Engineer",
+  "level": "senior",
+  "family": "ai_engineer",
+  "city": "Montreal",
+  "region": "QC",
+  "country": "CA",
+  "workplace": "hybrid",
+  "required": [
+    "AI Agents",
+    "OpenAI API",
+    "Gemini",
+    "Anthropic API",
+    "Product Judgment",
+    "Tool Calling",
+    "Databricks",
+    "Python",
+    "React",
+    "LLM",
+    "Vector Search",
+    "Fine-tuning",
+    "Observability",
+    "JavaScript",
+    "TypeScript",
+    "Azure",
+    "Kubernetes",
+    "GCP",
+    "Communication"
+  ],
+  "nice_to_have": [
+    "LLMOps",
+    "CI/CD",
+    "Docker"
+  ],
+  "posted_at": "2026-11-13T00:00:00",
+  "benefits": [
+    "retirement"
+  ],
+  "rules_confidence": 0.5555555555555556
+}

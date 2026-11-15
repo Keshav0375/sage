@@ -11,6 +11,8 @@ coordinators (Sonnet) assign work; workers (Haiku) hold the tools. You read only
 Scripts: `plugins/gimme-job/scripts/`. Data: `memory/resume/`. Specs: `plugins/gimme-job/config/`.
 
 ## 0. Setup
+- Design lock: if `memory/resume/design/baseline.json` is missing, run `layout.py baseline memory/resume/versions/v1/resume-v1.pdf`
+  (the ORIGINAL design: section order, skills rows, line fill, page breaks; snapshots are contact-redacted).
 - `gimme-job:script-worker`: `knobs.py brief [--preset P]` and `version.py latest`.
 - If latest version is 0: stop and tell Keshav to import his resume as `memory/resume/versions/v1/resume-v1.tex` (see README).
 - Run id: from the scan step (`runs/CURRENT`).
@@ -27,11 +29,17 @@ Read `gaps.md` and the last `judge.json` reasons/fixes. Write `runs/<run>/plan-v
 "blocked by facts" items are reported, never written. Prefer edits that serve several selected jobs.
 
 ## 5. REWRITE → `gimme-job:writer-lead` with the plan path. Show **Card 4 Changes**.
+Design rules (never break them in the plan): same section order, same skills row labels (one line each), every bullet keeps
+its line count and its last line ≥ `layout.min_last_line_fill` full, nothing past the margin. Plans change WORDS, not design.
+After the edits, `layout.py check` must PASS; on FAIL writer-lead runs `gimme-job:layout-fixer`, which loops and then reads the
+Playwright compare image (`layout.py compare <pdf> runs/<run>/compare-v{n}.png`) before it reports.
 `GATE-FAIL`: one retry with the gate's message; second failure → keep the previous version as current and report.
 
 ## 6. BLIND JUDGE
-- Pick the round job: `script-worker` → `python3 -c "import random,json; ..."` seeded with knobs `loop.seed` (or run id),
-  one random job from `selected.json` not used as round job before; pick a different one as **holdout**.
+- **Holdout is fixed for the whole run** (first draw), so every version is scored on the same job and scores compare.
+  The round job rotates: seeded random draw (knobs `loop.seed` or run id) from `selected.json`, not used before.
+  Also re-judge the final version on v1's round job, so the report shows a same-job before/after.
+- Judge scores from one sample vary about ±0.5. Treat a gain < 0.5 as noise.
 - Get texts: JD from `runs/<run>/jobs.jsonl` (or `pages/<id>.txt`), resume text via `pdftotext` (or `facts.tex_text`).
 - Spawn **`gimme-job:blind-judge`** (Opus, no tools, fresh context). The prompt contains ONLY: the rubric file text, the job text,
   the resume text. No run history, no scores, no plan, no version number.
@@ -48,6 +56,14 @@ Read `gaps.md` and the last `judge.json` reasons/fixes. Write `runs/<run>/plan-v
 ## 8. FINISH
 - `script-worker`: `trend.py --run <run>` (market snapshot) and `cards.py result`. Touch `runs/<run>/DONE`.
 - Show **Card 6 Result** with the link to `memory/resume/versions/v{n}/resume-v{n}.pdf`.
+
+## Commit rule
+Run `bash plugins/gimme-job/scripts/check.sh` (all tests + PII guard) before every commit. Commit only when it prints `check.sh: OK`.
+
+## Large API responses
+Use `MULTI_EXECUTE(sync_response_to_workbench=true)`, then run `composio_ingest.py --workbench-snippet` in COMPOSIO_REMOTE_BASH_TOOL
+to print one compact line per job; save that output as `runs/<run>/composio/<slug>.jsonl`. Full job text is fetched later for the
+top K only (source-worker writes `runs/<run>/pages/<id>.txt`).
 
 ## Token rules
 Scripts before models. Tools only on workers. Every subagent writes its full output to a file and replies ≤ 8 lines.

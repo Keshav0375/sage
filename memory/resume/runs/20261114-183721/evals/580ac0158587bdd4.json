@@ -1,0 +1,8 @@
+{"id": "580ac0158587bdd4", "score": 2.3, "band": "skip", "confidence": "low", "hard_stop": false,
+ "legitimacy": "unclear", "why": "Senior-level lead role at a small client consultancy (AI, SaaS, AR/VR, games) with a truncated JD, no pay, no stated requirements; level stretch and too little signal to justify applying.", "level_fit": "stretch", "base": "agentic",
+ "must_haves_missing": ["senior-level leadership and mentorship of a senior team", "ML model building (not evidenced beyond LLM apps)", "pay not stated, cannot confirm 95k floor"],
+ "customisation": [
+  {"change": "If pursued, lead with architecture ownership and mentorship of interns", "job_words": ["architect production AI systems", "mentorship"], "fact_ids": ["F010", "F013"], "blocked_by_facts": false},
+  {"change": "Show responsible-AI practice via guardrails and PII redaction", "job_words": ["responsible AI"], "fact_ids": ["F005", "F019", "F015"], "blocked_by_facts": false},
+  {"change": "Claim ML model training/building experience", "job_words": ["build ML models"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Tell us about architecting a production AI system for a client end to end.", "How do you ensure responsible AI practices in delivery?", "How have you mentored engineers on technical decisions?"]}

@@ -1,0 +1,10 @@
+{"id": "b7886a49f0543311", "score": 4.6, "band": "strong", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Eval/guardrails-centred AI platform role at Equinix Toronto, 1-4 yrs asked, CAD 102-152k; CI eval gates, LLM-judge, guardrails and OAuth/MCP facts map directly.", "level_fit": "fit", "base": "agentic",
+ "must_haves_missing": ["evaluation statistics (confidence intervals, inter-reviewer agreement)", "red-teaming / adversarial testing as a stated practice", "human-review vs judge calibration"],
+ "customisation": [
+  {"change": "Lead with the eval-gating claim: LLM judge over golden Q&A pairs failing PRs below citation/faithfulness thresholds", "job_words": ["golden datasets", "LLM-as-judge", "evaluate on every change"], "fact_ids": ["F021"], "blocked_by_facts": false},
+  {"change": "Frame agent scenario scoring and code-enforced limits as agent quality testing and trust controls", "job_words": ["agent quality", "guardrails", "tool permissions"], "fact_ids": ["F015", "F017"], "blocked_by_facts": false},
+  {"change": "Surface guardrail work: Kong Prompt Guard allow/deny, content safety, token rate limiting, PII redaction", "job_words": ["guardrails", "data boundaries"], "fact_ids": ["F005", "F019", "F018"], "blocked_by_facts": false},
+  {"change": "Name OAuth2/OIDC and MCP validation and workload identity under agent identity and access", "job_words": ["agent identity", "OAuth 2.0 / OIDC", "MCP"], "fact_ids": ["F008", "F016"], "blocked_by_facts": false},
+  {"change": "Claim red-teaming and evaluation statistics (CIs, reviewer agreement)", "job_words": ["red-teaming", "confidence intervals"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How would you design a golden dataset and LLM-judge pipeline, and how would you check the judge against human reviewers?", "Walk through your CI eval gate: how were the 95%/90% thresholds chosen and how do you handle run-to-run variance?", "How would you red-team an agent for prompt injection and data-boundary leaks, and turn findings into regression tests?"]}

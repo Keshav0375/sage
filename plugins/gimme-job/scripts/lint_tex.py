@@ -33,7 +33,11 @@ def bullets(tex: str) -> list[tuple[str, str]]:
 
 def lint(tex: str, cfg: dict) -> dict:
     tax = load_taxonomy()
-    generic = {"llm", "llms", "rag", "agentic", "evals", "tracing", "containers", "observability", "machine learning"}
+    generic = {"llm", "llms", "rag", "agentic", "evals", "tracing", "containers", "observability", "machine learning",
+               "orchestrator", "subagent", "sub-agent", "multi-agent", "multi agent", "agent orchestration", "token cost",
+               "model routing", "tool calling", "function calling", "tool use", "guardrails", "content safety",
+               "prompt injection", "ci/cd", "ci cd", "fallback routing", "cost and latency", "unit testing",
+               "integration testing", "infrastructure as code", "rest api", "microservices", "data pipelines"}
     tool_rx = [(a, re.compile(r"(?<![a-z0-9])" + re.escape(a) + r"(?![a-z0-9])")) for al in tax.values() for a in al
                if len(a) > 2 and a not in generic]
     errors, warnings = [], []

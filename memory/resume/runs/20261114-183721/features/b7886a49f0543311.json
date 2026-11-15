@@ -1,0 +1,36 @@
+{
+  "title": "AI Engineer, Trust & Evaluation",
+  "family": "ai_engineer",
+  "city": "Toronto",
+  "region": "ON",
+  "country": "CA",
+  "salary_min": 102000.0,
+  "salary_max": 152000.0,
+  "currency": "CAD",
+  "salary_period": "year",
+  "required": [
+    "LLM",
+    "Guardrails",
+    "Python",
+    "Testing",
+    "SQL",
+    "Communication"
+  ],
+  "nice_to_have": [
+    "Observability",
+    "LLM Evaluation",
+    "OAuth/OIDC",
+    "MCP",
+    "GCP",
+    "Gemini",
+    "Kubernetes"
+  ],
+  "degree": "bachelor",
+  "or_equivalent": true,
+  "posted_at": "2026-11-12T00:00:00",
+  "benefits": [
+    "stock"
+  ],
+  "equity": true,
+  "rules_confidence": 0.5555555555555556
+}

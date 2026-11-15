@@ -353,5 +353,13 @@
     "Prompt Engineering": "F011",
     "Observability (LangFuse)": "F014",
     "Multi-agent Orchestration": "F002"
+  },
+  "checks": {
+    "F017": "Resume says 2,693 pytest tests; sage projects/sentinel docs show 2,127 passed (E19-T2). Confirm in the Sentinel repo.",
+    "F018": "Zero-leakage tests for 4 roles: sage docs mark them planned (need live Postgres). Confirm they ran.",
+    "F019": "Two-pass PII: docs show only the ingest regex pass built; GCP DLP not selected in cloud. Confirm.",
+    "F020": "Kong 60 req/min per advisor: docs say planned (config G-14). Circuit breaker + fallback chain are built.",
+    "F021": "Eval gate on merges: 50 golden items exist; docs say the gate has not run yet. Confirm before saying 'gated merges'.",
+    "_note": "From evidence-worker run 20261114-183721. Writers must not strengthen these claims until Keshav confirms."
   }
 }

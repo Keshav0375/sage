@@ -1,0 +1,14 @@
+{
+  "verdict": "PASS",
+  "blocks": [],
+  "warnings": [
+    "Script warnings: Databricks, LLMOps, Machine Learning not in facts.skills. They come from the v1 Databricks certification line, the pdfkeywords and the locked title. v1 has the same text. No action.",
+    "line 89: 'guardrail layer' replaces v1 'control layer'. Same F005 facts (Prompt Guard, content-safety, token rate limits, Lua plugins). Wording only; keep.",
+    "line 125: 'Built trust controls into the agents to keep a human in control' replaces v1 'Kept a human in control'. 'Built' is slightly stronger than F015 but Sentinel is the user's own project and the limits are code-enforced. Prefer F015 wording if a strict match is wanted.",
+    "line 127: 'every PR must pass' and added 'AKS' / 'type checks' are fillers. They restate F017 and the Sentinel AKS setup. Not stronger than v1.",
+    "line 135: 'each of 4 user roles' restates F018 '4 user roles'. Same number.",
+    "Skills added from facts.skills / skills_evidence: Tool Calling (F010), Guardrails (F005), LLM-as-Judge (F021), Vector Search + pgvector (F018), LangFuse (F014). All have support. Java, Linux, ReAct, MongoDB, Snowflake, Django and others were dropped, which is allowed.",
+    "Dropped from v1: DevFest bullet and 'Microsoft MCP', 'UI/UX-driven'. Removal only; no new claim.",
+    "Summary line 47: '48% at Kinaxis' = F002, '77% at a startup' = F011 (Slideoo). Scope matches v1. F017-F021 numbers are unchanged."
+  ]
+}

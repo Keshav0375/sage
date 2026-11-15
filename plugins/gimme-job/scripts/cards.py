@@ -134,16 +134,17 @@ def card_result(k: dict) -> str:
     for p in sorted(vroot.glob("v*"), key=lambda p: int(p.name[1:]) if p.name[1:].isdigit() else 0):
         j = common.read_json(p / "judge.json", {}) or {}
         sc = common.read_json(p / "scores.json", {}) or {}
-        hist.append((p.name, j.get("score"), j.get("holdout_score"), sc.get("keyword_coverage"), (j.get("job_company") or "")))
+        lay = (common.read_json(p / "layout.json", {}) or {}).get("verdict", "—")
+        hist.append((p.name, j.get("score"), j.get("holdout_score"), sc.get("keyword_coverage"), (j.get("job_company") or ""), lay))
     vd = _version_dir(k, None)
     if not vd:
         return "### 🏁 Card 6 — Result\n\n(no versions)"
     pdf = vd / f"resume-{vd.name}.pdf"
     rel = pdf.relative_to(common.repo_root()) if pdf.is_relative_to(common.repo_root()) else pdf
     rows = ["### 🏁 Card 6 — Result", "", f"**New resume:** [`{rel}`]({rel})" + ("" if pdf.exists() else " (PDF not built — run build.sh)"), "",
-            "| Version | Round judge (job) | Holdout judge | Keyword coverage |", "|---|---:|---:|---:|"]
-    rows += [f"| {v} | {s if s is not None else '—'} ({co or '—'}) | {h if h is not None else '—'} | {c if c is not None else '—'} |"
-             for v, s, h, c, co in hist]
+            "| Version | Round judge (job) | Holdout judge | Keyword coverage | Design lock |", "|---|---:|---:|---:|---|"]
+    rows += [f"| {v} | {s if s is not None else '—'} ({co or '—'}) | {h if h is not None else '—'} | {c if c is not None else '—'} | {lay} |"
+             for v, s, h, c, co, lay in hist]
     return "\n".join(rows)
 
 

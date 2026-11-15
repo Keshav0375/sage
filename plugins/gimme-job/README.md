@@ -48,6 +48,8 @@ python3 plugins/gimme-job/scripts/doctor.py
 - **Gmail job alerts** (read only) + LinkedIn saved-jobs CSV export.
 - Signals (not jobs): Reddit, HN.
 
+Glassdoor is off by default: on 2026-11-15 the Composio provider returned HTTP 400 for every query.
+
 Scan modes: `scan.py --waves [W1 ..]`, `--full-ats`, `--company NAME`, `--url URL`, `--provider NAME`.
 
 ## Model tiers and tokens
@@ -67,6 +69,20 @@ SessionStart knobs brief · PreToolUse Composio budget cap · PreToolUse PII gua
 PostToolUse tool-call ledger (feeds Card 1) · PostToolUse auto-build on `versions/**/*.tex` · SubagentStop report-file check ·
 Stop final cards.
 
+## Design lock (layout)
+The original resume is the design: `memory/resume/design/baseline.json` + contact-redacted snapshots.
+`layout.py check <pdf>` fails a version when the section order or skills rows change, a bullet gains a line, a bullet's
+last line is less than `layout.min_last_line_fill` (0.80) full, text runs past the margin, or a page gets more empty space.
+`layout.py compare <pdf> out.png` makes an original | new | difference image with Playwright. The `layout-fixer` agent
+changes words only until the gate passes, then reads that image.
+
+## Writing style
+Every agent report and resume line follows ASD-STE100 (`plugins/brain/output-styles/ste.md`): active voice, simplest words,
+one term per thing. The blind judge is the only agent without it (it must stay neutral).
+
+## Before you commit
+`bash plugins/gimme-job/scripts/check.sh` runs every test and the PII guard. Commit only when it prints `check.sh: OK`.
+
 ## Versions
 `memory/resume/versions/v{n}/`: `resume-v{n}.tex`, `resume-v{n}.pdf` (gitignored), `changes.md` / `changes.json`
 (before / after / why / job words / fact ids / sources), `scores.json` (gates), `judge.json` (blind judge).
@@ -75,7 +91,7 @@ Stop final cards.
 ```bash
 cd plugins/gimme-job && python3 -m unittest discover -s tests -t . -p 'test_*.py'
 ```
-320 tests: one fixture test file per scanner (no network), extractors, and the core pipeline.
+323 tests: one fixture test file per scanner (no network), extractors, the core pipeline, and the layout gate.
 
 ## Limits (honest)
 - Scanner tests use fixtures built from upstream response shapes; live endpoints were **not** hit while building

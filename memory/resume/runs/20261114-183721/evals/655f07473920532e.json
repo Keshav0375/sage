@@ -1,0 +1,10 @@
+{"id": "655f07473920532e", "score": 3.3, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Strong agentic/RAG/Azure content fit and remote-anywhere-in-Canada, but asks 5+ yrs with 2+ leading LLM systems and knowledge-graph/NLP work; level stretch, ON pay 95.5-130.8k just clears floor.", "level_fit": "stretch", "base": "agentic",
+ "must_haves_missing": ["5+ years professional software development", "knowledge graphs / entity resolution NLP", "full-stack client-facing consulting delivery", "explicit multi-environment (dev/UAT/prod) deployment"],
+ "customisation": [
+  {"change": "Position Slideoo as owning end-to-end AI backend architecture and scaling in production", "job_words": ["end-to-end AI architectures", "scaling of LLM-based systems in production"], "fact_ids": ["F010", "F011"], "blocked_by_facts": false},
+  {"change": "Highlight RAG on Azure AI Search/Vertex and retrieval-quality regression tests", "job_words": ["embeddings", "vector search", "RAG", "retrieval quality"], "fact_ids": ["F009", "F018"], "blocked_by_facts": false},
+  {"change": "Emphasise orchestrator-subagent and tool integration via MCP", "job_words": ["agent orchestration", "tool integration"], "fact_ids": ["F002", "F003"], "blocked_by_facts": false},
+  {"change": "Show CI/CD, Docker, Kubernetes, Azure deployments", "job_words": ["CI/CD", "Azure", "Kubernetes"], "fact_ids": ["F006", "F014", "F017"], "blocked_by_facts": false},
+  {"change": "Claim knowledge graphs, entity resolution, 5+ years", "job_words": ["knowledge graphs", "entity resolution"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Describe an end-to-end LLM system you architected and how you scaled it in production.", "How did you improve retrieval quality in a RAG pipeline and prove it?", "How would you handle entity resolution or a knowledge graph layer in this platform?"]}

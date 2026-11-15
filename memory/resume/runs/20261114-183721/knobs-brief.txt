@@ -1,0 +1,5 @@
+gimme-job knobs: titles=8 years=2 min_base=95000 CAD
+  where: Ottawa, Ontario, Canada, Toronto, Ontario, Canada, Canada | workplace=remote,hybrid,onsite | posted<=week
+  sources: waves=W1,W2,W3 + linkedin_search, jsearch, glassdoor, gmail_alerts, reddit, hackernews
+  ranking: top_k=12 select=5 min=4.0 | loop pass=8.5 max_iter=4
+  budget: $0.5/run, 80 API calls, concurrency 3

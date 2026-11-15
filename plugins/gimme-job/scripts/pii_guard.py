@@ -16,11 +16,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from scripts import knobs as knobs_mod  # noqa: E402
 
-RAW_DUMP = re.compile(r"(^|/)memory/resume/(runs|market/jobs|contact)")
+RAW_DUMP = re.compile(r"(^|/)memory/resume/(contact\.tex|market/jobs|runs/[^/]+/(pages|composio)/|runs/[^/]+/jobs(\.raw)?\.jsonl"
+                      r"|runs/[^/]+/judge/[^/]+/(resume|job)\.txt)")
 
 
 def _git(*args: str) -> str:
-    return subprocess.run(["git", *args], capture_output=True, text=True).stdout
+    out = subprocess.run(["git", *args], capture_output=True).stdout
+    return out.decode("utf-8", errors="replace")
+
+
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+SAFE_IMAGE_DIR = re.compile(r"(^|/)memory/resume/(design|versions/v\d+)/snapshots/")
 
 
 def files_staged() -> list[str]:
@@ -53,6 +59,10 @@ def scan(paths: list[str], staged: bool = False) -> list[str]:
             continue
         if any(p.lower().endswith(ext) for ext in pv["block_extensions"]):
             hits.append(f"{p}: file type blocked ({Path(p).suffix})")
+            continue
+        if p.lower().endswith(IMAGE_EXT):
+            if not SAFE_IMAGE_DIR.search(p):
+                hits.append(f"{p}: image outside a redacted snapshots/ folder (may show contact info)")
             continue
         if RAW_DUMP.search(p):
             hits.append(f"{p}: private data folder")

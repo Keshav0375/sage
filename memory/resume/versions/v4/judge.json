@@ -1,0 +1,50 @@
+{
+  "score": 6.9,
+  "verdict": "BEST (design-locked) — stop: blocked by facts",
+  "job_id": "655f07473920532e",
+  "job_title": "AI Developer (LLM & Agentic Systems) — same job as v1 round",
+  "job_company": "WSP in Canada",
+  "criteria": {
+    "Requirement coverage": 2.0,
+    "Evidence strength": 2.0,
+    "Relevance and order": 1.2,
+    "Clarity / 6-second scan": 1.1,
+    "Seniority fit": 0.2,
+    "ATS readability": 0.4
+  },
+  "reasons": [
+    "5+ yrs and 2+ yrs leading LLM systems vs ~2 yrs",
+    "No entity extraction/resolution or knowledge-graph facts",
+    "Best architecture/RAG evidence is in projects"
+  ],
+  "fixes": [
+    "Entity extraction / knowledge-graph work (no fact)",
+    "Retrieval-quality metrics, dev/UAT/prod flow (no fact)",
+    "Slideoo architecture higher"
+  ],
+  "holdout_score": 7.2,
+  "holdout_id": "b7886a49f0543311",
+  "holdout_title": "AI Engineer, Trust & Evaluation (Equinix) — same job as v1 holdout",
+  "holdout_reasons": [
+    "Eval evidence at work has no numbers",
+    "No eval statistics / judge-human agreement / dataset versioning",
+    "Experience comes after education and skills (original design)"
+  ],
+  "holdout_fixes": [
+    "Eval-at-scale bullet with numbers (no fact)",
+    "Adversarial / prompt-injection tests (no fact)",
+    "Lead roles with eval/trust bullets"
+  ],
+  "comparison_same_jobs": {
+    "WSP": {
+      "v1": 6.5,
+      "v4": 6.9
+    },
+    "Equinix": {
+      "v1": 7.0,
+      "v3": 7.7,
+      "v4": 7.2
+    }
+  },
+  "note": "Single blind-judge samples vary about ±0.5. v3 scored higher on Equinix but broke the original design (moved Education, skills overflow)."
+}

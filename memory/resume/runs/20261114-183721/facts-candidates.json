@@ -1,0 +1,162 @@
+[
+  {
+    "claim": "Sentinel MVP caps each incident at 20 tool calls and 2 reflexion loops, with a 0.7 confidence gate",
+    "metrics": ["20", "2", "0.7"],
+    "status": "built",
+    "source": "projects/sentinel/arch/architecture.md",
+    "proof": "20 tool calls per incident, reflexion at most 2,",
+    "supports_fact_id": "F015"
+  },
+  {
+    "claim": "Sentinel agent tools are exactly six, all read-only or pure (MVP built; tests run offline)",
+    "metrics": ["6"],
+    "status": "built",
+    "source": "projects/sentinel/epic/E13-backend-3-tools-rewrite/epic.md",
+    "proof": "Exactly six tools, all read-only or pure",
+    "supports_fact_id": "F015"
+  },
+  {
+    "claim": "Sentinel has 30 pre-authored scenario branches (pass, deployfail, runtime); the offline gate is green but the live smoke has not run",
+    "metrics": ["30"],
+    "status": "built",
+    "source": "projects/sentinel/library/glossary.md",
+    "proof": "one of 30 pre-authored branches",
+    "supports_fact_id": "F017"
+  },
+  {
+    "claim": "Sentinel backend full pytest suite passes with 2127 tests (F017 says 2,693; that figure is not found in any Sentinel doc)",
+    "metrics": ["2127"],
+    "status": "built",
+    "source": "projects/sentinel/epic/E19-backend-9-cleanup-and-e2e/tickets/E19-T2-end-to-end-integration-smoke-eval.md",
+    "proof": "full pytest 2127 passed",
+    "supports_fact_id": "F017"
+  },
+  {
+    "claim": "Sentinel agent pipeline has 1925 tests, verified on a fake LLM only; no real-LLM run yet",
+    "metrics": ["1925"],
+    "status": "built",
+    "source": "projects/sentinel/epic/E14-backend-4-agent-pipeline-and-loops/epic.md",
+    "proof": "Verified on the fake LLM only (1925 tests); no real-LLM run yet.",
+    "supports_fact_id": "F014"
+  },
+  {
+    "claim": "Sentinel backend workflow runs a nightly scale-to-zero cron plus a manual up/down toggle (not verified live)",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/sentinel/epic/E18-backend-8-cicd-workflows/tickets/E18-T4-ci-backend-scale-yml-scale-toggle-nightly.md",
+    "proof": "plus nightly scale-to-zero cron",
+    "supports_fact_id": "F017"
+  },
+  {
+    "claim": "Sentinel AKS runs on Free tier with one Standard_B2pls_v2 ARM64 node, workload identity and Cilium",
+    "metrics": ["1"],
+    "status": "built",
+    "source": "projects/sentinel/arch/deep-dive/14-tech-stack.md",
+    "proof": "AKS Free tier, 1x `Standard_B2pls_v2` ARM64, workload identity, Cilium",
+    "supports_fact_id": "F017"
+  },
+  {
+    "claim": "Sentinel quality gate runs pyright, pip-audit and gitleaks on backend; tfsec runs on infra (NOTE: 10-security says infra PRs do not run gitleaks in CI)",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/sentinel/arch/deep-dive/14-tech-stack.md",
+    "proof": "`scripts/quality_gate.py`: ruff, pyright, pytest, pip-audit, gitleaks (backend)",
+    "supports_fact_id": "F017"
+  },
+  {
+    "claim": "Sentinel AKS pod uses workload identity to reach Azure (the no-K8s-Secret part is not confirmed in the built docs)",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/sentinel/arch/deep-dive/14-tech-stack.md",
+    "proof": "AKS Free tier, 1x `Standard_B2pls_v2` ARM64, workload identity, Cilium",
+    "supports_fact_id": "F016"
+  },
+  {
+    "claim": "Sentinel routes LLM calls to Anthropic by default with OpenAI as fallback, per agent step",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/sentinel/arch/deep-dive/14-tech-stack.md",
+    "proof": "Anthropic `claude-sonnet-4-6`, `claude-haiku-4-5` (default); OpenAI `gpt-4o`, `gpt-4o-mini` (fallback)",
+    "supports_fact_id": "F014"
+  },
+  {
+    "claim": "Sentinel glue is Event Grid custom topic plus Azure Functions (Python) for the bridge (MVP built)",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/sentinel/arch/deep-dive/14-tech-stack.md",
+    "proof": "Event Grid custom topic, Azure Functions (Python, Y1): bridge and rotator",
+    "supports_fact_id": "F014"
+  },
+  {
+    "claim": "FinAdvisor MVP enables Postgres RLS with FORCE on the chunks table (only chunks in the as-built code; v2 doc says nothing is built)",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "ALTER TABLE chunks ENABLE ROW LEVEL SECURITY; ... FORCE ROW LEVEL SECURITY",
+    "supports_fact_id": "F018"
+  },
+  {
+    "claim": "FinAdvisor zero-leakage RLS tests cover 4 users, but they need live Postgres and have not been run",
+    "metrics": ["4"],
+    "status": "planned",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "zero-leakage assertions for 4 users",
+    "supports_fact_id": "F018"
+  },
+  {
+    "claim": "FinAdvisor LiteLLM circuit breaker: 3 allowed fails, then a deployment is benched for 5 minutes (config only)",
+    "metrics": ["3", "5min"],
+    "status": "built",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "`cooldown_time: 300` benches a deployment for 5 minutes",
+    "supports_fact_id": "F020"
+  },
+  {
+    "claim": "FinAdvisor LLM fallback chain is Claude to GPT-4o to Gemini in LiteLLM config (baseline notes the fallback may match nothing)",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "claude-primary: [gpt4o-fallback, gemini-fallback]",
+    "supports_fact_id": "F020"
+  },
+  {
+    "claim": "FinAdvisor Kong rate limit of 60/min per advisor is configured but may be rejected or not per-user (G-14, never run)",
+    "metrics": ["60"],
+    "status": "planned",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "`rate-limiting` 60/min and 500/h",
+    "supports_fact_id": "F020"
+  },
+  {
+    "claim": "FinAdvisor eval set has 50 golden Q&A items in the repo",
+    "metrics": ["50"],
+    "status": "built",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "Golden Q&A: 50 items in `data/eval/golden_qa.json`",
+    "supports_fact_id": "F021"
+  },
+  {
+    "claim": "FinAdvisor eval gate fails on citation below 0.95 or faithfulness below 0.90, but the job cannot run as written and has never run",
+    "metrics": ["0.95", "0.90"],
+    "status": "planned",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "Gate exists in YAML and script; the job cannot run as written and no deploy exists",
+    "supports_fact_id": "F021"
+  },
+  {
+    "claim": "FinAdvisor PII redaction (regex default) runs at ingest before embedding; GCP DLP is never selected in cloud (PII_MODE mismatch) and raw_content keeps original text",
+    "metrics": [],
+    "status": "built",
+    "source": "projects/finadvisor/arch/deep-dive/00-as-built-baseline.md",
+    "proof": "Yes at ingest (regex default)",
+    "supports_fact_id": "F019"
+  },
+  {
+    "claim": "FinAdvisor v2 golden set is 200 items labelled by the owner (round-4 plan, not built)",
+    "metrics": ["200"],
+    "status": "planned",
+    "source": "projects/finadvisor/arch/deep-dive/01-context-and-goals.md",
+    "proof": "200 items labelled by Keshav (about 40-55 h estimate)",
+    "supports_fact_id": "F021"
+  }
+]

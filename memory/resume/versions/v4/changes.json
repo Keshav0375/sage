@@ -1,0 +1,78 @@
+{
+  "version": "v4",
+  "parent": "v3",
+  "date": "2026-11-15",
+  "run": "20261114-183721",
+  "why": "v3 broke the original design (section order, skills overflow, short last lines, lone words, page-1 gap). v4 = v3 wording on the original design; layout-fixer filled every line (87–100%).",
+  "judge_reasons_addressed": [
+    "Design locked to original: same section order and skills rows",
+    "Every bullet 2 full lines (last line ≥ 87%)",
+    "No text past the margin; no lone words"
+  ],
+  "changes": [
+    {
+      "section": "Layout",
+      "before": "v3: Education after Projects; FinAdvisor before Sentinel",
+      "after": "Original order restored (Education 2nd; Sentinel before FinAdvisor)",
+      "why": "Design lock to the original",
+      "job_words": [],
+      "fact_ids": [],
+      "sources": [
+        "layout.py check vs design/baseline.json"
+      ]
+    },
+    {
+      "section": "Skills",
+      "before": "v3: 'LLM & Evaluation' row past margin + extra unlabeled row",
+      "after": "Original 7 labels, one line each (LLM-as-Judge, Vector Search, Guardrails in 'LLM & RAG'; Tool Calling in 'AI & Agents'; LangFuse in 'LLMOps'; pgvector in 'Databases')",
+      "why": "No overflow; same rows as original",
+      "job_words": [
+        "LLM-as-judge",
+        "guardrails",
+        "vector search"
+      ],
+      "fact_ids": [
+        "F005",
+        "F014",
+        "F018",
+        "F021"
+      ],
+      "sources": [
+        "layout gate"
+      ]
+    },
+    {
+      "section": "All bullets",
+      "before": "14 bullets with short last lines (25–78%) or a lone word on line 3",
+      "after": "Every bullet 2 lines, last line 87–100% full",
+      "why": "Lines full, no gaps (Keshav's rule)",
+      "job_words": [],
+      "fact_ids": [
+        "F002",
+        "F003",
+        "F006",
+        "F007",
+        "F009",
+        "F010",
+        "F011",
+        "F012",
+        "F015",
+        "F016",
+        "F017",
+        "F018",
+        "F019",
+        "F020"
+      ],
+      "sources": [
+        "layout-fixer (words only, facts locked)",
+        "semantic fact gate PASS"
+      ]
+    }
+  ],
+  "locked_facts_kept": true,
+  "jobs_used": {
+    "selected": [],
+    "round_job": "655f07473920532e (same as v1)",
+    "holdout_job": "b7886a49f0543311 (same as v1)"
+  }
+}

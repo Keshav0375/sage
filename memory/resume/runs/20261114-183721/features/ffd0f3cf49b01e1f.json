@@ -1,0 +1,28 @@
+{
+  "title": "Staff Software Engineer, Agentic Analytics",
+  "level": "staff",
+  "family": "ai_engineer",
+  "city": "Ottawa",
+  "region": "ON",
+  "country": "CA",
+  "salary_min": 250000.0,
+  "salary_max": 325000.0,
+  "salary_period": "year",
+  "required": [
+    "AI Agents",
+    "GCP",
+    "MCP",
+    "LLM",
+    "Tool Calling",
+    "Guardrails",
+    "Observability",
+    "Testing",
+    "Snowflake"
+  ],
+  "nice_to_have": [
+    "Python",
+    "SQL"
+  ],
+  "posted_at": "2026-11-09T00:00:00",
+  "rules_confidence": 0.5555555555555556
+}

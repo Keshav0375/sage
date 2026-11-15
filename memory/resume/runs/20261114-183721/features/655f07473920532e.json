@@ -1,0 +1,38 @@
+{
+  "title": "AI Developer (LLM & Agentic Systems)",
+  "family": "ai_engineer",
+  "city": "Vancouver",
+  "region": "BC",
+  "country": "CA",
+  "salary_min": 104100.0,
+  "salary_max": 138000.0,
+  "salary_period": "year",
+  "years_min": 5,
+  "required": [
+    "LLM",
+    "AI Agents",
+    "Communication",
+    "NLP",
+    "ETL",
+    "Knowledge Graphs",
+    "CI/CD",
+    "Prompt Engineering",
+    "Multi-agent",
+    "Embeddings",
+    "Vector Search",
+    "RAG",
+    "Document Processing"
+  ],
+  "nice_to_have": [
+    "Python",
+    "FastAPI",
+    "JavaScript",
+    "Microservices",
+    "Azure",
+    "Docker",
+    "Kubernetes"
+  ],
+  "degree": "bachelor",
+  "posted_at": "2026-11-11T00:00:00",
+  "rules_confidence": 0.6666666666666666
+}

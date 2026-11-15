@@ -137,11 +137,23 @@ def cmd_select(rd: Path, k: dict) -> dict:
             continue
         rows.append({**x, "ah_score": e.get("score"), "band": e.get("band"), "why": e.get("why", ""),
                      "legitimacy": e.get("legitimacy", ""), "hard_stop": e.get("hard_stop", False)})
-    rows = [r for r in rows if not r["hard_stop"] and (r["ah_score"] or 0) >= k["ranking"]["select_min"]]
+    pool = [r for r in rows if not r["hard_stop"]]
+    used_min = k["ranking"]["select_min"]
+    rows = [r for r in pool if (r["ah_score"] or 0) >= used_min]
+    if len(rows) < 2 and k["ranking"].get("auto_relax", True):
+        scores = sorted({r["ah_score"] or 0 for r in pool}, reverse=True)
+        for s in scores:
+            if s < 3.0:
+                break
+            used_min = s
+            rows = [r for r in pool if (r["ah_score"] or 0) >= used_min]
+            if len(rows) >= min(k["ranking"]["select_top_n"], 5):
+                break
     rows.sort(key=lambda r: (-(r["ah_score"] or 0), -r["pre_score"]))
     selected = rows[: k["ranking"]["select_top_n"]]
-    common.write_json(rd / "selected.json", {"selected": selected, "evaluated": len(evals)})
-    return {"evaluated": len(evals), "selected": len(selected)}
+    common.write_json(rd / "selected.json", {"selected": selected, "evaluated": len(evals), "select_min_used": used_min,
+                                             "select_min_knob": k["ranking"]["select_min"]})
+    return {"evaluated": len(evals), "selected": len(selected), "select_min_used": used_min}
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,460 @@
+{
+  "pages": 2,
+  "right_margin_x": 576.0,
+  "sections": [
+    "PROFESSIONAL SUMMARY",
+    "EDUCATION",
+    "SKILLS",
+    "EXPERIENCE",
+    "PROJECTS",
+    "HACKATHONS & EVENTS",
+    "CERTIFICATIONS & TRAINING"
+  ],
+  "bullets": [
+    {
+      "section": "PROFESSIONAL SUMMARY",
+      "page": 1,
+      "text": "• AI Engineer with 2 years building production agentic AI, RAG, and LL",
+      "lines": 3,
+      "first_chars": 106,
+      "last_x1": 262.100907,
+      "max_x1": 576.001212,
+      "y0": 105.62463,
+      "last_fill": 0.407
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Built an orchestrator-subagent SDLC system turning Jira epics into r",
+      "lines": 2,
+      "first_chars": 112,
+      "last_x1": 578.11468,
+      "max_x1": 578.11468,
+      "y0": 428.81163,
+      "last_fill": 1.004
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Generalized it into a team shared agentic harness and plugin marketp",
+      "lines": 2,
+      "first_chars": 111,
+      "last_x1": 577.933643,
+      "max_x1": 577.933643,
+      "y0": 461.59263,
+      "last_fill": 1.004
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Built rolling LLM conversation compaction for MAF agents in C#/.NET,",
+      "lines": 2,
+      "first_chars": 108,
+      "last_x1": 563.19643,
+      "max_x1": 575.997234,
+      "y0": 494.37463,
+      "last_fill": 0.976
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Hardened Kong AI Gateway as the control layer for LLM traffic with A",
+      "lines": 2,
+      "first_chars": 105,
+      "last_x1": 564.925523,
+      "max_x1": 577.521279,
+      "y0": 527.15563,
+      "last_fill": 0.979
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Debugged a failing GCP Cloud SQL backup pipeline (0/21 exports) acro",
+      "lines": 2,
+      "first_chars": 106,
+      "last_x1": 529.247184,
+      "max_x1": 577.519517,
+      "y0": 592.71863,
+      "last_fill": 0.912
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Built zero-downtime credential rotation for a multi-tenant Kong Konn",
+      "lines": 2,
+      "first_chars": 104,
+      "last_x1": 565.920433,
+      "max_x1": 577.519053,
+      "y0": 625.49963,
+      "last_fill": 0.981
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Engineered a self-hosted MCP server and Python/pytest framework that",
+      "lines": 2,
+      "first_chars": 108,
+      "last_x1": 507.466202,
+      "max_x1": 576.00535,
+      "y0": 658.28063,
+      "last_fill": 0.87
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 1,
+      "text": "• Decommissioned a retired data source from 3 RAG agents on Azure AI S",
+      "lines": 2,
+      "first_chars": 103,
+      "last_x1": 546.401871,
+      "max_x1": 576.00484,
+      "y0": 691.06163,
+      "last_fill": 0.944
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 2,
+      "text": "• Owned the end-to-end architecture of Slideoo’s AI document-generatio",
+      "lines": 2,
+      "first_chars": 109,
+      "last_x1": 578.112966,
+      "max_x1": 578.112966,
+      "y0": 65.02363,
+      "last_fill": 1.004
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 2,
+      "text": "• Rebuilt the multimodal LLM pipeline for PowerPoint generation by pro",
+      "lines": 2,
+      "first_chars": 107,
+      "last_x1": 578.116174,
+      "max_x1": 578.116174,
+      "y0": 97.80463,
+      "last_fill": 1.004
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 2,
+      "text": "• Benchmarked competing LLM candidates for production by analyzing eva",
+      "lines": 2,
+      "first_chars": 105,
+      "last_x1": 573.893894,
+      "max_x1": 575.994616,
+      "y0": 130.58563,
+      "last_fill": 0.996
+    },
+    {
+      "section": "EXPERIENCE",
+      "page": 2,
+      "text": "• Led a team of interns and partnered with company leadership to shape",
+      "lines": 2,
+      "first_chars": 105,
+      "last_x1": 578.114035,
+      "max_x1": 578.114035,
+      "y0": 163.36763,
+      "last_fill": 1.004
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Built a multi-agent incident responder: Datadog alerts flow through ",
+      "lines": 2,
+      "first_chars": 112,
+      "last_x1": 548.684782,
+      "max_x1": 575.999372,
+      "y0": 250.70863,
+      "last_fill": 0.948
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Kept a human in control: read-only agent tools, a revert PR as the o",
+      "lines": 2,
+      "first_chars": 114,
+      "last_x1": 364.860265,
+      "max_x1": 576.270088,
+      "y0": 283.48963,
+      "last_fill": 0.601
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Secured the FastAPI pod with Entra ID bearer tokens, app roles, work",
+      "lines": 2,
+      "first_chars": 105,
+      "last_x1": 422.997041,
+      "max_x1": 576.000179,
+      "y0": 316.27063,
+      "last_fill": 0.711
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Cut idle cost with Terraform, one ARM64 node, and pod scale-to-zero;",
+      "lines": 2,
+      "first_chars": 111,
+      "last_x1": 403.137024,
+      "max_x1": 576.299542,
+      "y0": 349.05263,
+      "last_fill": 0.673
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Built a wealth-advisor RAG agent (Anthropic SDK, FastAPI, 4 tools) o",
+      "lines": 2,
+      "first_chars": 104,
+      "last_x1": 448.802517,
+      "max_x1": 576.000179,
+      "y0": 403.10563,
+      "last_fill": 0.76
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Added two-pass PII redaction (GCP DLP, regex fallback): one pass cle",
+      "lines": 2,
+      "first_chars": 111,
+      "last_x1": 442.769785,
+      "max_x1": 577.515461,
+      "y0": 435.88663,
+      "last_fill": 0.748
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Routed LLM calls through Kong (60 req/min per advisor, request loggi",
+      "lines": 2,
+      "first_chars": 109,
+      "last_x1": 461.341436,
+      "max_x1": 576.003648,
+      "y0": 468.66863,
+      "last_fill": 0.783
+    },
+    {
+      "section": "PROJECTS",
+      "page": 2,
+      "text": "• Gated merges with a GitHub Actions eval: an LLM judge scores 50 gold",
+      "lines": 2,
+      "first_chars": 105,
+      "last_x1": 469.992353,
+      "max_x1": 576.394111,
+      "y0": 501.44963,
+      "last_fill": 0.8
+    },
+    {
+      "section": "HACKATHONS & EVENTS",
+      "page": 2,
+      "text": "• WinHacks 2025: Built an AI scheduling assistant for student producti",
+      "lines": 1,
+      "first_chars": 107,
+      "last_x1": 576.827728,
+      "max_x1": 576.827728,
+      "y0": 568.372539,
+      "last_fill": 1.002
+    },
+    {
+      "section": "HACKATHONS & EVENTS",
+      "page": 2,
+      "text": "• InfoEdge AI Hackathon 2024: Shipped a charting feature for AI presen",
+      "lines": 1,
+      "first_chars": 106,
+      "last_x1": 577.492211,
+      "max_x1": 577.492211,
+      "y0": 586.656539,
+      "last_fill": 1.003
+    },
+    {
+      "section": "HACKATHONS & EVENTS",
+      "page": 2,
+      "text": "• DevFest, Google Developer Groups Sep 2025: Attended sessions on Gemi",
+      "lines": 1,
+      "first_chars": 94,
+      "last_x1": 550.388934,
+      "max_x1": 550.388934,
+      "y0": 604.939539,
+      "last_fill": 0.953
+    }
+  ],
+  "skills": [
+    {
+      "label": "Languages",
+      "y0": 250.404539,
+      "rows": 1,
+      "x1": 407.456875
+    },
+    {
+      "label": "AI & Agents",
+      "y0": 266.641539,
+      "rows": 1,
+      "x1": 514.167509
+    },
+    {
+      "label": "LLM & RAG",
+      "y0": 282.878539,
+      "rows": 1,
+      "x1": 483.132211
+    },
+    {
+      "label": "LLMOps",
+      "y0": 299.116539,
+      "rows": 1,
+      "x1": 574.822105
+    },
+    {
+      "label": "Cloud",
+      "y0": 315.353539,
+      "rows": 1,
+      "x1": 559.943184
+    },
+    {
+      "label": "Databases",
+      "y0": 331.590539,
+      "rows": 1,
+      "x1": 423.062342
+    },
+    {
+      "label": "Frameworks",
+      "y0": 347.828539,
+      "rows": 1,
+      "x1": 449.604183
+    }
+  ],
+  "overflow": [
+    {
+      "page": 1,
+      "x1": 576.0,
+      "text": "• AI Engineer with 2 years building production agentic AI, R"
+    },
+    {
+      "page": 1,
+      "x1": 576.0,
+      "text": "Jan 2025 - Aug 2026"
+    },
+    {
+      "page": 1,
+      "x1": 576.4,
+      "text": "Sept 2020 - Sept 2024"
+    },
+    {
+      "page": 1,
+      "x1": 578.1,
+      "text": "over GitHub, Bitbucket, Atlassian, and Microsoft MCP; tiered"
+    },
+    {
+      "page": 1,
+      "x1": 577.9,
+      "text": "loading, declarative sandbox policies, and eval-driven tunin"
+    },
+    {
+      "page": 1,
+      "x1": 577.5,
+      "text": "• Hardened Kong AI Gateway as the control layer for LLM traf"
+    },
+    {
+      "page": 1,
+      "x1": 576.0,
+      "text": "Jan 2026 - Aug 2026"
+    },
+    {
+      "page": 1,
+      "x1": 577.5,
+      "text": "• Debugged a failing GCP Cloud SQL backup pipeline (0/21 exp"
+    },
+    {
+      "page": 1,
+      "x1": 577.5,
+      "text": "• Built zero-downtime credential rotation for a multi-tenant"
+    },
+    {
+      "page": 1,
+      "x1": 576.0,
+      "text": "• Engineered a self-hosted MCP server and Python/pytest fram"
+    },
+    {
+      "page": 1,
+      "x1": 576.0,
+      "text": "• Decommissioned a retired data source from 3 RAG agents on "
+    },
+    {
+      "page": 2,
+      "x1": 576.0,
+      "text": "• Owned the end-to-end architecture of Slideoo’s AI document"
+    },
+    {
+      "page": 2,
+      "x1": 578.1,
+      "text": "tool calling, & reasoning on Azure and AWS, scaling to 10x t"
+    },
+    {
+      "page": 2,
+      "x1": 576.0,
+      "text": "• Rebuilt the multimodal LLM pipeline for PowerPoint generat"
+    },
+    {
+      "page": 2,
+      "x1": 578.1,
+      "text": "prompt orchestration, cutting generation latency 77% (3+ min"
+    },
+    {
+      "page": 2,
+      "x1": 576.3,
+      "text": "• Led a team of interns and partnered with company leadershi"
+    },
+    {
+      "page": 2,
+      "x1": 578.1,
+      "text": "roadmap, driving sprint planning, reviews, & technical mento"
+    },
+    {
+      "page": 2,
+      "x1": 576.3,
+      "text": "• Kept a human in control: read-only agent tools, a revert P"
+    },
+    {
+      "page": 2,
+      "x1": 576.0,
+      "text": "• Secured the FastAPI pod with Entra ID bearer tokens, app r"
+    },
+    {
+      "page": 2,
+      "x1": 576.3,
+      "text": "• Cut idle cost with Terraform, one ARM64 node, and pod scal"
+    },
+    {
+      "page": 2,
+      "x1": 576.0,
+      "text": "• Built a wealth-advisor RAG agent (Anthropic SDK, FastAPI, "
+    },
+    {
+      "page": 2,
+      "x1": 577.5,
+      "text": "• Added two-pass PII redaction (GCP DLP, regex fallback): on"
+    },
+    {
+      "page": 2,
+      "x1": 576.0,
+      "text": "• Routed LLM calls through Kong (60 req/min per advisor, req"
+    },
+    {
+      "page": 2,
+      "x1": 576.4,
+      "text": "• Gated merges with a GitHub Actions eval: an LLM judge scor"
+    },
+    {
+      "page": 2,
+      "x1": 576.8,
+      "text": "• WinHacks 2025: Built an AI scheduling assistant for studen"
+    },
+    {
+      "page": 2,
+      "x1": 577.5,
+      "text": "• InfoEdge AI Hackathon 2024: Shipped a charting feature for"
+    }
+  ],
+  "bottom_gap_pt": {
+    "1": 76.8,
+    "2": 112.4
+  },
+  "source": "memory/resume/versions/v1/resume-v1.pdf"
+}

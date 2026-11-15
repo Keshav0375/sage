@@ -93,10 +93,14 @@ def source_from_file(path: str) -> str:
 def ingest(files: list[str]) -> list[dict]:
     rows: list[dict] = []
     for f in files:
+        raw = Path(f).read_text(encoding="utf-8")
         try:
-            data = json.loads(Path(f).read_text(encoding="utf-8"))
+            data = json.loads(raw)
         except Exception:
-            continue
+            try:  # compact JSONL from the workbench snippet
+                data = [json.loads(line) for line in raw.splitlines() if line.strip()]
+            except Exception:
+                continue
         src = source_from_file(f)
         for rec in _iter_records(data):
             j = normalise(rec, src)
@@ -149,13 +153,34 @@ def plan(k: dict) -> list[dict]:
     return calls[: k["budget"]["max_composio_calls"]]
 
 
+WORKBENCH_SNIPPET = r"""
+# Run with COMPOSIO_REMOTE_BASH_TOOL after MULTI_EXECUTE(sync_response_to_workbench=true).
+# Prints one compact line per job (no descriptions) so a large response never enters a model's context.
+import json, sys, glob
+for f in sys.argv[1:] or glob.glob('/mnt/files/mex/*.json'):
+    d = json.load(open(f))
+    for r in d.get('results', []):
+        data = (r.get('response') or {}).get('data') or {}
+        res = data.get('result', data)
+        jobs = (res.get('data') if isinstance(res.get('data'), list) else (res.get('data') or {}).get('jobs')) or []
+        for j in jobs:
+            print(json.dumps({k: j.get(k) for k in ('id','title','companyName','location','linkedinUrl','datePosted',
+                  'job_id','job_title','employer_name','job_city','job_state','job_apply_link','job_posted_at_datetime_utc',
+                  'job_min_salary','job_max_salary','job_salary_period','job_is_remote') if j.get(k) not in (None, '')}))
+"""
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("files", nargs="*")
     ap.add_argument("--run")
     ap.add_argument("--plan", action="store_true")
+    ap.add_argument("--workbench-snippet", action="store_true", help="print the Python to compact responses in the Composio workbench")
     ap.add_argument("--preset")
     a = ap.parse_args(argv)
+    if a.workbench_snippet:
+        print(WORKBENCH_SNIPPET)
+        return 0
     k, _ = knobs_mod.load(a.preset)
     if a.plan:
         print(json.dumps(plan(k), indent=2))

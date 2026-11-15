@@ -1,0 +1,10 @@
+{"id": "9a2b9c0b7910bcd0", "score": 3.2, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Excellent agentic/multi-model topic fit at PSP, but Senior with 5+ yrs (stretch for ~2), Montreal hybrid, no pay stated, Databricks/fine-tuning missing.", "level_fit": "stretch", "base": "agentic",
+ "must_haves_missing": ["5+ years production software/ML", "Databricks", "model fine-tuning", "Python SDK/Gradio front end", "financial services domain", "French (asset)"],
+ "customisation": [
+  {"change": "Lead with multi-model orchestration and routing language (tiered routing, fallback across providers)", "job_words": ["multi-model orchestration", "routing"], "fact_ids": ["F002", "F020"], "blocked_by_facts": false},
+  {"change": "Foreground LLM evaluation/observability and eval-gated CI", "job_words": ["evaluation", "observability", "monitoring"], "fact_ids": ["F012", "F021", "F017"], "blocked_by_facts": false},
+  {"change": "Highlight security/governance guardrails relevant to financial institution", "job_words": ["security", "data-governance"], "fact_ids": ["F005", "F018", "F019"], "blocked_by_facts": false},
+  {"change": "Emphasize use of AI coding agents / MCP harness work", "job_words": ["Claude Code", "Codex", "AI coding agents"], "fact_ids": ["F002", "F003"], "blocked_by_facts": false},
+  {"change": "Databricks and fine-tuning experience", "job_words": ["Databricks", "fine-tuning"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How did you route tasks across models and cut token cost 48% without losing task success?", "How do you evaluate and regression-test an agentic system before release?", "How would you keep an LLM platform safe inside a financial institution's data-governance rules?"]}

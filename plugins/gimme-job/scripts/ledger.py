@@ -30,7 +30,7 @@ TIERS = {                        # agent name → required model tier
     "scout-lead": "coordinator", "analyst-lead": "coordinator", "writer-lead": "coordinator",
     "source-worker": "worker", "signal-worker": "worker", "mail-worker": "worker", "page-worker": "worker",
     "extract-worker": "worker", "evidence-worker": "worker", "script-worker": "worker",
-    "jd-evaluator": "reasoner", "gap-analyst": "reasoner", "resume-writer": "reasoner", "fact-checker": "reasoner",
+    "jd-evaluator": "reasoner", "gap-analyst": "reasoner", "resume-writer": "reasoner", "fact-checker": "reasoner", "layout-fixer": "reasoner",
     "blind-judge": "judge",
 }
 
