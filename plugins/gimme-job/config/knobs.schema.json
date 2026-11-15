@@ -418,6 +418,10 @@
             }
           },
           "additionalProperties": false
+        },
+        "auto_relax": {
+          "type": "boolean",
+          "description": "Lower select_min (not below 3.0) when fewer than 2 jobs pass"
         }
       },
       "additionalProperties": false
@@ -591,6 +595,32 @@
         }
       },
       "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Design lock vs the original resume (layout.py)",
+      "properties": {
+        "min_last_line_fill": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Last line of every bullet must be at least this full"
+        },
+        "max_lines": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "overflow_tolerance_pt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_extra_bottom_gap_pt": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
     }
   },
   "additionalProperties": false,

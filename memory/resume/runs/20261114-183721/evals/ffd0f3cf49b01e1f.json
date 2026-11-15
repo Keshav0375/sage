@@ -1,0 +1,8 @@
+{"id": "ffd0f3cf49b01e1f", "score": 1.5, "band": "skip", "confidence": "high", "hard_stop": false,
+ "legitimacy": "legit", "why": "Staff founding-lead role (10+ yrs, team hiring/management, text-to-SQL analytics, dbt/BigQuery) is far above ~2 years despite Ottawa and MCP/eval overlap.", "level_fit": "stretch", "base": "agentic",
+ "must_haves_missing": ["10+ years", "technical leadership of teams", "agentic analytics / text-to-SQL in production", "dbt and semantic layers", "BigQuery/warehouse depth", "hiring and developing engineers"],
+ "customisation": [
+  {"change": "Highlight MCP tooling and agent evals in CI", "job_words": ["MCP", "evaluation", "regression testing"], "fact_ids": ["F008", "F021", "F002"], "blocked_by_facts": false},
+  {"change": "Highlight identity-aware, permission-enforcing agents", "job_words": ["user's permissions", "audit trail"], "fact_ids": ["F018", "F016"], "blocked_by_facts": false},
+  {"change": "Text-to-SQL, dbt, semantic layer, team leadership", "job_words": ["dbt", "text-to-SQL", "hire"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How would you design an evaluation set with clarify/decline cases for an analytics agent?", "How do you enforce the asking user's permissions in an agent?", "How would you structure and grow a founding team?"]}

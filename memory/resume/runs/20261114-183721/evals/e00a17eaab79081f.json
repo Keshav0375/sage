@@ -1,0 +1,7 @@
+{"id": "e00a17eaab79081f", "score": 1.6, "band": "skip", "confidence": "high", "hard_stop": false,
+ "legitimacy": "legit", "why": "4-month student co-op at CAD 25-28/hr (about 52-58k annualised) requiring current 3rd/4th-year enrolment; under level, far below 95k floor, and not a full-time target.", "level_fit": "under", "base": "agentic",
+ "must_haves_missing": ["current enrolment in 3rd/4th year program (not evidenced in facts)", "Java proficiency", "full-time permanent employment"],
+ "customisation": [
+  {"change": "Emphasise Python/TypeScript LLM work and hackathons if ever applied", "job_words": ["Python", "TypeScript", "hackathons", "LLM"], "fact_ids": ["F022", "F023", "F002"], "blocked_by_facts": false},
+  {"change": "Claim student status", "job_words": ["currently enrolled"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How do you use AI coding assistants day to day?", "Describe a hackathon or project where you shipped under time pressure.", "Explain how an LLM handles context and how you would build a data pipeline with one."]}

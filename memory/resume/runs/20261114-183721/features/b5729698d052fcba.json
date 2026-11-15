@@ -1,0 +1,27 @@
+{
+  "title": "AI Engineer, Innovation",
+  "family": "ai_engineer",
+  "city": "Calgary",
+  "region": "AB",
+  "country": "CA",
+  "years_min": 5,
+  "required": [
+    "Azure",
+    "Azure AI Foundry",
+    "LLM",
+    "RAG",
+    "Azure AI Search",
+    "Document Processing",
+    "LLM Evaluation",
+    "Guardrails",
+    "AI Agents",
+    "Prompt Engineering",
+    "Python",
+    "Anthropic API"
+  ],
+  "nice_to_have": [
+    "MCP"
+  ],
+  "posted_at": "2026-11-09T00:00:00",
+  "rules_confidence": 0.4444444444444444
+}

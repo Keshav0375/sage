@@ -1,0 +1,20 @@
+{
+  "found": 64,
+  "unique": 63,
+  "after_filters": 59,
+  "dropped": {
+    "excluded title": 3,
+    "agency": 1
+  },
+  "liveness": {
+    "live": 0,
+    "dead": 0,
+    "unknown": 0,
+    "skipped": 59
+  },
+  "kept": 59,
+  "by_source": {
+    "linkedin": 32,
+    "jsearch": 32
+  }
+}

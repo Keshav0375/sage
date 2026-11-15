@@ -1,0 +1,7 @@
+{
+  "fact_gate": "PASS",
+  "lint": "PASS",
+  "ats": "PASS (clipped-skill check)",
+  "keyword_coverage": 0.753,
+  "pages": 2
+}

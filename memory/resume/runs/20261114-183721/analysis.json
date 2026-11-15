@@ -1,0 +1,19 @@
+{
+  "final_version": 2,
+  "strengths": [
+    "Agent platform work in production: orchestrator-subagent system over MCP, tiered model routing cut token cost 48% (Kinaxis).",
+    "LLM gateway with guardrails: Kong AI Prompt Guard, content-safety filters, token rate limits, custom Lua token metrics.",
+    "Measured results at a startup: generation latency 77% lower (3+ min to 40s), 10x traffic, 2,000+ users, cloud cost 35% lower.",
+    "Evaluation and trust controls in projects: LLM judge on 50 golden Q&A pairs, 30 scored agent scenarios, 0.7 confidence gate.",
+    "Wide production stack: Azure, GCP, AWS, Kubernetes, Terraform, OAuth2/OIDC, CI/CD; matches 9 of 12 common job asks.",
+    "Rare mix that banks and enterprise AI teams ask for: MCP + LLM gateway + guardrails."
+  ],
+  "weaknesses": [
+    "About 2 years of experience; 4 of 5 selected jobs ask 4\u20135+ years. Wording cannot fix this.",
+    "The current Kinaxis role shows 'Internship' after a finished Master's; it reads junior.",
+    "Evaluation work at Kinaxis has no numbers (eval set size, task success, number of users or teams).",
+    "No evaluation statistics, judge-vs-human agreement or red-teaming facts (Equinix asks for them).",
+    "No facts for fine-tuning, data pipelines (ETL), document processing, knowledge graphs or Azure AI Foundry.",
+    "Best RAG and eval proof is in personal projects, and 5 project claims conflict with sage docs (F017\u2013F021): confirm them."
+  ]
+}

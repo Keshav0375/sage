@@ -1,0 +1,30 @@
+{
+  "title": "Senior Applied AI Engineer - Artificial Intelligence",
+  "level": "senior",
+  "family": "ai_engineer",
+  "city": "Toronto",
+  "region": "ON",
+  "country": "CA",
+  "years_min": 5,
+  "years_max": 2,
+  "required": [
+    "Deep Learning",
+    "LLM",
+    "Vector Search",
+    "AI Agents",
+    "Fine-tuning",
+    "NLP",
+    "Python",
+    "Testing",
+    "RAG",
+    "Prompt Engineering",
+    "Guardrails",
+    "Observability"
+  ],
+  "nice_to_have": [
+    "Communication"
+  ],
+  "degree": "bachelor",
+  "posted_at": "2026-11-10T00:00:00",
+  "rules_confidence": 0.6666666666666666
+}

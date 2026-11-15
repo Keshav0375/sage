@@ -25,7 +25,15 @@ memory/resume/*.pdf
 memory/resume/out/
 memory/resume/contact.tex
 memory/resume/**/*.pdf
-memory/resume/runs/
+memory/resume/runs/*/pages/
+memory/resume/runs/*/composio/
+memory/resume/runs/*/jobs.raw.jsonl
+memory/resume/runs/*/jobs.jsonl
+memory/resume/runs/*/judge/*/resume.txt
+memory/resume/runs/*/judge/*/job.txt
+memory/resume/runs/CURRENT
+memory/resume/runs/*/*.png
 memory/resume/market/jobs-index.jsonl
 memory/resume/**/build.log
 memory/resume/**/resume.cls
+memory/resume/**/*.log

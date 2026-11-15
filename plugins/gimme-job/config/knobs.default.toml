@@ -49,7 +49,7 @@ num_pages = 2
 country = "ca"
 
 [sources.glassdoor]
-enabled = true
+enabled = false  # 2026-11-15: provider returned HTTP 400 for every query on the Composio instant account
 
 [sources.indeed]
 enabled = false
@@ -89,6 +89,7 @@ enabled = true
 pre_rank_top_k = 12
 select_top_n = 5
 select_min = 4.0
+auto_relax = true          # if fewer than 2 jobs reach select_min, lower it (not below 3.0) so the loop has a round + holdout job
 fresh_days = 30
 
 [ranking.weights]
@@ -116,8 +117,14 @@ min_keyword_coverage = 0.70
 max_tools_per_bullet = 3
 require_number = true
 max_lines = 2
-chars_per_line = 115
+chars_per_line = 105
 ban = [" \\& ", "Startup-trained"]
+
+[layout]
+min_last_line_fill = 0.80
+max_lines = 2
+overflow_tolerance_pt = 3.0
+max_extra_bottom_gap_pt = 30.0
 
 [budget]
 max_usd_per_run = 0.50

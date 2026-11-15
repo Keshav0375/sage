@@ -53,8 +53,9 @@ def card_jobs(rd: Path) -> str:
     r = common.read_json(rd / "ranking.json", {}) or {}
     lv = f.get("liveness", {})
     rows = ["### 📥 Card 2 — Jobs found", "",
-            f"**{f.get('found', 0)}** found → **{f.get('unique', 0)}** unique → **{f.get('after_filters', 0)}** after knob filters → "
-            f"**{f.get('kept', 0)}** live (dead {lv.get('dead', 0)}, unknown {lv.get('unknown', 0)}) → "
+            f"**{f.get('found', 0)}** found → **{f.get('unique', 0)}** unique → **{f.get('after_filters', 0)}** after knob filters → " +
+            (f"**{f.get('kept', 0)}** kept (liveness not checked) → " if lv.get("skipped") else
+             f"**{f.get('kept', 0)}** live (dead {lv.get('dead', 0)}, unknown {lv.get('unknown', 0)}) → ") +
             f"**{len(r.get('top_k', []))}** pre-ranked for A–H", ""]
     if f.get("dropped"):
         rows.append("Dropped: " + ", ".join(f"{k} {v}" for k, v in f["dropped"].items()))
@@ -70,8 +71,10 @@ def card_selected(rd: Path) -> str:
     rows = [f"### 🎯 Card 3 — Selected jobs ({len(sel)})", "",
             "| # | Role | Company | Where | Pay | A–H | Pre | Why |", "|---:|---|---|---|---|---:|---:|---|"]
     for i, s in enumerate(sel, 1):
-        lo, hi, cur = (s.get("salary") or [None, None, ""]) + [None] * 0
-        pay = f"{cur} {int(lo or 0):,}–{int(hi or 0):,}" if hi else "—"
+        sal = list(s.get("salary") or []) + [None, None, "", ""]
+        lo, hi, cur, per = sal[0], sal[1], sal[2] or "", sal[3] or ""
+        unit = {"hour": "/hr", "month": "/mo"}.get(per, "")
+        pay = f"{cur} {int(lo or 0):,}–{int(hi or 0):,}{unit}".strip() if hi else "—"
         where = f"{s.get('location', '')} {('· ' + s['workplace']) if s.get('workplace') else ''}"
         rows.append(f"| {i} | [{_esc(s['title'], 40)}]({s['url']}) | {_esc(s['company'], 25)} | {_esc(where, 30)} | {pay} | "
                     f"{s.get('ah_score', '—')} | {s.get('pre_score', '—')} | {_esc(s.get('why', ''), 80)} |")
@@ -131,21 +134,98 @@ def card_result(k: dict) -> str:
     for p in sorted(vroot.glob("v*"), key=lambda p: int(p.name[1:]) if p.name[1:].isdigit() else 0):
         j = common.read_json(p / "judge.json", {}) or {}
         sc = common.read_json(p / "scores.json", {}) or {}
-        hist.append((p.name, j.get("score"), sc.get("keyword_coverage")))
+        lay = (common.read_json(p / "layout.json", {}) or {}).get("verdict", "—")
+        hist.append((p.name, j.get("score"), j.get("holdout_score"), sc.get("keyword_coverage"), (j.get("job_company") or ""), lay))
     vd = _version_dir(k, None)
     if not vd:
         return "### 🏁 Card 6 — Result\n\n(no versions)"
     pdf = vd / f"resume-{vd.name}.pdf"
     rel = pdf.relative_to(common.repo_root()) if pdf.is_relative_to(common.repo_root()) else pdf
     rows = ["### 🏁 Card 6 — Result", "", f"**New resume:** [`{rel}`]({rel})" + ("" if pdf.exists() else " (PDF not built — run build.sh)"), "",
-            "| Version | Judge | Keyword coverage |", "|---|---:|---:|"]
-    rows += [f"| {v} | {s if s is not None else '—'} | {c if c is not None else '—'} |" for v, s, c in hist]
+            "| Version | Round judge (job) | Holdout judge | Keyword coverage | Design lock |", "|---|---:|---:|---:|---|"]
+    rows += [f"| {v} | {s if s is not None else '—'} ({co or '—'}) | {h if h is not None else '—'} | {c if c is not None else '—'} | {lay} |"
+             for v, s, h, c, co, lay in hist]
     return "\n".join(rows)
+
+
+# ------------------------------------------------------------------ final summary (the only thing shown at the end of a run)
+WHERE = {"LinkedIn search": "LinkedIn (Composio job_search)", "LinkedIn get job": "LinkedIn (Composio job_search)",
+         "JSearch": "JSearch / Google for Jobs (Composio)", "Glassdoor": "Glassdoor (Composio)", "liveness": "job pages (HTTP)"}
+
+
+def _pdf_bullets(pdf: Path) -> list[tuple[str, str]]:
+    import re as _re
+    import subprocess as _sp
+    t = _sp.run(["pdftotext", "-layout", str(pdf), "-"], capture_output=True, text=True).stdout
+    out, sec, cur = [], "", None
+    for line in t.splitlines():
+        st = line.strip()
+        if st and st.upper() == st and len(st) < 40 and _re.match(r"^[A-Z &]+$", st):
+            sec, cur = st, None
+            continue
+        if st.startswith("•"):
+            cur = [sec, st[1:].strip()]
+            out.append(cur)
+        elif cur and st and line.startswith("  ") and not _re.search(r"\s{4,}", st):
+            cur[1] += " " + st
+        else:
+            cur = None
+    keep = ("PROFESSIONAL SUMMARY", "EXPERIENCE", "PROJECTS", "HACKATHONS & EVENTS")
+    return [(a, _re.sub(r"\s+", " ", b)) for a, b in out if a in keep]
+
+
+def line_pairs(old_pdf: Path, new_pdf: Path) -> list[tuple[str, str, str]]:
+    import difflib
+    old, new = _pdf_bullets(old_pdf), _pdf_bullets(new_pdf)
+    used, rows = set(), []
+    for sec, o in old:
+        cands = [(difflib.SequenceMatcher(None, o, n).ratio(), i) for i, (s2, n) in enumerate(new) if s2 == sec and i not in used]
+        single = sum(1 for s2, _ in old if s2 == sec) == 1 and len(cands) == 1
+        best = max(cands, default=(0, None))
+        if best[1] is not None and (best[0] > 0.35 or single):
+            used.add(best[1])
+            if new[best[1]][1] != o:
+                rows.append((sec, o, new[best[1]][1]))
+        else:
+            rows.append((sec, o, "(removed)"))
+    rows += [(s2, "(new)", n) for i, (s2, n) in enumerate(new) if i not in used]
+    return rows
+
+
+def card_summary(rd: Path, k: dict) -> str:
+    import re as _re
+    out = ["### Tool calls", "", "| Tool call | Where | Success or fail | Reason |", "|---|---|---|---|"]
+    for r in common.read_jsonl(rd / "ledger.jsonl"):
+        src = r.get("source") or r.get("tool", "")
+        where = WHERE.get(src, src.replace("scanner:", "") + (" (in-house scanner)" if src.startswith("scanner") else ""))
+        out.append(f"| {_esc(src, 40)} | {_esc(where, 45)} | {'success' if r.get('status') == 'ok' else 'fail'} | {_esc(r.get('reason') or '—', 60)} |")
+    out += ["", "### Jobs selected", "", "| Job title | Years of exp | Company | Link |", "|---|---|---|---|"]
+    for s_ in (common.read_json(rd / "selected.json", {}) or {}).get("selected", []):
+        page = rd / "pages" / f"{s_['id']}.txt"
+        yrs = "—"
+        if page.exists():
+            txt = page.read_text()
+            plus = _re.findall(r"(\d+)\s*\+\s*years?", txt, _re.I) + _re.findall(r"at least\s+(\d+)\s+years?", txt, _re.I)
+            rng = _re.search(r"(\d+\s*-\s*\d+\s*years?)", txt, _re.I)
+            yrs = (" / ".join(dict.fromkeys(f"{x}+ years" for x in plus))) if plus else (rng.group(1) if rng else "—")
+        out.append(f"| {_esc(s_['title'], 50)} | {yrs} | {_esc(s_['company'], 25)} | [link]({s_['url']}) |")
+    an = common.read_json(rd / "analysis.json", {}) or {}
+    out += ["", "### Resume analysis", "", "**Strengths we have**", ""] + [f"- {x}" for x in an.get("strengths", [])]
+    out += ["", "**Weaknesses we have**", ""] + [f"- {x}" for x in an.get("weaknesses", [])]
+    vroot = common.data_root(k) / "versions"
+    vs = sorted(int(p.name[1:]) for p in vroot.glob("v*") if p.name[1:].isdigit())
+    best = an.get("final_version") or (vs[-1] if vs else None)
+    if vs and best and (vroot / "v1" / "resume-v1.pdf").exists() and (vroot / f"v{best}" / f"resume-v{best}.pdf").exists():
+        out += ["", f"### Lines before (v1) / lines now (v{best})", "", "| Section | Before | Now |", "|---|---|---|"]
+        for sec, o, n in line_pairs(vroot / "v1" / "resume-v1.pdf", vroot / f"v{best}" / f"resume-v{best}.pdf"):
+            cell = lambda x: x.replace("|", "/")  # noqa: E731
+            out.append(f"| {sec.title()} | {cell(o)} | {cell(n)} |")
+    return "\n".join(out)
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("card", nargs="?", default="all", choices=["tools", "jobs", "selected", "changes", "judge", "result", "all"])
+    ap.add_argument("card", nargs="?", default="all", choices=["tools", "jobs", "selected", "changes", "judge", "result", "all", "summary"])
     ap.add_argument("--run")
     ap.add_argument("--version", type=int)
     ap.add_argument("--final", action="store_true")
@@ -160,8 +240,14 @@ def main(argv: list[str] | None = None) -> int:
         if not done.exists() or shown.exists():
             return 0
         shown.write_text("1")
-        text = "\n\n".join([card_tools(rd), card_jobs(rd), card_selected(rd), card_changes(k, None), card_judge(k, None), card_result(k)])
+        text = card_summary(rd, k)
         print(json.dumps({"systemMessage": text}))
+        return 0
+    if a.card == "summary":
+        rd = common.run_dir(a.run, k)
+        text = card_summary(rd, k)
+        (rd / "summary.md").write_text(text + "\n", encoding="utf-8")
+        print(text)
         return 0
     rd = common.run_dir(a.run, k) if a.card in ("tools", "jobs", "selected", "all") else None
     out = {

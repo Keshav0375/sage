@@ -1,0 +1,7 @@
+{
+  "fact_gate": "PASS (script + semantic; 2 blocks fixed)",
+  "lint": "PASS",
+  "ats": "FAIL (skills row clipped: 'Observability (LangFuse)') \u2014 found by the new ATS check after judging",
+  "keyword_coverage": 0.753,
+  "pages": 2
+}

@@ -34,8 +34,10 @@ def main() -> int:
     rows.append(("data root", dr.exists(), str(dr), True))
     rows.append(("resume v1 imported", v1.exists(), str(v1), False))
     rows.append(("facts.json", (dr / "facts.json").exists(), str(dr / "facts.json"), False))
+    rows.append(("design baseline (layout lock)", (dr / "design" / "baseline.json").exists(), str(dr / "design" / "baseline.json"), False))
+    rows.append(("node + playwright (compare)", bool(shutil.which("node")), shutil.which("node") or "install node; npm i -g playwright", False))
     rows.append(("contact.tex (private)", (dr / "contact.tex").exists(), str(dr / "contact.tex"), False))
-    for probe in ("memory/resume/contact.tex", "memory/resume/versions/v1/resume-v1.pdf", "memory/resume/runs/x/ledger.jsonl"):
+    for probe in ("memory/resume/contact.tex", "memory/resume/versions/v1/resume-v1.pdf", "memory/resume/runs/x/pages/a.txt"):
         r = subprocess.run(["git", "check-ignore", "-q", probe], cwd=common.repo_root())
         rows.append((f"gitignored: {probe}", r.returncode == 0, "ok" if r.returncode == 0 else "add rule to .gitignore", True))
     width = max(len(r[0]) for r in rows)

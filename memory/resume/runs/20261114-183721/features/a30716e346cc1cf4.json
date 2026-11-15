@@ -1,0 +1,52 @@
+{
+  "title": "AI Engineer - Applied AI, Data & LLM Systems",
+  "family": "ai_engineer",
+  "city": "Toronto",
+  "region": "ON",
+  "country": "CA",
+  "workplace": "hybrid",
+  "remote_regions": [
+    "CA"
+  ],
+  "salary_min": 55.0,
+  "salary_max": 60.0,
+  "salary_period": "hour",
+  "years_min": 4,
+  "or_equivalent": true,
+  "required": [
+    "LLM",
+    "Prompt Engineering",
+    "Machine Learning",
+    "AI Agents",
+    "Tool Calling",
+    "Document Processing",
+    "ETL",
+    "RAG",
+    "Embeddings",
+    "LLM Evaluation",
+    "Python",
+    "REST APIs",
+    "FastAPI",
+    "CI/CD",
+    "AWS",
+    "Azure",
+    "GCP",
+    "Testing",
+    "SQL",
+    "Docker",
+    "Deep Learning",
+    "Vector Search",
+    "Guardrails"
+  ],
+  "nice_to_have": [
+    "LangGraph",
+    "LangChain",
+    "Microsoft Agent Framework",
+    "Observability",
+    "Hugging Face",
+    "PyTorch",
+    "Fine-tuning"
+  ],
+  "posted_at": "2026-11-12T00:00:00",
+  "rules_confidence": 0.6666666666666666
+}

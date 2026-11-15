@@ -124,8 +124,16 @@ def main(argv: list[str] | None = None) -> int:
         from scripts.providers._http import Http
         http = Http(retries=1, min_delay=0.5)
         final = []
+        blocked = 0
         for j in kept:
+            if blocked >= 3 and not any(v for kk, v in live_counts.items() if kk in ("live", "dead")):
+                j["liveness"] = "skipped"
+                live_counts["skipped"] += 1
+                final.append(j)
+                continue
             st = liveness(j, http)
+            if st == "unknown":
+                blocked += 1
             j["liveness"] = st
             live_counts[st] += 1
             if st != "dead":
@@ -134,6 +142,8 @@ def main(argv: list[str] | None = None) -> int:
                                                      "status": "ok" if st != "unknown" else "failed",
                                                      "reason": "" if st != "unknown" else "unreachable"})
         kept = final
+        if live_counts["skipped"]:
+            live_counts["note"] = "network blocked: liveness skipped after 3 unreachable checks"
     else:
         live_counts["skipped"] = len(kept)
     common.write_jsonl(rd / "jobs.jsonl", kept)

@@ -1,1 +1,3 @@
-# gimme-job user knobs (overrides of plugins/gimme-job/config/knobs.default.toml). Use `knobs.py set` or edit.
+# gimme-job user knobs (overrides). Edit or use `knobs.py set`.
+[ranking]
+select_min = 3.3

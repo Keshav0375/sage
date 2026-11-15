@@ -1,0 +1,8 @@
+{"id": "c941e025520cccb5", "score": 1.6, "band": "skip", "confidence": "high", "hard_stop": false,
+ "legitimacy": "unclear", "why": "Distinguished-level role requiring 10+ years and team-hiring/direction-setting; far beyond ~2 years despite topical overlap and Ottawa/remote CA.", "level_fit": "stretch", "base": "agentic",
+ "must_haves_missing": ["10+ years production software", "distinguished-level direction setting", "Go", "distributed systems operation at scale", "hiring bar/interviewing", "AWS-primary depth"],
+ "customisation": [
+  {"change": "Emphasize agentic SDLC harness and guardrails work", "job_words": ["agentic coding workflows", "guardrails", "evals"], "fact_ids": ["F002", "F003", "F015"], "blocked_by_facts": false},
+  {"change": "Show mentoring/leading interns", "job_words": ["mentoring", "technical leadership"], "fact_ids": ["F013"], "blocked_by_facts": false},
+  {"change": "10+ years and Go experience", "job_words": ["10+ years", "Go"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Describe a project you led and how you used AI on it.", "Design a system that stays sound when agents write most of the code.", "Where should humans stay in the loop in agent workflows?"]}

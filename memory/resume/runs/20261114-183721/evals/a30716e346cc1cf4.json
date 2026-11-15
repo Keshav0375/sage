@@ -1,0 +1,10 @@
+{"id": "a30716e346cc1cf4", "score": 3.8, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "unclear", "why": "Strong skills match (RAG, eval, FastAPI, tool calling, guardrails, 3 clouds), remote Canada, ~CAD 114-125k annualised, but asks 4+ yrs vs ~2 and hourly pay suggests contract.", "level_fit": "stretch", "base": "agentic",
+ "must_haves_missing": ["4+ years professional experience", "dedicated ETL/ELT ingestion pipeline ownership", "deep learning / PyTorch", "async Python depth not evidenced"],
+ "customisation": [
+  {"change": "Frame RAG work as document processing, embeddings, retrieval, permission-aware access with citations", "job_words": ["RAG", "permission-aware", "citations", "embeddings"], "fact_ids": ["F018", "F019", "F009"], "blocked_by_facts": false},
+  {"change": "Lead with evaluation frameworks, golden sets and CI regression gates", "job_words": ["evaluation", "regression tests", "baselines"], "fact_ids": ["F021", "F012", "F017"], "blocked_by_facts": false},
+  {"change": "Surface AI security: prompt guard, read-only tools, PII redaction", "job_words": ["prompt injection", "sensitive data exposure", "excessive tool permissions"], "fact_ids": ["F005", "F015", "F019"], "blocked_by_facts": false},
+  {"change": "Show prototype-to-production and client-style ownership", "job_words": ["proof of concept", "technical ownership"], "fact_ids": ["F010", "F013", "F011"], "blocked_by_facts": false},
+  {"change": "Data ingestion/ETL pipelines and PyTorch/deep learning", "job_words": ["ETL", "PyTorch"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Walk through a RAG pipeline you built end to end and how you enforced per-user permissions.", "How do you build an eval set and catch quality regressions in CI?", "How would you handle prompt injection and excessive tool permissions in an agent?"]}

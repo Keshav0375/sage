@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Resume versions: memory/resume/versions/v{n}/ with resume-v{n}.tex|.pdf, changes.md|json, scores.json, judge.json.
 
-  version.py new [--from N] [--run ID]     copy v{N or latest} → v{latest+1}; write changes skeleton
+  version.py start --run ID               ONE version per run: return the run's v{n}, or create it (copy of latest)
+  version.py iterate N                    new loop round: v{n}/iterations/iter-k/resume.tex (copy of the last iteration)
+  version.py promote N [--iter K|--best]  copy iter-K (or best judged) into v{n}/resume-v{n}.tex + judge/scores/layout/snapshots
+  version.py new [--from N] [--run ID]    same as start (kept for old callers)
   version.py list
   version.py latest                        print latest version number
   version.py diff A B                      unified diff of resume-vA.tex vs resume-vB.tex
@@ -40,7 +43,20 @@ def tex_path(k: dict, n: int) -> Path:
     return vdir(k, n) / f"resume-v{n}.tex"
 
 
+def version_for_run(k: dict, run: str) -> int | None:
+    for n in versions(k):
+        meta = common.read_json(vdir(k, n) / "changes.json", {}) or {}
+        if run and meta.get("run") == run and n != 1:
+            return n
+    return None
+
+
 def new_version(k: dict, src: int | None = None, run: str | None = None) -> int:
+    """One version per run: reuse the run's version when it exists."""
+    if run:
+        existing = version_for_run(k, run)
+        if existing:
+            return existing
     vs = versions(k)
     if not vs:
         raise SystemExit("no v1 yet: import the current resume as versions/v1/resume-v1.tex first")
@@ -57,9 +73,54 @@ def new_version(k: dict, src: int | None = None, run: str | None = None) -> int:
     return n
 
 
+def iterations(k: dict, n: int) -> list[int]:
+    d = vdir(k, n) / "iterations"
+    return sorted(int(p.name[5:]) for p in d.glob("iter-*") if p.name[5:].isdigit()) if d.exists() else []
+
+
+def iterate(k: dict, n: int) -> Path:
+    its = iterations(k, n)
+    nxt = (its[-1] + 1) if its else 1
+    d = vdir(k, n) / "iterations" / f"iter-{nxt}"
+    d.mkdir(parents=True)
+    src = (vdir(k, n) / "iterations" / f"iter-{its[-1]}" / "resume.tex") if its else tex_path(k, n)
+    shutil.copy(src, d / "resume.tex")
+    common.write_json(d / "changes.json", {"version": f"v{n} iter-{nxt}", "parent": f"v{n} iter-{its[-1]}" if its else f"v{n}",
+                                           "changes": [], "why": ""})
+    return d / "resume.tex"
+
+
+def promote(k: dict, n: int, it: int | None = None) -> int:
+    its = iterations(k, n)
+    if not its:
+        raise SystemExit(f"v{n} has no iterations")
+    if it is None:  # best = design PASS first, then highest judge score
+        def key(i: int):
+            d = vdir(k, n) / "iterations" / f"iter-{i}"
+            lay = (common.read_json(d / "layout.json", {}) or {}).get("verdict") == "PASS"
+            j = common.read_json(d / "judge.json", {}) or {}
+            return (lay, j.get("holdout_score") or 0, j.get("score") or 0, i)
+        it = max(its, key=key)
+    d = vdir(k, n) / "iterations" / f"iter-{it}"
+    shutil.copy(d / "resume.tex", tex_path(k, n))
+    for name in ("judge.json", "scores.json", "layout.json", "fact-gate.json"):
+        if (d / name).exists():
+            shutil.copy(d / name, vdir(k, n) / name)
+    if (d / "snapshots").exists():
+        shutil.copytree(d / "snapshots", vdir(k, n) / "snapshots", dirs_exist_ok=True)
+    meta = common.read_json(vdir(k, n) / "changes.json", {}) or {}
+    meta["promoted_iteration"] = f"iter-{it}"
+    common.write_json(vdir(k, n) / "changes.json", meta)
+    return it
+
+
 def render(meta: dict, scores: dict, judge: dict) -> str:
     L = [f"# {meta['version']} — {meta.get('date', '')} — run {meta.get('run') or '—'} — parent {meta.get('parent', '—')}", "",
          "## Why this version", "", meta.get("why") or "_(filled by writer-lead)_", ""]
+    if meta.get("iterations"):
+        L += ["## Iterations in this run", "", "| Iteration | What | Round judge | Holdout judge | Design lock |", "|---|---|---|---|---|"]
+        L += [f"| {x['iter']} | {x['what']} | {x['round']} | {x.get('holdout')} | {x['design']} |" for x in meta["iterations"]]
+        L += ["", f"Promoted: **{meta.get('promoted_iteration', '—')}**", ""]
     if meta.get("judge_reasons_addressed"):
         L += ["Judge reasons addressed:", *[f"- {r}" for r in meta["judge_reasons_addressed"]], ""]
     L += ["## Changes", "", "| # | Section | Before | After | Why | Job words | Fact ids | Sources |", "|---|---|---|---|---|---|---|---|"]
@@ -100,13 +161,21 @@ def best(k: dict) -> tuple[int, float | None]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["new", "list", "latest", "diff", "render", "best"])
+    ap.add_argument("cmd", choices=["new", "start", "iterate", "promote", "list", "latest", "diff", "render", "best"])
+    ap.add_argument("--iter", type=int)
+    ap.add_argument("--best", action="store_true")
     ap.add_argument("args", nargs="*")
     ap.add_argument("--from", dest="src", type=int)
     ap.add_argument("--run")
     a = ap.parse_args(argv)
     k, _ = knobs_mod.load()
-    if a.cmd == "new":
+    if a.cmd == "iterate":
+        print(json.dumps({"tex": str(iterate(k, int(a.args[0])))}))
+        return 0
+    if a.cmd == "promote":
+        print(json.dumps({"version": int(a.args[0]), "promoted": f"iter-{promote(k, int(a.args[0]), None if a.best else a.iter)}"}))
+        return 0
+    if a.cmd in ("new", "start"):
         n = new_version(k, a.src, a.run)
         print(json.dumps({"version": n, "tex": str(tex_path(k, n))}))
     elif a.cmd == "list":

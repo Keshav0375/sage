@@ -1,0 +1,34 @@
+{
+  "title": "Distinguished Software Engineer, AI",
+  "family": "ai_engineer",
+  "salary_min": 400000.0,
+  "salary_max": 500000.0,
+  "currency": "CAD",
+  "salary_period": "year",
+  "years_min": 10,
+  "required": [
+    "AI Agents",
+    "Guardrails",
+    "LLM Evaluation",
+    "Communication",
+    "TypeScript",
+    "Go",
+    "AWS",
+    "LLM",
+    "Anthropic API",
+    "Mentoring",
+    "Tool Calling",
+    "CI/CD",
+    "Docker",
+    "Kubernetes",
+    "JavaScript",
+    "Terraform",
+    "PostgreSQL"
+  ],
+  "posted_at": "2026-11-09T00:00:00",
+  "benefits": [
+    "stock"
+  ],
+  "equity": true,
+  "rules_confidence": 0.4444444444444444
+}

@@ -1,0 +1,28 @@
+{
+  "title": "[OWD] Lead Data & AI Engineer (Palantir FoundryAIP) Canada",
+  "level": "lead",
+  "family": "ai_engineer",
+  "country": "CA",
+  "required": [
+    "ETL",
+    "LLM",
+    "AI Agents",
+    "Communication",
+    "Document Processing"
+  ],
+  "nice_to_have": [
+    "Knowledge Graphs",
+    "Azure",
+    "AWS",
+    "GCP",
+    "Databricks",
+    "Azure AI Foundry",
+    "CI/CD",
+    "OpenAI API",
+    "Anthropic API",
+    "Cost Optimization"
+  ],
+  "employment": "fulltime",
+  "posted_at": "2026-11-12T00:00:00",
+  "rules_confidence": 0.5555555555555556
+}

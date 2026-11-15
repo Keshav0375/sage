@@ -76,7 +76,9 @@ def pre_score(j: dict, k: dict, tax: dict, mine: set[str]) -> tuple[float, dict]
     loc = (j.get("location") or "").lower()
     loc_ok = any(x.split(",")[0].lower() in loc for x in s["locations"]) or "canada" in loc or j.get("workplace") == "remote"
     parts["fit"] = (0.6 if loc_ok else 0.2) + (0.4 if not j.get("workplace") or j["workplace"] in s["workplace"] else 0.0)
-    smax = j.get("salary_max") or 0
+    smax = float(j.get("salary_max") or 0)
+    period = (j.get("salary_period") or "").lower()
+    smax *= {"hour": 2080, "month": 12}.get(period, 1)
     parts["pay"] = 0.5 if not smax else min(1.0, float(smax) / max(1, p["min_base"]))
     age = 15
     if j.get("posted_at"):
@@ -102,11 +104,21 @@ def cmd_rank(rd: Path, k: dict) -> dict:
         sc, why = pre_score(j, k, tax, mine)
         scored.append({"id": j["id"], "title": j["title"], "company": j.get("company", ""), "location": j.get("location", ""),
                        "url": j["url"], "source": j.get("source"), "workplace": j.get("workplace", ""),
-                       "salary": [j.get("salary_min"), j.get("salary_max"), j.get("currency", "")],
+                       "salary": [j.get("salary_min"), j.get("salary_max"), j.get("currency", ""), j.get("salary_period", "")],
                        "pre_score": sc, **why})
     scored.sort(key=lambda x: -x["pre_score"])
-    top_k = scored[: k["ranking"]["pre_rank_top_k"]]
-    out = {"total": len(scored), "top_k": top_k, "rest": scored[len(top_k):]}
+    # one slot per role: the same title at the same company in several cities counts once (best city kept)
+    top_k, rest, seen = [], [], set()
+    for x in scored:
+        key = (re.sub(r"[^a-z0-9]+", " ", x["title"].lower()).strip(),
+               re.sub(r"\b(inc|ltd|corp|corporation|in canada)\b|[^a-z0-9]+", " ", x["company"].lower()).split()[0] if x["company"] else "")
+        if key in seen or len(top_k) >= k["ranking"]["pre_rank_top_k"]:
+            x["same_role_as_top"] = key in seen
+            rest.append(x)
+            continue
+        seen.add(key)
+        top_k.append(x)
+    out = {"total": len(scored), "top_k": top_k, "rest": rest}
     common.write_json(rd / "ranking.json", out)
     return {"total": len(scored), "top_k": [{"id": x["id"], "title": x["title"], "company": x["company"], "pre_score": x["pre_score"]} for x in top_k]}
 
@@ -125,11 +137,23 @@ def cmd_select(rd: Path, k: dict) -> dict:
             continue
         rows.append({**x, "ah_score": e.get("score"), "band": e.get("band"), "why": e.get("why", ""),
                      "legitimacy": e.get("legitimacy", ""), "hard_stop": e.get("hard_stop", False)})
-    rows = [r for r in rows if not r["hard_stop"] and (r["ah_score"] or 0) >= k["ranking"]["select_min"]]
+    pool = [r for r in rows if not r["hard_stop"]]
+    used_min = k["ranking"]["select_min"]
+    rows = [r for r in pool if (r["ah_score"] or 0) >= used_min]
+    if len(rows) < 2 and k["ranking"].get("auto_relax", True):
+        scores = sorted({r["ah_score"] or 0 for r in pool}, reverse=True)
+        for s in scores:
+            if s < 3.0:
+                break
+            used_min = s
+            rows = [r for r in pool if (r["ah_score"] or 0) >= used_min]
+            if len(rows) >= min(k["ranking"]["select_top_n"], 5):
+                break
     rows.sort(key=lambda r: (-(r["ah_score"] or 0), -r["pre_score"]))
     selected = rows[: k["ranking"]["select_top_n"]]
-    common.write_json(rd / "selected.json", {"selected": selected, "evaluated": len(evals)})
-    return {"evaluated": len(evals), "selected": len(selected)}
+    common.write_json(rd / "selected.json", {"selected": selected, "evaluated": len(evals), "select_min_used": used_min,
+                                             "select_min_knob": k["ranking"]["select_min"]})
+    return {"evaluated": len(evals), "selected": len(selected), "select_min_used": used_min}
 
 
 def main(argv: list[str] | None = None) -> int:

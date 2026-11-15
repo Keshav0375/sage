@@ -1,0 +1,17 @@
+{"ts": 1794681572.2812023, "tool": "composio", "source": "LinkedIn search", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681572.3236835, "tool": "composio", "source": "LinkedIn search", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681572.360623, "tool": "composio", "source": "LinkedIn search", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681572.3985019, "tool": "composio", "source": "LinkedIn search", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681572.4389176, "tool": "composio", "source": "LinkedIn search", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681572.4893308, "tool": "composio", "source": "LinkedIn search", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681572.5292027, "tool": "composio", "source": "JSearch", "status": "ok", "reason": "", "cost": 0.0015}
+{"ts": 1794681572.5660112, "tool": "composio", "source": "JSearch", "status": "ok", "reason": "", "cost": 0.0015}
+{"ts": 1794681572.6040194, "tool": "composio", "source": "Glassdoor", "status": "failed", "reason": "HTTP 400 (provider rejected city/query)", "cost": 0.0}
+{"ts": 1794681572.641534, "tool": "http", "source": "scanners (145, W1-W3 planned)", "status": "blocked", "reason": "sandbox network: tunnel 403 (run on Mac)", "cost": 0.0}
+{"ts": 1794681677.9224403, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681677.9660015, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681678.0046928, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681678.042161, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681678.0794344, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794681678.1203828, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794718381.2890966, "tool": "composio", "source": "Glassdoor", "status": "failed", "reason": "HTTP 400 again on retest with query only (provider problem)", "cost": 0.0}

@@ -1,0 +1,64 @@
+{
+  "version": "v2 iter-2",
+  "parent": "v2 iter-1",
+  "date": "2026-11-14",
+  "run": "20261114-183721",
+  "why": "v2 judge 7.1 (Bloomberg) / 7.0 (247Labs): skills row clipped in PDF, Education above Experience, FinAdvisor eval below Sentinel. Remaining asks (years, fine-tuning, ETL, harness adoption numbers) are blocked by facts.",
+  "judge_reasons_addressed": [
+    "Fixed clipped skills entry ('O' → full list fits)",
+    "Education moved below Projects",
+    "FinAdvisor (financial RAG + eval) above Sentinel"
+  ],
+  "changes": [
+    {
+      "section": "Skills",
+      "before": "LLM & Evaluation row overflowed the page; 'Observability (LangFuse)' clipped",
+      "after": "Row fits; LangFuse moved to LLMOps; 'Prompt Versioning' dropped (no fact)",
+      "why": "ATS could not read the clipped item",
+      "job_words": [
+        "observability"
+      ],
+      "fact_ids": [
+        "F014"
+      ],
+      "sources": [
+        "v2 judge",
+        "ats_check clipped-skill rule"
+      ]
+    },
+    {
+      "section": "Layout",
+      "before": "Education 2nd section",
+      "after": "Education after Projects",
+      "why": "Lead with experience; judge ask",
+      "job_words": [],
+      "fact_ids": [],
+      "sources": [
+        "v2 holdout judge"
+      ]
+    },
+    {
+      "section": "Projects",
+      "before": "Sentinel first",
+      "after": "FinAdvisor (financial RAG, LLM-judge eval) first",
+      "why": "Bloomberg/PSP/Equinix weight financial RAG + evaluation",
+      "job_words": [
+        "financial",
+        "evaluation"
+      ],
+      "fact_ids": [
+        "F018",
+        "F021"
+      ],
+      "sources": [
+        "v2 round judge"
+      ]
+    }
+  ],
+  "locked_facts_kept": true,
+  "jobs_used": {
+    "selected": [],
+    "round_job": "b5729698d052fcba",
+    "holdout_job": "b7886a49f0543311 (reused: all 5 selected jobs drawn)"
+  }
+}

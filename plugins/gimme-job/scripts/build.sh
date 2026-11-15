@@ -30,5 +30,5 @@ else
   echo "no LaTeX engine: install tectonic (brew install tectonic)" >&2
   exit 2
 fi
-rm -f "$dir/$base".{aux,out,fls,fdb_latexmk}
+rm -f "$dir/$base".{aux,out,fls,fdb_latexmk,log}
 echo "$dir/$base.pdf"

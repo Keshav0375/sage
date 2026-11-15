@@ -61,6 +61,12 @@ def check(pdf: Path, tex: Path | None, max_pages: int) -> dict:
             ext = extracted.replace("\\textasciitilde", "~").replace("\\", "").rstrip(":").strip("{}")
             if ext and ext not in text and ext.replace("\\textasciitilde", "~") not in text:
                 warnings.append(f"\\ats text not extracted: {ext!r} (shown as {shown!r})")
+        flat = re.sub(r"\s+", " ", text)
+        for row in re.findall(r"\\ats\{[^}]*\}\{[^}]*\}\s*&\s*(.+?)\\\\", src):
+            for item in row.split(","):
+                it = re.sub(r"\\(.)", r"\1", item).strip()
+                if len(it) > 2 and it not in flat:
+                    errors.append(f"skills item clipped or missing in PDF: {it!r} (row too wide for the page)")
         for url in re.findall(r"\\href\{([^}]+)\}", src):
             if not url.startswith(("http://", "https://", "mailto:")):
                 errors.append(f"link not absolute: {url}")

@@ -1,0 +1,22 @@
+{
+  "title": "Conversational AI Engineer",
+  "family": "ai_engineer",
+  "city": "Ottawa",
+  "region": "ON",
+  "country": "CA",
+  "workplace": "remote",
+  "years_min": 8,
+  "required": [
+    "Gemini",
+    "GCP",
+    "AWS",
+    "Azure"
+  ],
+  "nice_to_have": [
+    "Communication"
+  ],
+  "sponsorship": "not_offered",
+  "employment": "fulltime",
+  "posted_at": "2026-11-13T00:00:00",
+  "rules_confidence": 0.6666666666666666
+}
