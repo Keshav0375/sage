@@ -1,0 +1,12 @@
+{
+  "verdict": "PASS",
+  "blocks": [],
+  "warnings": [
+    "F017-F021 kept at v1 meaning; sage docs show some as planned \u2014 Keshav to confirm"
+  ],
+  "resolved": [
+    "'at equal task success' -> 'at task success' (F002)",
+    "'IAM root cause' removed (F006)",
+    "summary 'CI eval gates' -> 'eval-driven tuning' (F003)"
+  ]
+}

@@ -28,7 +28,11 @@ Read `gaps.md` and the last `judge.json` reasons/fixes. Write `runs/<run>/plan-v
 `{section, target line, change, why, job words, fact ids}`. Rules: wording-fixable gaps first; never plan an edit without a fact id;
 "blocked by facts" items are reported, never written. Prefer edits that serve several selected jobs.
 
-## 5. REWRITE → `gimme-job:writer-lead` with the plan path. Show **Card 4 Changes**.
+## 5. REWRITE → `gimme-job:writer-lead` with the plan path.
+**One version per run.** Round 1: `version.py start --run <run>` (returns v{n}). Every round: `version.py iterate <n>` →
+`v{n}/iterations/iter-k/resume.tex`; all gates and the judge write into that iter folder. At the end: `version.py promote <n> --best`
+(design PASS first, then holdout score). Never create a second version folder in the same run.
+ Show **Card 4 Changes**.
 Design rules (never break them in the plan): same section order, same skills row labels (one line each), every bullet keeps
 its line count and its last line ≥ `layout.min_last_line_fill` full, nothing past the margin. Plans change WORDS, not design.
 After the edits, `layout.py check` must PASS; on FAIL writer-lead runs `gimme-job:layout-fixer`, which loops and then reads the
@@ -54,6 +58,7 @@ Playwright compare image (`layout.py compare <pdf> runs/<run>/compare-v{n}.png`)
   On a stop without PASS: `version.py best` → that version is the result; say what blocks a higher score (often "blocked by facts").
 
 ## 8. FINISH
+Show ONLY `cards.py summary` (tool calls · jobs selected · resume strengths/weaknesses · lines before/now) and the PDF link.
 - `script-worker`: `trend.py --run <run>` (market snapshot) and `cards.py result`. Touch `runs/<run>/DONE`.
 - Show **Card 6 Result** with the link to `memory/resume/versions/v{n}/resume-v{n}.pdf`.
 

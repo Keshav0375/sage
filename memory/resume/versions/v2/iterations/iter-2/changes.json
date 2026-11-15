@@ -1,6 +1,6 @@
 {
-  "version": "v3",
-  "parent": "v2",
+  "version": "v2 iter-2",
+  "parent": "v2 iter-1",
   "date": "2026-11-14",
   "run": "20261114-183721",
   "why": "v2 judge 7.1 (Bloomberg) / 7.0 (247Labs): skills row clipped in PDF, Education above Experience, FinAdvisor eval below Sentinel. Remaining asks (years, fine-tuning, ETL, harness adoption numbers) are blocked by facts.",

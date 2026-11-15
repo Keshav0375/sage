@@ -223,6 +223,16 @@ class TestLedgerCardsVersions(unittest.TestCase):
         self.assertIn("parent v1", (Path(TMP) / "versions" / "v2" / "changes.md").read_text())
         common.write_json(Path(TMP) / "versions" / "v2" / "judge.json", {"score": 8.7})
         self.assertEqual(version.best(k), (2, 8.7))
+        # one version per run: the same run gets the same version; loop rounds become iterations
+        self.assertEqual(version.new_version(k, run="r1"), 2)
+        t1 = version.iterate(k, 2)
+        t2 = version.iterate(k, 2)
+        self.assertTrue(t1.exists() and t2.exists() and t2.parent.name == "iter-2")
+        common.write_json(t1.parent / "layout.json", {"verdict": "PASS"})
+        common.write_json(t1.parent / "judge.json", {"score": 7.0, "holdout_score": 7.2})
+        common.write_json(t2.parent / "layout.json", {"verdict": "FAIL"})
+        common.write_json(t2.parent / "judge.json", {"score": 7.7, "holdout_score": 7.9})
+        self.assertEqual(version.promote(k, 2), 1)   # design PASS beats a higher score with design FAIL
 
 
 class TestRegistry(unittest.TestCase):

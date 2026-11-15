@@ -14,3 +14,4 @@
 {"ts": 1794681678.042161, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
 {"ts": 1794681678.0794344, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
 {"ts": 1794681678.1203828, "tool": "composio", "source": "LinkedIn get job", "status": "ok", "reason": "", "cost": 0.0002}
+{"ts": 1794718381.2890966, "tool": "composio", "source": "Glassdoor", "status": "failed", "reason": "HTTP 400 again on retest with query only (provider problem)", "cost": 0.0}

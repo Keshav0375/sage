@@ -1,15 +1,23 @@
-# v2 — 2026-11-14 — run 20261114-183721 — parent v1
+# v2 — 2026-11-15 — run 20261114-183721 — parent v1
 
 ## Why this version
 
-v1 judge 6.5 (WSP) / 7.0 (Equinix): evaluation and trust work hidden, summary vague, tool soup, '&' style, co-op reads like DevOps. gaps.md top-7 wording changes.
+One version per run. 3 loop iterations; iter-3 promoted: it is the only one that keeps the original design, and it beats v1 on the same two jobs.
+
+## Iterations in this run
+
+| Iteration | What | Round judge | Holdout judge | Design lock |
+|---|---|---|---|---|
+| iter-1 | Wording rewrite from gaps.md | 7.1 (Bloomberg) | 7.0 | FAIL |
+| iter-2 | Skills clip fix, Education moved, FinAdvisor first | 6.8 (MNP) | 7.7 | FAIL |
+| iter-3 | iter-2 wording on the original design; every line full | 6.9 (WSP in Canada, same job as v1) | 7.2 | PASS |
+
+Promoted: **iter-3**
 
 Judge reasons addressed:
-- Summary now names agent platforms, guardrails, eval-driven tuning
-- Eval work moved up (FinAdvisor eval bullet first; LLM-as-Judge first in skills)
-- Co-op reordered AI-first; fewer tools per bullet
-- '&' replaced with 'and'
-- Sentinel framed as trust controls
+- Design locked to original: same section order and skills rows
+- Every bullet 2 full lines (last line ≥ 87%)
+- No text past the margin; no lone words
 
 ## Changes
 
@@ -24,6 +32,9 @@ Judge reasons addressed:
 | 7 | Projects | FinAdvisor eval bullet last; Sentinel 'Kept a human in control' | FinAdvisor eval bullet first; Sentinel 'Built trust controls into the agents' | Equinix weights evaluation and trust | LLM-as-judge, trust controls | F015, F021 | gaps.md W1, W8 |
 | 8 | Skills | 7 rows incl. Java, Django, MongoDB, Snowflake | 'LLM & Evaluation' row first (LLM-as-Judge, RAG, Vector Search, Tool Calling, Guardrails, Prompt Engineering, Observability); dropped 4 off-target items | Tool soup; lead with what jobs ask | LLM-as-judge, vector search, tool calling | F005, F010, F011, F014, F018, F021 | gaps.md W10 |
 | 9 | Hackathons | DevFest attendance line | (removed) | No signal |  |  | resume review |
+| 10 | Layout | v3: Education after Projects; FinAdvisor before Sentinel | Original order restored (Education 2nd; Sentinel before FinAdvisor) | Design lock to the original |  |  | layout.py check vs design/baseline.json |
+| 11 | Skills | v3: 'LLM & Evaluation' row past margin + extra unlabeled row | Original 7 labels, one line each (LLM-as-Judge, Vector Search, Guardrails in 'LLM & RAG'; Tool Calling in 'AI & Agents'; LangFuse in 'LLMOps'; pgvector in 'Databases') | No overflow; same rows as original | LLM-as-judge, guardrails, vector search | F005, F014, F018, F021 | layout gate |
+| 12 | All bullets | 14 bullets with short last lines (25–78%) or a lone word on line 3 | Every bullet 2 lines, last line 87–100% full | Lines full, no gaps (Keshav's rule) |  | F002, F003, F006, F007, F009, F010, F011, F012, F015, F016, F017, F018, F019, F020 | layout-fixer (words only, facts locked), semantic fact gate PASS |
 
 ## Locked facts kept
 
@@ -33,22 +44,23 @@ Titles, employers, dates and every number are unchanged unless a fact id says ot
 
 | Gate | Result |
 |---|---|
-| fact_gate | PASS (script + semantic; 2 blocks fixed) |
+| fact_gate | PASS (script + semantic, 0 blocks) |
+| layout | PASS (design-locked, every last line ≥ 87%) |
 | lint | PASS |
-| ats | FAIL (skills row clipped: 'Observability (LangFuse)') — found by the new ATS check after judging |
-| keyword_coverage | 0.753 |
+| ats | PASS |
+| keyword_coverage | 0.729 |
 | pages | 2 |
 
 ## Blind judge
 
-Score **7.1** / 10 → LOOP (round job: Senior Applied AI Engineer @ Bloomberg)
+Score **6.9** / 10 → BEST (design-locked) — stop: blocked by facts (round job: AI Developer (LLM & Agentic Systems) — same job as v1 round @ WSP in Canada)
 
-- Seniority: ~2 yrs vs Bachelor's+5 / Master's+4 for Senior
-- No model training / SFT / RLHF, no code-gen over structured data, no publications
-- Harness, compaction, Kong bullets have scope but no results; skills list cut off ('O')
+- 5+ yrs and 2+ yrs leading LLM systems vs ~2 yrs
+- No entity extraction/resolution or knowledge-graph facts
+- Best architecture/RAG evidence is in projects
 
 ## Jobs used
 
-- Selected: b7886a49f0543311, a30716e346cc1cf4, b5729698d052fcba, 655f07473920532e, 151023ad6588a66e
-- Round job: 151023ad6588a66e
-- Holdout job: a30716e346cc1cf4
+- Selected: —
+- Round job: 655f07473920532e (same as v1)
+- Holdout job: b7886a49f0543311 (same as v1)

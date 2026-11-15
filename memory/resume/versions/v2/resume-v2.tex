@@ -48,6 +48,7 @@
 \end{itemize}
 \end{rSection}
 
+
 %----------------------------------------------------------------------------------------
 %	EDUCATION SECTION
 %----------------------------------------------------------------------------------------
@@ -62,14 +63,11 @@
 \begin{rSection}{Skills}
 \begin{tabular}{ @{} >{\bfseries}l @{\hspace{2.5ex}} l }
 \ats{Languages}{Languages:} & Python, C\#, TypeScript, SQL, Lua, JavaScript, Bash\\
-\ats{LLM \& Evaluation}{LLM \& Evaluation:} & LLM-as-Judge, RAG, Vector Search (pgvector), Tool Calling, Guardrails, Prompt Engineering, Observability (LangFuse)\\
- & Azure OpenAI, Vertex AI, Azure AI Search, ReAct, LLM Evaluation\\
-\ats{AI \& Agents}{AI \& Agents:} & Microsoft Agent Framework, OpenAI Agents SDK, LangGraph, LangChain, MCP\\
-\ats{LLMOps}{LLMOps:} & Kong AI Gateway, LiteLLM, OpenTelemetry, Datadog, Prompt Versioning, CI/CD Eval Gates\\
-\ats{Cloud}{Cloud:} & Azure, GCP, AWS, Kubernetes, Docker, Terraform, Helm, ArgoCD, GitHub Actions, Linux\\
-% Security & OAuth2, OIDC, Entra ID, HashiCorp Vault, Multi-Tenant Isolation, Prompt-Injection Defense\\
-% Testing & Playwright, pytest, NUnit, MSTest, Integration Testing, LLM-as-Judge\\
-\ats{Databases}{Databases:} & PostgreSQL, Redis, SQLite, Cosmos DB\\
+\ats{AI \& Agents}{AI \& Agents:} & Microsoft Agent Framework, OpenAI Agents SDK, LangGraph, LangChain, MCP, Tool Calling\\
+\ats{LLM \& RAG}{LLM \& RAG:} & Azure OpenAI, Vertex AI, Azure AI Search, RAG, Vector Search, LLM-as-Judge, Guardrails\\
+\ats{LLMOps}{LLMOps:} & Kong AI Gateway, LiteLLM, LangFuse, OpenTelemetry, Datadog, CI/CD Eval Gates\\
+\ats{Cloud}{Cloud:} & Azure, GCP, AWS, Kubernetes, Docker, Terraform, Helm, ArgoCD, GitHub Actions\\
+\ats{Databases}{Databases:} & PostgreSQL, Redis, SQLite, Cosmos DB, pgvector\\
 \ats{Frameworks}{Frameworks:} & FastAPI, ASP.NET Core, .NET 8, Pydantic, React, Node.js\\
 \end{tabular}
 \end{rSection}
@@ -85,8 +83,8 @@ Kinaxis --- \textit{Internship} \hfill \textit{Ottawa, Ontario}%
 \vspace{\headergap}
 \begin{itemize}[leftmargin=0.15in]
     \itemsep \bulletgap {}
-    \item Built an orchestrator-subagent SDLC system that turns Jira epics into research, plans, code and Playwright tests over MCP; tiered model routing cut token cost 48\% at task success.
-    \item Generalized it into a shared agentic harness and plugin marketplace for the team: custom orchestration, lazy tool loading, declarative sandbox policies and eval-driven tuning.
+    \item Built an orchestrator-subagent SDLC system that turns Jira epics into research, plans, code and Playwright tests over GitHub, Bitbucket and Atlassian MCP; tiered model routing cut token cost 48\% at task success.
+    \item Generalized it into a shared agentic harness and plugin marketplace for the team: custom orchestration, lazy tool loading, declarative sandbox policies, eval-driven tuning and a port of legacy code to a web client.
     \item Built rolling conversation compaction for Microsoft Agent Framework agents in C\#/.NET: summarization past 120K tokens replaced 100-message truncation, bounding context while keeping history in unbounded sessions.
     \item Hardened Kong AI Gateway as the guardrail layer for LLM traffic: AI Prompt Guard allow/deny policies, content-safety filters, token-based rate limits and custom Lua plugins for per-user token metrics.
 \end{itemize}
@@ -98,9 +96,9 @@ Kinaxis --- \textit{Co-op} \hfill \textit{Ottawa, Ontario}%
 \begin{itemize}[leftmargin=0.15in]
     \itemsep \bulletgap {}
     \item Engineered a self-hosted MCP server and Python/pytest framework that validates OAuth2 authorization across 5 integration scenarios in CI/CD, replacing a paid vendor with deterministic, reproducible tests.
-    \item Removed a retired data source from 3 RAG agents on Azure AI Search and GCP Vertex AI, with regression tests protecting retrieval quality.
-    \item Built zero-downtime credential rotation for a multi-tenant Kong Konnect gateway (Vault, OIDC) with dual-write grace periods, keeping tenant traffic live during rollovers.
-    \item Debugged a GCP Cloud SQL backup pipeline failing 0/21 exports across CI/CD, Kubernetes and IAM, fixed it in Terraform, and added alerting that cut failure detection from 30 min to \ats{$\sim$}{\textasciitilde}15s.
+    \item Removed a retired data source from 3 RAG agents on Azure AI Search and GCP Vertex AI, removing ETL loaders and Helm/ArgoCD Kubernetes templates, with regression tests protecting retrieval quality.
+    \item Built zero-downtime credential rotation for a multi-tenant Kong Konnect gateway (Azure Event Grid, HashiCorp Vault, OIDC auth) with dual-write grace periods, keeping tenant traffic live during rollovers.
+    \item Debugged a GCP Cloud SQL backup pipeline failing 0/21 exports across GitHub Actions CI/CD, Kubernetes, ArgoCD and IAM, fixed it in Terraform, and added alerting that cut failure detection from 30 min to \ats{$\sim$}{\textasciitilde}15s.
 \end{itemize}
 
 \newpage
@@ -109,9 +107,9 @@ Slideoo AI \hfill \textit{Remote}%
 \vspace{\headergap}
 \begin{itemize}[leftmargin=0.15in]
     \itemsep \bulletgap {}
-    \item Owned the end-to-end architecture of Slideoo's AI document-generation backend with agent orchestration, LLM tool calling, and reasoning on Azure and AWS, scaling to 10x traffic and 2,000+ users while cutting cloud spend 35\%.
-    \item Rebuilt the multimodal LLM pipeline for PowerPoint generation by profiling bottlenecks and re-engineering prompt orchestration, cutting generation latency 77\% (3+ min to 40s) and directly lifting subscription growth 43\%.
-    \item Benchmarked candidate LLMs for production on evaluation datasets, surfacing quality regressions early and driving data-backed prompt-tuning decisions as traffic scaled.
+    \item Owned the end-to-end architecture of Slideoo's AI document-generation backend with agent orchestration, LLM tool calling and reasoning on Azure and AWS, scaling to 10x traffic and 2,000+ users, cutting cloud spend 35\%.
+    \item Rebuilt the multimodal LLM pipeline for PowerPoint generation by profiling bottlenecks and reworking prompt orchestration, cutting generation latency 77\% (3+ min to 40s) and lifting subscription growth 43\%.
+    \item Benchmarked candidate LLMs for production by analyzing evaluation results and datasets across generation, surfacing quality regressions early and driving data-backed prompt-tuning decisions as traffic scaled.
     \item Led a team of interns and partnered with company leadership to shape the AI document-generation product roadmap, driving sprint planning, reviews, and technical mentorship to ship features from prototype to production.
 \end{itemize}
 %----------------------------------------------------------------------------------------
@@ -124,22 +122,25 @@ Slideoo AI \hfill \textit{Remote}%
 \begin{itemize}[leftmargin=0.15in]
     \itemsep \bulletgap {}
     \item Built a multi-agent incident responder: Datadog alerts flow through Azure Event Grid and Functions into GitHub Actions, which run agents on AKS (Claude, GPT fallback) to find the bad deploy and draft a revert PR.
-    \item Built trust controls into the agents: read-only agent tools, a revert PR as the only rollback, and code-enforced limits of 20 tool calls, 2 reflexion loops, and a 0.7 confidence gate per incident.
-    \item Secured the FastAPI pod with Entra ID bearer tokens, app roles, workload identity, and Key Vault, so no Kubernetes Secret exists; CI signs in with GitHub OIDC and no client secrets.
-    \item Cut idle cost with Terraform, one ARM64 node, and pod scale-to-zero; PRs must pass 2,693 pytest tests, strict pyright, tfsec, and gitleaks, and agent runs are scored on 30 test scenarios.
+    \item Built trust controls into the agents to keep a human in control: read-only agent tools, a revert PR as the only rollback, and code-enforced limits of 20 tool calls, 2 reflexion loops, and a 0.7 confidence gate per incident.
+    \item Secured the FastAPI pod on AKS with Entra ID bearer tokens, app roles, workload identity, and Key Vault, so no Kubernetes Secret exists; GitHub Actions CI signs in with GitHub OIDC and no client secrets.
+    \item Cut idle cost with Terraform, one ARM64 AKS node, and pod scale-to-zero; every PR must pass 2,693 pytest tests, strict pyright type checks, tfsec, and gitleaks, and agent runs are scored on 30 test scenarios.
 \end{itemize}
+
 
 \textbf{FinAdvisor: Regulated RAG Advisor} \textbar{} {\small \href{https://github.com/Keshav0375/FinAdvisor}{\color{black}\ats{GitHub}{github.com/Keshav0375/FinAdvisor}}} \hfill {\small \textit{Anthropic SDK \textperiodcentered{} FastAPI \textperiodcentered{} LiteLLM \textperiodcentered{} Kong \textperiodcentered{} GCP}}
 \vspace{\headergap}
 \begin{itemize}[leftmargin=0.15in]
     \itemsep \bulletgap {}
     \item Gated merges with a GitHub Actions eval: an LLM judge scores 50 golden Q\&A pairs and fails the PR below 95\% citation accuracy or 90\% faithfulness; Terraform defines the GCP Cloud Run stack.
-    \item Built a wealth-advisor RAG agent (Anthropic SDK, FastAPI, 4 tools) over pgvector; PostgreSQL row-level security enforces tier and jurisdiction access, with zero-leakage tests for 4 user roles.
-    \item Added two-pass PII redaction (GCP DLP, regex fallback): one pass cleans documents before Voyage AI embedding, one checks each LLM answer, keeping personal data out of retrieval and responses.
-    \item Routed LLM calls through Kong (60 req/min per advisor, request logging) and LiteLLM fallback from Claude to GPT-4o to Gemini, with a circuit breaker that pulls a model for 5 min after 3 failures.
+    \item Built a wealth-advisor RAG agent (Anthropic SDK, FastAPI, 4 tools) over pgvector; PostgreSQL row-level security enforces tier and jurisdiction access, with zero-leakage tests for each of 4 user roles.
+    \item Added two-pass PII redaction (GCP DLP, regex fallback): one pass cleans source documents before Voyage AI embedding, one checks each LLM answer, keeping personal data out of both retrieval and responses.
+    \item Routed LLM calls through Kong (60 req/min per advisor, request logging) and LiteLLM fallback from Claude to GPT-4o to Gemini, with a circuit breaker that pulls a failing model for 5 min after 3 failures.
 \end{itemize}
+
 \vspace{4pt}
 \end{rSection}
+
 
 %----------------------------------------------------------------------------------------
 %	HACKATHONS & EVENTS

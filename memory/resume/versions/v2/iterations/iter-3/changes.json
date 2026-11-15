@@ -1,6 +1,6 @@
 {
-  "version": "v4",
-  "parent": "v3",
+  "version": "v2 iter-3",
+  "parent": "v2 iter-2",
   "date": "2026-11-15",
   "run": "20261114-183721",
   "why": "v3 broke the original design (section order, skills overflow, short last lines, lone words, page-1 gap). v4 = v3 wording on the original design; layout-fixer filled every line (87–100%).",

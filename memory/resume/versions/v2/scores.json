@@ -1,7 +1,8 @@
 {
-  "fact_gate": "PASS (script + semantic; 2 blocks fixed)",
+  "fact_gate": "PASS (script + semantic, 0 blocks)",
+  "layout": "PASS (design-locked, every last line ≥ 87%)",
   "lint": "PASS",
-  "ats": "FAIL (skills row clipped: 'Observability (LangFuse)') \u2014 found by the new ATS check after judging",
-  "keyword_coverage": 0.753,
+  "ats": "PASS",
+  "keyword_coverage": 0.729,
   "pages": 2
 }

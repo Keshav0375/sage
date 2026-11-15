@@ -1,0 +1,129 @@
+{
+  "verdict": "FAIL",
+  "errors": [
+    "skills rows changed: ['Languages', 'LLM & Evaluation', '', 'AI & Agents', 'LLMOps', 'Cloud', 'Databases', 'Frameworks'] vs original ['Languages', 'AI & Agents', 'LLM & RAG', 'LLMOps', 'Cloud', 'Databases', 'Frameworks']",
+    "skills row 'LLM & Evaluation' runs past the right margin (618 > 576pt)",
+    "skills row 'LLMOps' runs past the right margin (605 > 576pt)",
+    "skills row 'Cloud' runs past the right margin (590 > 576pt)",
+    "p1 line past right margin (617.5pt): LLM-as-Judge, RAG, Vector Search (pgvector), Tool Calling, G",
+    "p1 line past right margin (604.8pt): Kong AI Gateway, LiteLLM, OpenTelemetry, Datadog, Prompt Ver",
+    "p1 line past right margin (590.0pt): Azure, GCP, AWS, Kubernetes, Docker, Terraform, Helm, ArgoCD",
+    "EXPERIENCE #1 \"Built an orchestrator-subagent SDLC syst…\": last line only 66% full (min 80%)",
+    "EXPERIENCE #2 \"Generalized it into a shared agentic har…\": last line only 59% full (min 80%)",
+    "EXPERIENCE #6 \"Removed a retired data source from 3 RAG…\": last line only 29% full (min 80%)",
+    "EXPERIENCE #7 \"Built zero-downtime credential rotation …\": last line only 52% full (min 80%)",
+    "EXPERIENCE #8 \"Debugged a GCP Cloud SQL backup pipeline…\": last line only 73% full (min 80%)",
+    "EXPERIENCE #9 \"Owned the end-to-end architecture of Sli…\": 3 lines (slot 2); last line 4%",
+    "EXPERIENCE #10 \"Rebuilt the multimodal LLM pipeline for …\": 3 lines (slot 2); last line 4%",
+    "EXPERIENCE #11 \"Benchmarked candidate LLMs for productio…\": last line only 56% full (min 80%)",
+    "PROJECTS #2 \"Built trust controls into the agents: re…\": last line only 71% full (min 80%)",
+    "PROJECTS #3 \"Secured the FastAPI pod with Entra ID be…\": last line only 71% full (min 80%)",
+    "PROJECTS #4 \"Cut idle cost with Terraform, one ARM64 …\": last line only 67% full (min 80%)",
+    "PROJECTS #6 \"Built a wealth-advisor RAG agent (Anthro…\": last line only 76% full (min 80%)",
+    "PROJECTS #7 \"Added two-pass PII redaction (GCP DLP, r…\": last line only 75% full (min 80%)",
+    "PROJECTS #8 \"Routed LLM calls through Kong (60 req/mi…\": last line only 78% full (min 80%)"
+  ],
+  "warnings": [
+    "HACKATHONS & EVENTS: 2 bullets vs 3 in the original"
+  ],
+  "advice": [
+    {
+      "bullet": "EXPERIENCE #1 \"Built an orchestrator-subagent SDLC syst…\"",
+      "action": "add",
+      "chars_min": 15,
+      "chars_max": 35,
+      "or": "cut ~74 chars to drop the last line"
+    },
+    {
+      "bullet": "EXPERIENCE #2 \"Generalized it into a shared agentic har…\"",
+      "action": "add",
+      "chars_min": 24,
+      "chars_max": 44,
+      "or": "cut ~67 chars to drop the last line"
+    },
+    {
+      "bullet": "EXPERIENCE #6 \"Removed a retired data source from 3 RAG…\"",
+      "action": "add",
+      "chars_min": 53,
+      "chars_max": 71,
+      "or": "cut ~33 chars to drop the last line"
+    },
+    {
+      "bullet": "EXPERIENCE #7 \"Built zero-downtime credential rotation …\"",
+      "action": "add",
+      "chars_min": 32,
+      "chars_max": 52,
+      "or": "cut ~60 chars to drop the last line"
+    },
+    {
+      "bullet": "EXPERIENCE #8 \"Debugged a GCP Cloud SQL backup pipeline…\"",
+      "action": "add",
+      "chars_min": 8,
+      "chars_max": 27,
+      "or": "cut ~80 chars to drop the last line"
+    },
+    {
+      "bullet": "EXPERIENCE #9 \"Owned the end-to-end architecture of Sli…\"",
+      "action": "cut",
+      "chars": 7,
+      "lines_now": 3,
+      "lines_target": 2
+    },
+    {
+      "bullet": "EXPERIENCE #10 \"Rebuilt the multimodal LLM pipeline for …\"",
+      "action": "cut",
+      "chars": 7,
+      "lines_now": 3,
+      "lines_target": 2
+    },
+    {
+      "bullet": "EXPERIENCE #11 \"Benchmarked candidate LLMs for productio…\"",
+      "action": "add",
+      "chars_min": 27,
+      "chars_max": 46,
+      "or": "cut ~62 chars to drop the last line"
+    },
+    {
+      "bullet": "PROJECTS #2 \"Built trust controls into the agents: re…\"",
+      "action": "add",
+      "chars_min": 11,
+      "chars_max": 32,
+      "or": "cut ~83 chars to drop the last line"
+    },
+    {
+      "bullet": "PROJECTS #3 \"Secured the FastAPI pod with Entra ID be…\"",
+      "action": "add",
+      "chars_min": 10,
+      "chars_max": 29,
+      "or": "cut ~77 chars to drop the last line"
+    },
+    {
+      "bullet": "PROJECTS #4 \"Cut idle cost with Terraform, one ARM64 …\"",
+      "action": "add",
+      "chars_min": 15,
+      "chars_max": 35,
+      "or": "cut ~77 chars to drop the last line"
+    },
+    {
+      "bullet": "PROJECTS #6 \"Built a wealth-advisor RAG agent (Anthro…\"",
+      "action": "add",
+      "chars_min": 5,
+      "chars_max": 23,
+      "or": "cut ~82 chars to drop the last line"
+    },
+    {
+      "bullet": "PROJECTS #7 \"Added two-pass PII redaction (GCP DLP, r…\"",
+      "action": "add",
+      "chars_min": 6,
+      "chars_max": 26,
+      "or": "cut ~86 chars to drop the last line"
+    },
+    {
+      "bullet": "PROJECTS #8 \"Routed LLM calls through Kong (60 req/mi…\"",
+      "action": "add",
+      "chars_min": 2,
+      "chars_max": 22,
+      "or": "cut ~88 chars to drop the last line"
+    }
+  ]
+}

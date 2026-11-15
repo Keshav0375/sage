@@ -148,9 +148,84 @@ def card_result(k: dict) -> str:
     return "\n".join(rows)
 
 
+# ------------------------------------------------------------------ final summary (the only thing shown at the end of a run)
+WHERE = {"LinkedIn search": "LinkedIn (Composio job_search)", "LinkedIn get job": "LinkedIn (Composio job_search)",
+         "JSearch": "JSearch / Google for Jobs (Composio)", "Glassdoor": "Glassdoor (Composio)", "liveness": "job pages (HTTP)"}
+
+
+def _pdf_bullets(pdf: Path) -> list[tuple[str, str]]:
+    import re as _re
+    import subprocess as _sp
+    t = _sp.run(["pdftotext", "-layout", str(pdf), "-"], capture_output=True, text=True).stdout
+    out, sec, cur = [], "", None
+    for line in t.splitlines():
+        st = line.strip()
+        if st and st.upper() == st and len(st) < 40 and _re.match(r"^[A-Z &]+$", st):
+            sec, cur = st, None
+            continue
+        if st.startswith("•"):
+            cur = [sec, st[1:].strip()]
+            out.append(cur)
+        elif cur and st and line.startswith("  ") and not _re.search(r"\s{4,}", st):
+            cur[1] += " " + st
+        else:
+            cur = None
+    keep = ("PROFESSIONAL SUMMARY", "EXPERIENCE", "PROJECTS", "HACKATHONS & EVENTS")
+    return [(a, _re.sub(r"\s+", " ", b)) for a, b in out if a in keep]
+
+
+def line_pairs(old_pdf: Path, new_pdf: Path) -> list[tuple[str, str, str]]:
+    import difflib
+    old, new = _pdf_bullets(old_pdf), _pdf_bullets(new_pdf)
+    used, rows = set(), []
+    for sec, o in old:
+        cands = [(difflib.SequenceMatcher(None, o, n).ratio(), i) for i, (s2, n) in enumerate(new) if s2 == sec and i not in used]
+        single = sum(1 for s2, _ in old if s2 == sec) == 1 and len(cands) == 1
+        best = max(cands, default=(0, None))
+        if best[1] is not None and (best[0] > 0.35 or single):
+            used.add(best[1])
+            if new[best[1]][1] != o:
+                rows.append((sec, o, new[best[1]][1]))
+        else:
+            rows.append((sec, o, "(removed)"))
+    rows += [(s2, "(new)", n) for i, (s2, n) in enumerate(new) if i not in used]
+    return rows
+
+
+def card_summary(rd: Path, k: dict) -> str:
+    import re as _re
+    out = ["### Tool calls", "", "| Tool call | Where | Success or fail | Reason |", "|---|---|---|---|"]
+    for r in common.read_jsonl(rd / "ledger.jsonl"):
+        src = r.get("source") or r.get("tool", "")
+        where = WHERE.get(src, src.replace("scanner:", "") + (" (in-house scanner)" if src.startswith("scanner") else ""))
+        out.append(f"| {_esc(src, 40)} | {_esc(where, 45)} | {'success' if r.get('status') == 'ok' else 'fail'} | {_esc(r.get('reason') or '—', 60)} |")
+    out += ["", "### Jobs selected", "", "| Job title | Years of exp | Company | Link |", "|---|---|---|---|"]
+    for s_ in (common.read_json(rd / "selected.json", {}) or {}).get("selected", []):
+        page = rd / "pages" / f"{s_['id']}.txt"
+        yrs = "—"
+        if page.exists():
+            txt = page.read_text()
+            plus = _re.findall(r"(\d+)\s*\+\s*years?", txt, _re.I) + _re.findall(r"at least\s+(\d+)\s+years?", txt, _re.I)
+            rng = _re.search(r"(\d+\s*-\s*\d+\s*years?)", txt, _re.I)
+            yrs = (" / ".join(dict.fromkeys(f"{x}+ years" for x in plus))) if plus else (rng.group(1) if rng else "—")
+        out.append(f"| {_esc(s_['title'], 50)} | {yrs} | {_esc(s_['company'], 25)} | [link]({s_['url']}) |")
+    an = common.read_json(rd / "analysis.json", {}) or {}
+    out += ["", "### Resume analysis", "", "**Strengths we have**", ""] + [f"- {x}" for x in an.get("strengths", [])]
+    out += ["", "**Weaknesses we have**", ""] + [f"- {x}" for x in an.get("weaknesses", [])]
+    vroot = common.data_root(k) / "versions"
+    vs = sorted(int(p.name[1:]) for p in vroot.glob("v*") if p.name[1:].isdigit())
+    best = an.get("final_version") or (vs[-1] if vs else None)
+    if vs and best and (vroot / "v1" / "resume-v1.pdf").exists() and (vroot / f"v{best}" / f"resume-v{best}.pdf").exists():
+        out += ["", f"### Lines before (v1) / lines now (v{best})", "", "| Section | Before | Now |", "|---|---|---|"]
+        for sec, o, n in line_pairs(vroot / "v1" / "resume-v1.pdf", vroot / f"v{best}" / f"resume-v{best}.pdf"):
+            cell = lambda x: x.replace("|", "/")  # noqa: E731
+            out.append(f"| {sec.title()} | {cell(o)} | {cell(n)} |")
+    return "\n".join(out)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("card", nargs="?", default="all", choices=["tools", "jobs", "selected", "changes", "judge", "result", "all"])
+    ap.add_argument("card", nargs="?", default="all", choices=["tools", "jobs", "selected", "changes", "judge", "result", "all", "summary"])
     ap.add_argument("--run")
     ap.add_argument("--version", type=int)
     ap.add_argument("--final", action="store_true")
@@ -165,8 +240,14 @@ def main(argv: list[str] | None = None) -> int:
         if not done.exists() or shown.exists():
             return 0
         shown.write_text("1")
-        text = "\n\n".join([card_tools(rd), card_jobs(rd), card_selected(rd), card_changes(k, None), card_judge(k, None), card_result(k)])
+        text = card_summary(rd, k)
         print(json.dumps({"systemMessage": text}))
+        return 0
+    if a.card == "summary":
+        rd = common.run_dir(a.run, k)
+        text = card_summary(rd, k)
+        (rd / "summary.md").write_text(text + "\n", encoding="utf-8")
+        print(text)
         return 0
     rd = common.run_dir(a.run, k) if a.card in ("tools", "jobs", "selected", "all") else None
     out = {
