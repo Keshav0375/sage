@@ -142,7 +142,8 @@ class TestPiiGuard(unittest.TestCase):
         (d / "shot.png").write_bytes(b"\x89PNG\r\n")
         hits = pii_guard.scan([str(d / x) for x in ("a.md", "b.md", "c.md", "r.pdf", "shot.png")])
         self.assertEqual(len(hits), 4)
-        self.assertEqual(pii_guard.scan(["memory/resume/versions/v4/snapshots/page-1.png"]), [])
+        self.assertEqual(pii_guard.scan(["memory/resume/versions/v4/snapshots/page-1.png",
+                                         "memory/resume/versions/v2/iterations/iter-3/snapshots/page-2.png"]), [])
         self.assertFalse(any("c.md" in h for h in hits))
 
 

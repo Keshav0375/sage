@@ -26,7 +26,7 @@ def _git(*args: str) -> str:
 
 
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp")
-SAFE_IMAGE_DIR = re.compile(r"(^|/)memory/resume/(design|versions/v\d+)/snapshots/")
+SAFE_IMAGE_DIR = re.compile(r"(^|/)memory/resume/(design|versions/v\d+(/iterations/iter-\d+)?)/snapshots/")
 
 
 def files_staged() -> list[str]:
