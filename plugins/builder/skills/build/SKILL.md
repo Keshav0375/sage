@@ -38,8 +38,9 @@ background. One check wave at a time when both tickets reach it together.
   session claimed is refused, so pick another ticket.
 - **Reports.** Every report file starts with `sha: <git rev-parse HEAD>` and `status: <keyword>`.
   A report for another commit is stale and does not count.
-- **Verifier gate.** `builder:verifier` is refused until `review.md`, `security.md`, `tests.md`
-  and `arch-check.md` are all fresh for HEAD.
+- **Verifier gate.** `builder:verifier` is refused until `review-compat.md`,
+  `review-standards.md`, `review-design.md`, `security.md`, `tests.md` and `arch-check.md` are
+  all fresh for HEAD.
 - **Ship gate.** `git push` and `gh pr create` from a ticket worktree are refused unless
   `verdict.md` is `GREEN` for HEAD. A commit after GREEN needs new checks.
 - **Escalation.** The second and later `mode: fix` editor runs on Opus.
@@ -77,11 +78,19 @@ your answers to the pack's gaps and assumptions. The editor first writes `plan.m
 change, tests for each acceptance criterion, unit and integration), then tests, then code, and
 commits. `GAP` → Resolve a gap and send it back.
 
-## 5. Check (one wave of four agents)
-`builder:code-reviewer`, `builder:security-reviewer`, `builder:runner`, `builder:warden`, in
-parallel. The runner runs lint, types, the changed-area tests, the full unit suite, the
-integration tests (with the services the repo defines), the same commands CI runs, and coverage
-of the changed lines; it compares any failure with the default branch.
+## 5. Check (one wave of six agents)
+In parallel:
+- three **blind** `builder:code-reviewer` runs, one per lens — `lens: compat` (correctness,
+  backward compatibility, side effects), `lens: standards` (coding standards, config, test
+  quality), `lens: design` (code design, simplicity, resilience). Give them only the worktree,
+  the base branch, the ticket file and the arch refs: never the editor's report, `plan.md`, or
+  your rulings. Each declares PASS or FAIL in `review-<lens>.md`.
+- `builder:security-reviewer`, `builder:runner`, `builder:warden`.
+The runner runs lint, types, the changed-area tests, the full unit suite, the integration tests
+(with the services the repo defines), the same commands CI runs, and coverage of the changed
+lines over unit + integration tests together; it compares any failure with the default branch.
+A reviewer's FAIL is decided like any finding in step 7; you may overrule a finding only with an
+arch or ticket reference, and you tell the verifier which ones and why.
 
 ## 6. Verify
 `builder:verifier` → `verdict.md` GREEN or RED. Give it your rulings on pre-existing failures and
