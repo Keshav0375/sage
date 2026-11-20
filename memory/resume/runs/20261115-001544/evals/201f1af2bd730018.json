@@ -1,0 +1,12 @@
+{"id": "201f1af2bd730018", "score": 3.2, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Real Data Scientist title and pay $82k-$108k, but in-office Edmonton, 4 years asked, closes 2026-11-17, and classic ML and BI gaps.",
+ "level_fit": "stretch", "base": "agentic",
+ "company": "Government of Alberta (Treasury Board and Finance)", "company_size": "500+", "company_size_basis": "Well-known: Government of Alberta public service has tens of thousands of staff.",
+ "must_haves_missing": ["4 years of related experience (about 2 years, education may count 1:1)", "Classic ML on tabular data: regression, clustering, time series", "Dashboards: Power BI or Tableau", "Alberta POPA privacy knowledge", "Level 2 security screening incl. credit check (not checked)"],
+ "customisation": [
+  {"change": "Lead with RAG, LLM and prompt work for the NLP and LLM duties", "job_words": ["RAG", "prompt engineering", "embeddings", "NLP"], "fact_ids": ["F018", "F011"], "blocked_by_facts": false},
+  {"change": "Show PII control and access control for the privacy duties (F019 is under check; do not strengthen)", "job_words": ["privacy", "PII", "responsible AI"], "fact_ids": ["F018", "F019"], "blocked_by_facts": false},
+  {"change": "Show model monitoring and eval gates", "job_words": ["monitor model performance", "evaluation"], "fact_ids": ["F021", "F012"], "blocked_by_facts": false},
+  {"change": "Show cloud deploy work on Azure and GCP", "job_words": ["AWS, Azure", "deploy"], "fact_ids": ["F010", "F009"], "blocked_by_facts": false},
+  {"change": "Show dashboards, regression and clustering work (candidate NC03 is a dashboard, not a fact yet)", "job_words": ["dashboards", "classification, regression, clustering"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Describe a model you took to production and how you monitored drift.", "How do you keep personal data out of an LLM workflow?", "Explain a technical result to a non-technical manager."]}

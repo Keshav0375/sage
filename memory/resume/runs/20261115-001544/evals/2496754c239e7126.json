@@ -1,0 +1,12 @@
+{"id": "2496754c239e7126", "score": 2.3, "band": "skip", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "unclear", "why": "Hourly contract AI-training work (Alignerr), not a data scientist job; no pay stated, no stability, Master's asked.",
+ "level_fit": "under", "base": "agentic",
+ "company": "Alignerr", "company_size": "unknown", "company_size_basis": "JD text says no size; Alignerr is a contractor marketplace, size not well known.",
+ "must_haves_missing": ["Master's or PhD in progress or held (no education fact in facts.json)", "Scikit-Learn / PyTorch / TensorFlow", "Bayesian inference, cross-validation, dimensionality reduction", "R"],
+ "customisation": [
+  {"change": "Put LLM evaluation and LLM-as-judge work first", "job_words": ["audit AI outputs", "failure modes"], "fact_ids": ["F012", "F021"], "blocked_by_facts": false},
+  {"change": "Show Python and SQL skills with pytest test work", "job_words": ["Python", "SQL"], "fact_ids": ["F008"], "blocked_by_facts": false},
+  {"change": "Show the judge self-grading finding (candidate NC04, not a fact yet)", "job_words": ["identify logical failures in AI reasoning"], "fact_ids": [], "blocked_by_facts": true},
+  {"change": "Show classical ML skills (no fact exists)", "job_words": ["hyperparameter optimization", "Scikit-Learn"], "fact_ids": [], "blocked_by_facts": true},
+  {"change": "State a Master's degree (no fact exists)", "job_words": ["Master's"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How do you find a failure in an LLM answer?", "How do you grade code that looks right but has data leakage?", "How do you keep quality high when you work alone and async?"]}

@@ -4,13 +4,13 @@ title: "One typed config that fails boot on missing secrets"
 epic: "E0"
 repo: "FinAdvisor"
 size: "M"
-status: "todo"
+status: "done"
 depends_on: []
-arch_refs: ["deep-dive/06-interfaces-and-contracts.md#6.6", "deep-dive/01-context-and-goals.md#1", "decision-logs.md#adr-006", "decision-logs.md#adr-005"]
-issue: {"repo": "Keshav0375/FinAdvisor", "number": 4, "id": 6155567512, "url": "https://github.com/Keshav0375/FinAdvisor/issues/4"}
-branch: null
-pr: null
-updated: "2026-11-01"
+arch_refs: ["deep-dive/06-interfaces-and-contracts.md#6.6","deep-dive/01-context-and-goals.md#1","decision-logs.md#adr-006","decision-logs.md#adr-005"]
+issue: {"repo":"Keshav0375/FinAdvisor","number":4,"id":6155567512,"url":"https://github.com/Keshav0375/FinAdvisor/issues/4"}
+branch: "feat/E0-T3-one-typed-config-that-fails-boot-on-miss"
+pr: "https://github.com/Keshav0375/FinAdvisor/pull/330"
+updated: "2026-11-20"
 ---
 
 ## Summary

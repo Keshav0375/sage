@@ -25,7 +25,18 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
    `mkdir <context_dir>/.runtime/locks/<p>-compose` (wait and retry while it exists, at most
    20 minutes), then `rmdir` it after `down`. If you cannot run them, say why.
    Integration tests are required when the change crosses a boundary; "not run" there is a failure.
-5. The security scanners the repo defines or has installed (`gitleaks`, `bandit`, `semgrep`,
+5. Coverage of the change, end to end: run the unit AND integration tests together with
+   coverage (`pytest --cov=<src> --cov-report=xml` with the services up, `vitest --coverage`,
+   `go test -cover`, or what the repo defines; with pytest-cov, `--cov-append` across runs) and
+   report total coverage and the coverage of the changed lines (`diff-cover coverage.xml --compare-branch=origin/<base>`
+   when installed; else list changed functions with no test that runs them). Changed lines below
+   80% covered is a finding (name the uncovered lines).
+6. The CI commands: run exactly what the repo's CI workflow runs for the changed area, with only
+   the env the workflow sets (a fresh venv and `env -i HOME=<fresh> PATH=$PATH` plus the step
+   env), so a CI failure shows here first.
+7. For any failure, run the same command on the default branch (a read-only baseline worktree)
+   and say whether it is new on this branch or already there.
+8. The security scanners the repo defines or has installed (`gitleaks`, `bandit`, `semgrep`,
    `pip-audit`, `npm audit`).
 
 ## Write

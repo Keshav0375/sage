@@ -1,0 +1,13 @@
+{"id": "026c53ead66c93d5", "score": 3.1, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "unclear", "why": "Data Scientist, Victoria BC on site, about $102k CAD; asks 3-5 years (stretch) and the work is broad IT, not LLM work.",
+ "level_fit": "stretch", "base": "ml-data", "company_size": "startup",
+ "company_size_basis": "JD text: 'Medium-sized business (between 5 and 100 employees)'",
+ "must_haves_missing": ["3 to 5 years experience", "R", "ensemble modelling", "data visualization", "on-site in Victoria BC"],
+ "customisation": [
+  {"change": "Lead with Python and ML evaluation work; use the word 'machine learning' where F012 and F011 allow", "job_words": ["Machine Learning", "Python"], "fact_ids": ["F011", "F012"], "blocked_by_facts": false},
+  {"change": "Show Java skill in the skills line", "job_words": ["Java"], "fact_ids": [], "blocked_by_facts": false},
+  {"change": "Say 'find trends in large data' for benchmark analysis of LLM results", "job_words": ["Discover trends and patterns"], "fact_ids": ["F012"], "blocked_by_facts": false},
+  {"change": "Add R, ensemble modelling, data visualization", "job_words": ["R", "ensemble modelling", "data visualization"], "fact_ids": [], "blocked_by_facts": true},
+  {"change": "Show client-facing requirement work", "job_words": ["Confer with clients to identify requirements"], "fact_ids": ["F013"], "blocked_by_facts": false}
+ ],
+ "interview_questions": ["How would you use ensemble models to improve prediction, and when would you not?", "Describe a time you found a pattern in large data and told non-technical people.", "Tell me about your Python and Java experience in production."]}

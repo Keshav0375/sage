@@ -1,0 +1,13 @@
+{"id": "22b04aa3f2bbc5ee", "score": 4.0, "band": "apply", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Google Software Developer II Early Career, Waterloo or Montreal, $126-129k CAD; title and 1-year ask fit; role is general, not AI-focused; future vacancy.",
+ "level_fit": "fit", "base": "swe-general", "company_size": "500+",
+ "company_size_basis": "Well-known company size (Google); JD text does not state size",
+ "must_haves_missing": [],
+ "customisation": [
+  {"change": "Lead with production software and cloud delivery work in an industry setting", "job_words": ["software development", "deploy", "maintain"], "fact_ids": ["F010", "F006"], "blocked_by_facts": false},
+  {"change": "Name Python, Java, JavaScript and Linux in skills", "job_words": ["Python", "Java", "JavaScript", "Unix/Linux"], "fact_ids": ["F010", "F016"], "blocked_by_facts": false},
+  {"change": "Show AI tools used to speed up development work", "job_words": ["AI productivity tools"], "fact_ids": ["F002", "F003"], "blocked_by_facts": false},
+  {"change": "Show ML and distributed system work (Kubernetes, RAG agents)", "job_words": ["Machine Learning", "Distributed", "Information Retrieval"], "fact_ids": ["F009", "F017"], "blocked_by_facts": false},
+  {"change": "Claim accessible-technology experience", "job_words": ["accessible technologies"], "fact_ids": [], "blocked_by_facts": true}
+ ],
+ "interview_questions": ["Walk me through a system you designed, tested and deployed end to end.", "How do you manage priorities and deadlines on a small team?", "How do you use AI tools in your development workflow?"]}

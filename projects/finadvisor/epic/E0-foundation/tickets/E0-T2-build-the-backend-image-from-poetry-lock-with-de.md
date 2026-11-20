@@ -4,13 +4,13 @@ title: "Build the backend image from poetry.lock with dev and runtime stages"
 epic: "E0"
 repo: "FinAdvisor"
 size: "M"
-status: "todo"
+status: "done"
 depends_on: []
-arch_refs: ["deep-dive/01-context-and-goals.md#1", "deep-dive/04-components-and-responsibilities.md#4", "decision-logs.md#adr-021", "decision-logs.md#adr-019"]
-issue: {"repo": "Keshav0375/FinAdvisor", "number": 3, "id": 6155566176, "url": "https://github.com/Keshav0375/FinAdvisor/issues/3"}
-branch: null
-pr: null
-updated: "2026-11-01"
+arch_refs: ["deep-dive/01-context-and-goals.md#1","deep-dive/04-components-and-responsibilities.md#4","decision-logs.md#adr-021","decision-logs.md#adr-019"]
+issue: {"repo":"Keshav0375/FinAdvisor","number":3,"id":6155566176,"url":"https://github.com/Keshav0375/FinAdvisor/issues/3"}
+branch: "feat/E0-T2-build-the-backend-image-from-poetry-lock"
+pr: "https://github.com/Keshav0375/FinAdvisor/pull/331"
+updated: "2026-11-20"
 ---
 
 ## Summary

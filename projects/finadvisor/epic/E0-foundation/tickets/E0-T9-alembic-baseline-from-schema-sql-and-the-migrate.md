@@ -4,13 +4,13 @@ title: "Alembic baseline from schema.sql and the migrate entrypoint"
 epic: "E0"
 repo: "FinAdvisor"
 size: "M"
-status: "todo"
-depends_on: ["E0-T2", "E0-T3"]
-arch_refs: ["deep-dive/01-context-and-goals.md#1", "deep-dive/04-components-and-responsibilities.md#4", "decision-logs.md#adr-019", "decision-logs.md#adr-021", "deep-dive/11-tech-stack.md#migrations"]
-issue: {"repo": "Keshav0375/FinAdvisor", "number": 10, "id": 6155579937, "url": "https://github.com/Keshav0375/FinAdvisor/issues/10"}
-branch: null
+status: "in_progress"
+depends_on: ["E0-T2","E0-T3"]
+arch_refs: ["deep-dive/01-context-and-goals.md#1","deep-dive/04-components-and-responsibilities.md#4","decision-logs.md#adr-019","decision-logs.md#adr-021","deep-dive/11-tech-stack.md#migrations"]
+issue: {"repo":"Keshav0375/FinAdvisor","number":10,"id":6155579937,"url":"https://github.com/Keshav0375/FinAdvisor/issues/10"}
+branch: "feat/E0-T9-alembic-baseline-from-schema-sql-and-the"
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-20"
 ---
 
 ## Summary

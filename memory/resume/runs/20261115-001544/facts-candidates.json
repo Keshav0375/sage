@@ -1,0 +1,161 @@
+{
+  "_doc": "Evidence candidates from evidence-worker run 20261115-001544. Not facts. The main session merges only quoted, sourced items into facts.json. Claims are written in ASD-STE100 Simplified Technical English. Items under new_candidates are not in facts.json. Items under support_for_existing name an existing fact ID and say what the new proof adds.",
+  "run": "20261115-001544",
+  "date": "2026-11-15",
+  "target_roles": ["AI Engineer", "ML Engineer", "LLM Engineer", "Forward Deployed Engineer", "Data Scientist", "Software Developer II"],
+  "method": "Read memory/resume/facts.json. Grep projects/sentinel/arch, projects/finadvisor/arch and decision logs. Read git history with git CLI in the local repos Sentinel, Sentinel-infra, Sentinel-deployment, sentinel-brain and FinAdvisor. Listed Keshav0375 repos with gh CLI (the GitHub MCP tool was not used). Exa company news was not run because it was not asked for.",
+  "repo_links": {
+    "Sentinel": "https://github.com/Keshav0375/Sentinel",
+    "sentinel-brain": "https://github.com/Keshav0375/sentinel-brain",
+    "Sentinel-infra": "https://github.com/Keshav0375/Sentinel-infra",
+    "Sentinel-deployment": "https://github.com/Keshav0375/Sentinel-deployment",
+    "FinAdvisor": "https://github.com/Keshav0375/FinAdvisor"
+  },
+  "new_candidates": [
+    {
+      "id": "NC01",
+      "claim": "Wrote 45 architecture decision records for an autonomous incident-response agent over four months. Each record has a status, context and decision. Every build phase passed a conformance review before sign-off.",
+      "metrics": ["45", "4 months"],
+      "target_roles": ["AI Engineer", "Software Developer II", "Forward Deployed Engineer"],
+      "source": "projects/sentinel/arch/decision-logs.md (line 3) and projects/sentinel/arch/state.md (lines 4-16); git history of sentinel-brain (186 commits) and Sentinel (134 commits)",
+      "proof": "decision-logs.md: \"Condensed from sentinel-brain/architecture/decisions.md (append-only, about 90 entries from 2026-06-30 to 2026-10-28). Each entry: status (date, decided-by), context, decision\". state.md: \"ADR-001 to ADR-019 (2026-06-30 to 2026-07-12)\" and \"ADR-042 to ADR-045 (2026-10-25 to 2026-10-28)\"; \"Every phase passed an `architecture-warden` conformance review (CONFORMS) before sign-off\".",
+      "proof_link": "https://github.com/Keshav0375/sentinel-brain",
+      "caveat": "The log says about 90 entries. Only ADR numbers 001 to 045 are listed in the condensed file, so 45 ADRs is the safe number. The 'about 90 entries' count includes amendments and is not used here. Confirm the number with Keshav before use.",
+      "supports_fact_id": null
+    },
+    {
+      "id": "NC02",
+      "claim": "Proved a full Azure infrastructure cycle from an empty subscription: apply, destroy and verify. The verify step passed 11 of 11 checks.",
+      "metrics": ["11/11"],
+      "target_roles": ["Software Developer II", "AI Engineer", "Forward Deployed Engineer"],
+      "source": "projects/sentinel/arch/state.md (Validated section)",
+      "proof": "state.md: \"Proven live: the infra identity plane (OIDC from CI, RBAC, state), the full infra lifecycle from an empty subscription (apply platform and deployment, destroy, verify 11/11)\"",
+      "proof_link": "https://github.com/Keshav0375/Sentinel-infra",
+      "caveat": "State file says 'proven live'. Use the wording 'verify 11/11' only.",
+      "supports_fact_id": null
+    },
+    {
+      "id": "NC03",
+      "claim": "Built an ops dashboard on GitHub Pages with React, TypeScript and Vite. It has 67 Vitest unit tests, 18 Playwright browser runs, and Lighthouse scores of 0.97 for performance and 1.00 for accessibility.",
+      "metrics": ["67", "18", "0.97", "1.00"],
+      "target_roles": ["Software Developer II", "AI Engineer"],
+      "source": "projects/sentinel/arch/deep-dive/11-observability-and-ops-dashboard.md (line 60); Sentinel README.md (lines 264-266)",
+      "proof": "11-observability-and-ops-dashboard.md: \"Lighthouse >= 0.90 (shipped: perf 0.97, a11y 1.00)\". README.md: \"**67 Vitest tests** and **18 Playwright runs** (6 smoke tests × light, dark and 360 px)\"",
+      "proof_link": "https://github.com/Keshav0375/Sentinel",
+      "caveat": "state.md says the dashboard was 'proven offline only'. Do not say it has live users.",
+      "supports_fact_id": null
+    },
+    {
+      "id": "NC04",
+      "claim": "Found that an LLM judge graded outputs from its own model family. Changed the rule so the judge model serves no agent role as primary or fallback. A static check and a runtime guard enforce the rule.",
+      "metrics": [],
+      "target_roles": ["LLM Engineer", "AI Engineer", "ML Engineer", "Data Scientist"],
+      "source": "projects/sentinel/arch/decision-logs.md (ADR-035, lines 106-112)",
+      "proof": "ADR-035: \"The 2026-10-15 rule (judge = the other provider's `gpt-4o`) self-grades: `gpt-4o` is also the fallback for three roles, so any Anthropic failure had `gpt-4o` scoring `gpt-4o`.\" Decision: \"a static check plus a runtime `judge_conflict` guard; no judge fallback.\"",
+      "proof_link": "https://github.com/Keshav0375/sentinel-brain",
+      "caveat": "None. This is a design decision with a clear reason.",
+      "supports_fact_id": null
+    },
+    {
+      "id": "NC05",
+      "claim": "Redesigned a 30-case agent test catalog to be deterministic. About half of the first faults could not produce their expected label on the real stack.",
+      "metrics": ["30", "about half"],
+      "target_roles": ["ML Engineer", "Data Scientist", "AI Engineer"],
+      "source": "projects/sentinel/arch/decision-logs.md (ADR-031, lines 143-151); ADR-018 (30 scenario branches)",
+      "proof": "ADR-031: \"About half the original faults could not produce their label on the stack as built\" and Decision: \"30 deterministic, repo-only faults\"",
+      "proof_link": "https://github.com/Keshav0375/Sentinel-deployment",
+      "caveat": "None. Supports F017 wording too ('scored on 30 test scenarios').",
+      "supports_fact_id": "F017"
+    },
+    {
+      "id": "NC06",
+      "claim": "Designed the Sentinel infrastructure to cost about $5 to $12 a month. The AKS node runs only while started, about 20 to 80 hours a month.",
+      "metrics": ["$5-12/month", "20-80 h/month"],
+      "target_roles": ["Software Developer II", "Forward Deployed Engineer"],
+      "source": "projects/sentinel/arch/deep-dive/13-cost.md (lines 9 and 21)",
+      "proof": "13-cost.md: \"billed only while started (20-80 h/month)\"; Total: \"about $5-12/month + Redis while up; infra about $0 at idle\"",
+      "proof_link": "https://github.com/Keshav0375/Sentinel",
+      "caveat": "These are estimates from the design. They are not measured bills. Write 'estimated'.",
+      "supports_fact_id": "F017"
+    },
+    {
+      "id": "NC07",
+      "claim": "Ran a four-stage design process for a compliance-aware wealth advisor. It had 19 recorded decisions, 13 new decision records, three validation checks, and 14 build epics.",
+      "metrics": ["19", "13", "3", "14"],
+      "target_roles": ["AI Engineer", "Forward Deployed Engineer", "Software Developer II"],
+      "source": "projects/finadvisor/arch/state.md (lines 4-12)",
+      "proof": "state.md: \"ADR-026 to ADR-038: round 4\"; \"Decision source: `library/research/r4/decision-r4.md` (R4-D1 to R4-D19)\"; \"Stage 3 validation DONE (2026-11-07): database docs check, AI docs check, consistency check\"; \"Stage 4 tickets cut (E0-E13)\"",
+      "proof_link": "https://github.com/Keshav0375/FinAdvisor",
+      "caveat": "The count of 14 epics is E0 to E13. Confirm the count with the plan file before use.",
+      "supports_fact_id": null
+    }
+  ],
+  "support_for_existing": [
+    {
+      "fact_id": "F017",
+      "check": "Resume says 2,693 pytest tests; sage docs show 2,127 passed (E19-T2).",
+      "new_proof": "Sentinel README.md (lines 264-266): \"The suite has **2,693 pytest tests** (`pytest --collect-only`)\". This is a collected count, not a passed count. Use 'collects 2,693 pytest tests' or confirm a passing run with Keshav.",
+      "proof_link": "https://github.com/Keshav0375/Sentinel",
+      "status": "Partly resolved. The number is in the repo README. The pass count is still open."
+    },
+    {
+      "fact_id": "F021",
+      "check": "Eval gate on merges: docs say the gate has not run yet.",
+      "new_proof": "FinAdvisor git log: 765a28a (2026-05-17) 'add golden Q&A eval set with 50 entries and LLM-as-judge prompt'; 0d878e5 (2026-05-17) 'add eval runner script with LLM-as-judge scoring and threshold gates'; 6e6fbdb (2026-05-18) 'activate GitHub Actions eval gate with threshold checks'.",
+      "proof_link": "https://github.com/Keshav0375/FinAdvisor/commit/6e6fbdb",
+      "status": "Partly resolved. The gate code and the 50-item set are in git history. A CI run result is still not shown in the repo."
+    },
+    {
+      "fact_id": "F020",
+      "check": "Kong 60 req/min per advisor: docs say planned.",
+      "new_proof": "FinAdvisor git log: b231742 (2026-05-17) 'feat: add Kong AI Gateway with rate limiting, size limits, and audit logging'; acf8f61 (2026-05-17) 'add fallback chain verification tests and live validation script'.",
+      "proof_link": "https://github.com/Keshav0375/FinAdvisor/commit/b231742",
+      "status": "Kong gateway with rate limiting is in git. The 60 req/min value is not confirmed by this run."
+    },
+    {
+      "fact_id": "F018",
+      "check": "Zero-leakage tests for 4 roles: docs say planned.",
+      "new_proof": "FinAdvisor git log: 80622fa (2026-05-17) 'test: add RLS integration tests with conftest fixtures and seeded data'.",
+      "proof_link": "https://github.com/Keshav0375/FinAdvisor/commit/80622fa",
+      "status": "RLS integration tests exist. The 4-role zero-leakage result is not confirmed by this run."
+    },
+    {
+      "fact_id": "F014",
+      "check": "none",
+      "new_proof": "Sentinel-infra git log: 1cf6fb4 (2026-10-04) 'fix: Event Grid custom input schema for Datadog, outputs, seed-vault retry, DD_SITE refuse (#17)'. Adds the Event Grid to Datadog path in code.",
+      "proof_link": "https://github.com/Keshav0375/Sentinel-infra/commit/1cf6fb4",
+      "status": "Supports the Datadog to Event Grid path of F014."
+    },
+    {
+      "fact_id": "F015",
+      "check": "none",
+      "new_proof": "Sentinel decision-logs.md ADR-033 (lines 125-132): \"Exactly six tools\" with \"ToolFailure results\" and \"an untrusted-data preamble on every prompt\".",
+      "proof_link": "https://github.com/Keshav0375/sentinel-brain",
+      "status": "Supports read-only tools in F015. Adds the exact count of six tools."
+    }
+  ],
+  "rejected_or_not_used": [
+    {
+      "item": "FinAdvisor README line 'project 100% complete' (commit 6b00033)",
+      "reason": "Self-description in a commit message. Not an outcome. Not used."
+    },
+    {
+      "item": "FinAdvisor retrieval target p95 <= 600 ms and TTFT 2.0 s / 3.5 s",
+      "reason": "Design targets from finadvisor/arch/state.md. They are not measured results. Not used as claims."
+    },
+    {
+      "item": "Sentinel path-to-production items",
+      "reason": "Roadmap, not built (path-to-production.md status line). Not used."
+    }
+  ],
+  "unresolved_tooling": [
+    "Exa company news was not run. It was not asked for in this run.",
+    "The Datadog MCP server (plugin:datadog:mcp) failed to connect. It was not needed for this run.",
+    "GitHub data came from the gh CLI, as the brief allowed."
+  ],
+  "counts": {
+    "new_candidates": 7,
+    "support_for_existing": 6,
+    "rejected": 3
+  }
+}
