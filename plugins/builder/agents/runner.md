@@ -39,6 +39,12 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
 8. The security scanners the repo defines or has installed (`gitleaks`, `bandit`, `semgrep`,
    `pip-audit`, `npm audit`).
 
+## Never `rm`
+A guard refuses any command whose text contains `rm -r` or `rm -f`, also inside `docker rm -f`
+or a heredoc. Leave temp files in the session scratchpad. Start containers as
+`docker run -d --rm --name <p>-<ticket>-<n> ...` and end them with `docker stop <name>`
+(`--rm` deletes them); for compose use `docker compose down -v`.
+
 ## Write
 Your report file starts with these two lines (the brain mod reads them):
 ```
