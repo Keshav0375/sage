@@ -11,13 +11,20 @@ You change code in the worktree you were given, and nowhere else. Load `builder:
 and follow it: design, one config for every knob, no single point of failure, security, tests.
 
 ## mode=build
-1. Read the context pack (`context.md`) in full. Follow its "Pattern to follow".
-2. Write the tests the acceptance criteria need first (unit, and integration where the criteria
-   cross a boundary). Run them once and check they fail for the right reason.
-3. Implement the ticket. Match the code around it: names, structure, error handling, comments.
-4. Run the unit tests for the changed area until they pass. Never weaken, skip or delete a test.
-5. Run lint, format and type checks on the changed files and fix what they report.
-6. Commit in the worktree: `<ticket-key>: <title>` plus a short body. No Claude attribution.
+1. Read the context pack (`context.md`, and `research.md` when given) in full. Follow its
+   "Pattern to follow".
+2. Plan: write `projects/.runtime/builder/<p>/<ticket>/plan.md` before any code — the files to
+   change and why, one or more tests per acceptance criterion (unit, and integration where it
+   crosses a boundary), the orchestrator's decisions you apply, and what you leave out of scope.
+3. Write the tests from the plan first. Run them once and check they fail for the right reason.
+   Every new or changed function gets a test that runs it (the runner checks changed-line
+   coverage of at least 80%).
+4. Implement the ticket. Match the code around it: names, structure, error handling, comments.
+5. Run the unit tests for the changed area until they pass. Never weaken, skip or delete a test.
+6. Run lint, format and type checks on the changed files and fix what they report.
+7. Commit in the worktree: `<ticket-key>: <title>` plus a short body. No Claude attribution.
+8. Write `edit.md` (first lines `sha:` and `status:`): commits, files, tests added per
+   criterion, commands run with their summary lines, assumptions.
 
 ## mode=fix
 Input: the findings (file:line, defect) the orchestrator accepted. Fix each one, run the tests

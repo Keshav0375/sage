@@ -67,8 +67,10 @@ not say. A violation is a finding like any other.
 3. Integration tests for the changed boundaries.
 4. Security checks the repo supports: dependency audit (`pip-audit`, `npm audit`), static scan
    (`bandit`, `semgrep`) and a secret scan (`gitleaks`), when installed or defined in CI.
-5. After the PR opens, the GitHub Actions checks on it must pass (`gh pr checks --watch`).
-   A failed check goes back to the fix loop like a failed local test.
+5. Coverage: the changed lines are at least 80% covered by tests that run them.
+6. After the PR opens, the background lander (`pr_land.py`) waits for the GitHub Actions checks
+   and merges only when they all pass. A failed check goes back to the fix loop like a failed
+   local test. CI is never left red, also when the failure is older than the change.
 
 ## 8. Continuous integration
 - The repo must have a GitHub Actions workflow that runs steps 1-4 on every pull request. If the
