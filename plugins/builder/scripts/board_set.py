@@ -27,7 +27,8 @@ def gql(query, **vars):
             msg = json.dumps(out['errors'])[:300]
         else:
             msg = (r.stderr or r.stdout)[:300]
-        if any(x in msg.lower() for x in ('rate limit', 'secondary', 'timeout', 'something went wrong', '502', '503')):
+        if any(x in msg.lower() for x in ('rate limit', 'secondary', 'timeout', 'something went wrong', '502', '503',
+                                          'connection reset', 'eof', 'tls', 'i/o timeout', 'no such host')):
             time.sleep(15 * (attempt + 1))
             continue
         break

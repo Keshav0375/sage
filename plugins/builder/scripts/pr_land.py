@@ -92,9 +92,18 @@ def main():
     if info['mergeable'] == 'CONFLICTING':
         write(a.out, sha, 'CONFLICT', f'PR {a.pr} has merge conflicts with its base. CI:\n{summary}')
         return 2
-    m = sh('gh', 'pr', 'merge', a.pr, '--merge')
-    if m.returncode != 0:
-        write(a.out, sha, 'CONFLICT', f'gh pr merge failed: {(m.stderr or m.stdout)[:400]}\nCI:\n{summary}')
+    err = ''
+    for attempt in range(4):
+        # A dropped connection can lose the reply of a merge that worked: check the state first.
+        if pr_json(a.pr, 'state')['state'] == 'MERGED':
+            break
+        m = sh('gh', 'pr', 'merge', a.pr, '--merge')
+        if m.returncode == 0:
+            break
+        err = (m.stderr or m.stdout)[:400]
+        time.sleep(15 * (attempt + 1))
+    if pr_json(a.pr, 'state')['state'] != 'MERGED':
+        write(a.out, sha, 'CONFLICT', f'gh pr merge failed: {err}\nCI:\n{summary}')
         return 2
     merge_sha = (pr_json(a.pr, 'mergeCommit').get('mergeCommit') or {}).get('oid', '?')
     board = sh('python3', '-I', os.path.join(HERE, 'board_set.py'), '--project-dir', a.project_dir, '--ticket', a.ticket, '--status', 'done').stdout.strip()
