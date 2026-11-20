@@ -1,0 +1,11 @@
+{"id": "377d8f43870d21f8", "score": 1.9, "band": "skip", "confidence": "high", "hard_stop": false,
+ "legitimacy": "unclear", "why": "On-device embedded AI role asks 4+ years, C++/JNI and NPU model optimization; resume has none of this. Listing is a JobLeads copy.",
+ "level_fit": "stretch", "base": "agentic", "company_size": "500+", "company_size_basis": "Well-known company size (Ford Motor Company).",
+ "must_haves_missing": ["4+ years production AI/ML", "Embedded/mobile NPU model optimization", "C++/JNI and Android Automotive OS", "Quantization, pruning, distillation", "TensorFlow Lite / ONNX Runtime"],
+ "customisation": [
+  {"change": "Use Python, Docker, Kubernetes, Vertex AI wording", "job_words": ["Python", "Kubernetes", "Docker", "Vertex AI"], "fact_ids": ["F006", "F009"], "blocked_by_facts": false},
+  {"change": "Show privacy controls", "job_words": ["data privacy", "privacy controls"], "fact_ids": ["F019"], "blocked_by_facts": false, "note": "F019 has an open check."},
+  {"change": "Show production monitoring", "job_words": ["production monitoring", "model health"], "fact_ids": ["F014"], "blocked_by_facts": false},
+  {"change": "Show latency cut work", "job_words": ["latency"], "fact_ids": ["F011"], "blocked_by_facts": false},
+  {"change": "Embedded, C++, quantization", "job_words": ["C++", "quantization"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How do you fit a model in tight memory and power limits?", "Explain quantization versus distillation.", "How do you detect model drift in production?"]}

@@ -1,8 +1,19 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "3"
+  },
   "attribution": {
     "commit": "",
     "pr": ""
+  },
+  "enabledPlugins": {
+    "brain@hq": true,
+    "researcher@hq": true,
+    "builder@hq": true,
+    "observe@hq": true,
+    "time@hq": true,
+    "gimme-job@hq": true
   },
   "extraKnownMarketplaces": {
     "hq": {
@@ -11,15 +22,5 @@
         "path": "/Users/keshav/Projects/sage"
       }
     }
-  },
-  "enabledPlugins": {
-    "brain@hq": true,
-    "researcher@hq": true,
-    "builder@hq": true,
-    "observe@hq": true,
-    "time@hq": true
-  },
-  "env": {
-    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "3"
   }
 }

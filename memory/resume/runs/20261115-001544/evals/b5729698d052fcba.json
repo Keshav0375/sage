@@ -1,0 +1,12 @@
+{"id": "b5729698d052fcba", "score": 3.8, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Near-perfect stack match (Azure AI Search, agents, evals, guardrails, MCP) for AI Engineer at MNP, but 5+ years asked vs 2 and pay not stated.",
+ "level_fit": "stretch", "base": "agentic",
+ "company": "MNP", "company_size": "500+", "company_size_basis": "Well-known: MNP is a national Canadian accounting and advisory firm with thousands of staff; JD says 'leading national firm'.",
+ "must_haves_missing": ["5+ years in AI/ML engineering (about 2 years)", "Azure AI Foundry (not in skills; Azure OpenAI and Azure AI Search are)", "Document Intelligence and PDF/scan pipelines", "Azure AI certifications (asset only)"],
+ "customisation": [
+  {"change": "Put Azure AI Search RAG and agent platform work first", "job_words": ["Azure AI Search", "RAG", "agents"], "fact_ids": ["F009", "F002", "F010"], "blocked_by_facts": false},
+  {"change": "Name eval loops and LLM-as-judge in the same words as the JD", "job_words": ["offline evals", "LLM as a judge", "error analysis"], "fact_ids": ["F012", "F021"], "blocked_by_facts": false},
+  {"change": "Name guardrails and content safety", "job_words": ["guardrails", "content safety", "PII protection"], "fact_ids": ["F005", "F019"], "blocked_by_facts": false},
+  {"change": "Name MCP and tool-enabled workflows, and AI coding tools", "job_words": ["MCP", "tool enabled workflows", "Claude"], "fact_ids": ["F002", "F008", "F003"], "blocked_by_facts": false},
+  {"change": "Show document processing and Document Intelligence work (no fact exists)", "job_words": ["document processing pipelines", "Document Intelligence"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How did you cut cost and latency in a production LLM system?", "How do you measure RAG quality so it is not assumed?", "How do you keep an agent safe with PII and enterprise data?"]}

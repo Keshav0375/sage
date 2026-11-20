@@ -4,13 +4,13 @@ title: "Add a retired-model check for configured model ids"
 epic: "E0"
 repo: "FinAdvisor"
 size: "S"
-status: "todo"
+status: "in_progress"
 depends_on: ["E0-T3"]
-arch_refs: ["decision-logs.md#adr-006", "deep-dive/06-interfaces-and-contracts.md#6.6", "deep-dive/01-context-and-goals.md#1"]
-issue: {"repo": "Keshav0375/FinAdvisor", "number": 5, "id": 6155568723, "url": "https://github.com/Keshav0375/FinAdvisor/issues/5"}
-branch: null
+arch_refs: ["decision-logs.md#adr-006","deep-dive/06-interfaces-and-contracts.md#6.6","deep-dive/01-context-and-goals.md#1"]
+issue: {"repo":"Keshav0375/FinAdvisor","number":5,"id":6155568723,"url":"https://github.com/Keshav0375/FinAdvisor/issues/5"}
+branch: "feat/E0-T4-add-a-retired-model-check-for-configured"
 pr: null
-updated: "2026-11-01"
+updated: "2026-11-20"
 ---
 
 ## Summary
