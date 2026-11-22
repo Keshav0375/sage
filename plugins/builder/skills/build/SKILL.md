@@ -89,6 +89,11 @@ change, tests for each acceptance criterion, unit and integration), then tests, 
 commits. `GAP` → Resolve a gap and send it back.
 
 ## 5. Check (one wave of six agents)
+Round 2 and later (token rule): give each checker the previous GREEN-path sha and ask it to
+check only the fix diff (`git diff <prev>..HEAD`) through its lens, plus whether the fix breaks
+what the earlier round accepted; its own earlier report is its starting point. The runner still
+runs the full CI commands for the changed areas and skips areas the branch never touched.
+
 Resume note: a `SendMessage` to a builder agent must start with the same `project:`, `ticket:`,
 `worktree:` and `mode:` lines as a spawn, or the brain mod refuses the resume. Never start a line
 with `Ticket:` (capital T) inside a prompt; write `Ticket file:`.
