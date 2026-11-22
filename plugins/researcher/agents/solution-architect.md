@@ -1,7 +1,7 @@
 ---
 name: solution-architect
 description: Proposes one complete solution architecture for a problem from given evidence, through an assigned lens (simplicity, scale, cost, reliability, speed-to-ship). Spawn two or more with different lenses; the main session compares them. Never decides.
-model: sonnet
+model: opus
 effort: medium
 disallowedTools: Edit, NotebookEdit, Agent
 color: green

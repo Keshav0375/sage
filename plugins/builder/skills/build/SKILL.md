@@ -43,7 +43,9 @@ background. One check wave at a time when both tickets reach it together.
   all fresh for HEAD.
 - **Ship gate.** `git push` and `gh pr create` from a ticket worktree are refused unless
   `verdict.md` is `GREEN` for HEAD. A commit after GREEN needs new checks.
-- **Escalation.** The second and later `mode: fix` editor runs on Opus.
+- **Models.** Every builder agent runs on Sonnet, fix loops too (Keshav's rule: Opus only for
+  reasoning and research). When a fix loop repeats, you (Opus) write a sharper fix list instead of
+  a bigger model.
 - **Ticket writes.** Change ticket frontmatter (`status`, `branch`, `pr`, `issue`) only with
   `mcp__brain__ticket_update`.
 - **Board.** After every `ticket_update` of `status`, run
@@ -57,8 +59,16 @@ background. One check wave at a time when both tickets reach it together.
 - Read the ticket frontmatter of the epic. Tickets `todo` whose `depends_on` are all `done` are
   **ready**. A dependency in `review` (PR open, landing) is also enough when the next ticket can
   stack on its branch; prefer to wait for the merge when it is minutes away.
-- Tickets gated by an input only Keshav can give (accounts, money, domain, labelling, repo
-  settings — listed in `state.md` open decisions): set `blocked` with the reason and continue.
+- **Demo mode, never blocked on a missing input.** A ticket that needs an input only Keshav can
+  give (API keys, accounts, cloud project, domain, labelling, repo settings) is built anyway with
+  demo stand-ins: placeholder config values (`demo-…`, never a real-looking key pattern such as
+  `AKIA…` or `sk-…`), fakes or recorded fixtures behind the same interface, tests marked `live`
+  that skip until the real input exists, and Terraform that validates and plans with a demo
+  project id. A spike that needs a real account answers from the vendor docs and a local
+  emulator or fixture and lists "confirm with the real account" in its findings. The editor writes
+  `demo: <what is stand-in>` in `edit.md`; you add the input to `state.md` `## Keshav inputs`
+  (what to set, where, which ticket to re-check). Only a safeguard or classifier refusal still
+  blocks a ticket: never retry or work around it.
 
 ## 1. Fetch
 `builder:fetcher` per ready ticket → `context.md`. `HALT` → Resolve a gap, then fetch again.
@@ -79,6 +89,10 @@ change, tests for each acceptance criterion, unit and integration), then tests, 
 commits. `GAP` → Resolve a gap and send it back.
 
 ## 5. Check (one wave of six agents)
+Resume note: a `SendMessage` to a builder agent must start with the same `project:`, `ticket:`,
+`worktree:` and `mode:` lines as a spawn, or the brain mod refuses the resume. Never start a line
+with `Ticket:` (capital T) inside a prompt; write `Ticket file:`.
+
 In parallel:
 - three **blind** `builder:code-reviewer` runs, one per lens — `lens: compat` (correctness,
   backward compatibility, side effects), `lens: standards` (coding standards, config, test

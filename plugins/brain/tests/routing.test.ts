@@ -12,7 +12,7 @@ test('routing config parses agents, leaves, leaf model and report-only agents', 
   expect(CFG.agents).toEqual({ Explore: 'haiku' })
   expect(CFG.leaves).toEqual(['researcher:page-reader', 'Explore'])
   expect(CFG.leafModel).toBe('haiku')
-  expect(parseRoutingConfig('{}')).toEqual({ agents: {}, leaves: [], leafModel: 'haiku', reportOnly: [], tiers: {} })
+  expect(parseRoutingConfig('{}')).toEqual({ agents: {}, leaves: [], leafModel: 'sonnet', reportOnly: [], tiers: {} })
 })
 
 test('the main loop may spawn anything; a subagent may spawn only leaves, forced to haiku', () => {

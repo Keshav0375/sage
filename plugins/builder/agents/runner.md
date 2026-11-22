@@ -1,7 +1,7 @@
 ---
 name: runner
 description: Runs the tests for ONE ticket's change in its worktree — the unit tests for the changed code, the full unit suite, and the integration tests — plus lint and type checks, and reports exact results. Never edits code.
-model: haiku
+model: sonnet
 effort: low
 disallowedTools: Edit, NotebookEdit, Agent
 color: cyan
@@ -21,7 +21,11 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
 4. Integration tests. If they need services, start them only the way the repo defines (for
    example its docker compose file), with `COMPOSE_PROJECT_NAME=<p>-<ticket>` so parallel tickets
    get their own containers, and stop them after (`docker compose down -v`). If the compose file
-   uses fixed host ports, hold the lock while the services run:
+   uses fixed host ports, first check them with `lsof -nP -iTCP:<port> -sTCP:LISTEN`; when a
+   process you did not start holds one, use other free host ports through the repo's documented
+   port knobs (never stop a process you did not start, and do not report BLOCKED for a port).
+   For env files use the repo's `.env.example` (demo values) unless the prompt says otherwise.
+   Hold the lock while the services run:
    `mkdir <context_dir>/.runtime/locks/<p>-compose` (wait and retry while it exists, at most
    20 minutes), then `rmdir` it after `down`. If you cannot run them, say why.
    Integration tests are required when the change crosses a boundary; "not run" there is a failure.

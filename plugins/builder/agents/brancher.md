@@ -1,7 +1,7 @@
 ---
 name: brancher
 description: Git and GitHub handler for ONE ticket. mode=start creates the properly named branch and a worktree from the up-to-date default branch and marks the issue in progress; mode=ship pushes the branch and opens the PR that closes the issue (the orchestrator's background lander waits for CI and merges). Never force-pushes, never merges.
-model: haiku
+model: sonnet
 effort: low
 disallowedTools: Edit, NotebookEdit, Agent
 color: orange

@@ -1,10 +1,10 @@
 // Model routing and spawn tiers.
 // - The main loop decides and always runs on the main model (opus by default).
 // - Depth 1 (spawned by the main loop): the agent's own `model` frontmatter decides for plugin
-//   agents (sonnet for judgment, haiku for mechanical work). Built-in types (Explore,
+//   agents (opus for reasoning and research, sonnet for all other work). Built-in types (Explore,
 //   general-purpose, Plan) take context/routing.json, then the subagent_model option.
 // - Depth 2 (spawned by a subagent): only the leaf agents in routing.json may be spawned, and they
-//   always run on the leaf model (haiku). Anything else is refused.
+//   always run on the leaf model (sonnet). Anything else is refused.
 // An explicit model on the Agent call wins at depth 1, never at depth 2.
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
@@ -45,7 +45,7 @@ export function parseRoutingConfig(text: string): RoutingConfig {
   const cfg: RoutingConfig = {
     agents,
     leaves: list(data.leaf_agents),
-    leafModel: typeof data.leaf_model === 'string' ? data.leaf_model : 'haiku',
+    leafModel: typeof data.leaf_model === 'string' ? data.leaf_model : 'sonnet',
     reportOnly: list(data.report_only_agents),
     tiers,
   }

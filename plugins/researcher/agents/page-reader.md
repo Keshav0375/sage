@@ -1,7 +1,7 @@
 ---
 name: page-reader
 description: Leaf reader (Haiku). Reads ONE source — a URL, a doc page, a paper section, a file — and returns verbatim quotes that answer the exact questions it was given, with location and version/date. No opinions, no synthesis. Spawned by scouts and readers, never by the main loop for decisions.
-model: haiku
+model: sonnet
 effort: low
 disallowedTools: Edit, NotebookEdit, Agent
 color: gray

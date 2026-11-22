@@ -1,7 +1,7 @@
 {
   "_doc": "Model tiers. Depth 0 = main loop (opus, decides). Depth 1 = agents spawned by the main loop: `tiers` sets model and effort per agent type, enforced by the brain mod on every model request; built-in types without a tier use `agents`, else the subagent_model option. Depth 2 = agents spawned by a subagent: only `leaf_agents`, on `leaf_model` and `leaf_effort`. `report_only_agents` may write only under projects/<p>/library/ and projects/.runtime/. A project's own routing.json tiers override these. An explicit model on the Agent call wins at depth 1 only.",
   "agents": {
-    "Explore": "haiku",
+    "Explore": "sonnet",
     "general-purpose": "sonnet",
     "Plan": "sonnet"
   },
@@ -9,7 +9,7 @@
     "researcher:page-reader",
     "Explore"
   ],
-  "leaf_model": "haiku",
+  "leaf_model": "sonnet",
   "report_only_agents": [
     "researcher:docs-reader",
     "researcher:reference-scout",
@@ -26,37 +26,37 @@
     "builder:verifier"
   ],
   "tiers": {
-    "_doc": "Model and effort per agent type, enforced by the brain mod on every model request of that agent. Haiku for mechanical work, Sonnet for judgment; effort low unless the output decides or writes binding text.",
+    "_doc": "Model and effort per agent type, enforced by the brain mod on every model request of that agent. Keshav's rule (2026-11-21): Opus only for reasoning and research (the main loop's decisions and the researcher's research and design agents); every other agent (work, coordination, mechanical tasks) runs on Sonnet. No Haiku. Effort low unless the output decides or writes binding text.",
     "researcher:page-reader": {
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     },
     "researcher:web-scout": {
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     },
     "researcher:publisher": {
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     },
     "researcher:docs-reader": {
-      "model": "sonnet",
+      "model": "opus",
       "effort": "low"
     },
     "researcher:reference-scout": {
-      "model": "sonnet",
+      "model": "opus",
       "effort": "low"
     },
     "researcher:paper-scout": {
-      "model": "sonnet",
+      "model": "opus",
       "effort": "medium"
     },
     "researcher:skeptic": {
-      "model": "sonnet",
+      "model": "opus",
       "effort": "medium"
     },
     "researcher:solution-architect": {
-      "model": "sonnet",
+      "model": "opus",
       "effort": "medium"
     },
     "researcher:arch-writer": {
@@ -68,11 +68,11 @@
       "effort": "medium"
     },
     "builder:brancher": {
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     },
     "builder:runner": {
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     },
     "builder:fetcher": {
@@ -100,7 +100,7 @@
       "effort": "medium"
     },
     "Explore": {
-      "model": "haiku",
+      "model": "sonnet",
       "effort": "low"
     },
     "general-purpose": {
