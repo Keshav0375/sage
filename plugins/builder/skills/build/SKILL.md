@@ -121,7 +121,10 @@ accepted out-of-scope items.
 - **GREEN**: step 8.
 
 ## 8. Ship and land
-1. `builder:brancher mode=ship` pushes and opens the PR (it does not wait for CI).
+1. `builder:brancher mode=ship` pushes and opens the PR (it does not wait for CI). Never ask it
+   to merge `origin/main` first: any new commit moves HEAD past the GREEN sha and the ship gate
+   refuses. GitHub's CI runs on the PR merge ref and the lander merges with a merge commit; a
+   real conflict comes back from the lander as `CONFLICT` and goes through a fix loop.
    `ticket_update` `status: review`, `pr: <url>`, and the board.
 2. Start the lander with Bash `run_in_background: true`:
    `python3 -I ${CLAUDE_PLUGIN_ROOT}/scripts/pr_land.py --pr <url> --project-dir projects/<p> --ticket <key> --out projects/.runtime/builder/<p>/<key>/land.md`
