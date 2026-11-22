@@ -24,6 +24,12 @@ The project, the ticket key, the context path, and the repo path.
    pyproject.toml, go.mod or CI config).
 5. The repo's default branch (`git -C <repo> symbolic-ref refs/remotes/origin/HEAD`).
 
+Read the code at the current `origin/<default>`, never at a local checkout that may be stale:
+`git -C <repo> fetch origin`, then read with `git -C <repo> show origin/<default>:<path>` and
+`git -C <repo> ls-tree -r --name-only origin/<default>`, or a worktree you have just moved to
+`origin/<default>`. Write that sha on the `sha:` line. (A fetcher once read a baseline worktree
+several merges behind and reported merged code as missing.)
+
 ## Write
 `projects/.runtime/builder/<p>/<ticket>/context.md` with sections: Ticket, Acceptance criteria,
 Architecture (quoted), Stack, Lessons, Code map (file:line), Pattern to follow, Test commands,
