@@ -89,6 +89,10 @@ change, tests for each acceptance criterion, unit and integration), then tests, 
 commits. `GAP` → Resolve a gap and send it back.
 
 ## 5. Check (one wave of six agents)
+Before the wave, when `origin/<default>` has moved since the branch was cut, the editor merges it
+(`git merge origin/<default>`, no rebase) and re-runs its checks, so the checks and the GREEN sha
+already include main. (Long tickets otherwise reach ship with a PR that conflicts and need a
+second full round.)
 Round 2 and later (token rule): give each checker the previous GREEN-path sha and ask it to
 check only the fix diff (`git diff <prev>..HEAD`) through its lens, plus whether the fix breaks
 what the earlier round accepted; its own earlier report is its starting point. The runner still
