@@ -93,6 +93,10 @@ Before the wave, when `origin/<default>` has moved since the branch was cut, the
 (`git merge origin/<default>`, no rebase) and re-runs its checks, so the checks and the GREEN sha
 already include main. (Long tickets otherwise reach ship with a PR that conflicts and need a
 second full round.)
+Hot files: tickets that edit the same shared files (settings/config modules, `.env.example`,
+the CI workflow, dependency lock files) are not checked or shipped in parallel. The second waits
+until the first has merged, then merges `origin/<default>` and runs its check wave. (Three spikes
+that each added one setting to the same config file conflicted one after another at ship.)
 Round 2 and later (token rule): give each checker the previous GREEN-path sha and ask it to
 check only the fix diff (`git diff <prev>..HEAD`) through its lens, plus whether the fix breaks
 what the earlier round accepted; its own earlier report is its starting point. The runner still
