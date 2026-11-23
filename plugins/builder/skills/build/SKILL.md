@@ -105,6 +105,11 @@ check only the fix diff (`git diff <prev>..HEAD`) through its lens, plus whether
 what the earlier round accepted; its own earlier report is its starting point. The runner still
 runs the full CI commands for the changed areas and skips areas the branch never touched.
 
+Usage limits and restarts: after a 5-hour limit, a sleep or a Docker restart, resume every
+stopped agent with `SendMessage` (header lines + "continue from where you stopped"), at most
+three calls per message: larger batches often time out in the action-safety check and must be
+sent again.
+
 Resume note: a `SendMessage` to a builder agent must start with the same `project:`, `ticket:`,
 `worktree:` and `mode:` lines as a spawn, or the brain mod refuses the resume. Never start a line
 with `Ticket:` (capital T) inside a prompt; write `Ticket file:`.
