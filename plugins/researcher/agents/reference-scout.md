@@ -1,7 +1,7 @@
 ---
 name: reference-scout
 description: Finds well-known systems and official reference architectures that solve a similar problem, and returns how they did it, at what scale, and what they learned. Use to validate a design or decision against prior art, or to find a better approach.
-model: sonnet
+model: opus
 effort: low
 disallowedTools: Edit, NotebookEdit
 color: blue

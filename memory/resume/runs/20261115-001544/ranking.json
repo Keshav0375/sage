@@ -1,0 +1,2961 @@
+{
+  "total": 99,
+  "top_k": [
+    {
+      "id": "a41b73fc0e1d59c4",
+      "title": "AI Engineer – Applied AI, Data & LLM Systems",
+      "company": "247Labs",
+      "location": "Toronto, Ontario",
+      "url": "https://ca.indeed.com/viewjob?jk=fe42f74376708489",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 81.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 1.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "LLM"
+      ],
+      "skills_matched": [
+        "LLM"
+      ],
+      "years_asked": null
+    },
+    {
+      "id": "655f07473920532e",
+      "title": "AI Developer (LLM & Agentic Systems)",
+      "company": "WSP in Canada",
+      "location": "Vancouver, British Columbia, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/ai-developer-llm-agentic-systems-at-wsp-in-canada-4472100123",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 81.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 1.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "AI Agents",
+        "LLM"
+      ],
+      "skills_matched": [
+        "AI Agents",
+        "LLM"
+      ],
+      "years_asked": null
+    },
+    {
+      "id": "58251ba27e0927ec",
+      "title": "Embedded Software Designer - AI Agents and Tooling",
+      "company": "Fidus Systems",
+      "location": "Ottawa, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/embedded-software-designer-ai-agents-and-tooling-at-fidus-systems-4490771961",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 73.8,
+      "parts": {
+        "title": 0.6,
+        "skills": 1.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "AI Agents"
+      ],
+      "skills_matched": [
+        "AI Agents"
+      ],
+      "years_asked": null
+    },
+    {
+      "id": "8d69cb003c2c4c6c",
+      "title": "AI Security Engineer, AWS Security - AISec",
+      "company": "Amazon Web Services Canada, Inc.",
+      "location": "Nova Scotia, CAN · Vancouver, British Columbia, CAN",
+      "url": "https://www.amazon.jobs/en/jobs/10595850/ai-security-engineer-aws-security-aisec",
+      "source": "amazon",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 70.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 1.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.6,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "AWS"
+      ],
+      "skills_matched": [
+        "AWS"
+      ],
+      "years_asked": null
+    },
+    {
+      "id": "1dbaf124cb59d6fb",
+      "title": "AI Data Developer II, Professional Services, Google Cloud",
+      "company": "Google",
+      "location": "Toronto, ON, Canada",
+      "url": "https://www.google.com/about/careers/applications/jobs/results/117224053755781830-ai-data-developer-ii-professional-services-google-cloud",
+      "source": "google",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 69.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 1.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "GCP"
+      ],
+      "skills_matched": [
+        "GCP"
+      ],
+      "years_asked": null
+    },
+    {
+      "id": "216491949b25fbcf",
+      "title": "Cloud Engineer Automation",
+      "company": "Smile Digital Health",
+      "location": "Toronto, Ontario",
+      "url": "https://remoteOK.com/remote-jobs/remote-cloud-engineer-automation-smile-digital-health-1137600",
+      "source": "remoteok",
+      "workplace": "remote",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 60.9,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.88,
+        "years": 1.0,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.47,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "AI Agents",
+        "Anthropic API",
+        "Azure",
+        "Bash",
+        "CI/CD",
+        "Communication",
+        "Cost Optimization",
+        "Guardrails",
+        "Kafka",
+        "Kubernetes",
+        "Observability",
+        "PostgreSQL",
+        "Python",
+        "SQL",
+        "Secrets Management",
+        "Terraform"
+      ],
+      "skills_matched": [
+        "AI Agents",
+        "Anthropic API",
+        "Azure",
+        "Bash",
+        "CI/CD",
+        "Cost Optimization",
+        "Guardrails",
+        "Kubernetes",
+        "Observability",
+        "PostgreSQL",
+        "Python",
+        "SQL",
+        "Secrets Management",
+        "Terraform"
+      ],
+      "years_asked": 1
+    },
+    {
+      "id": "f997beef22b3a673",
+      "title": "AI Engineer, Trust & Evaluation",
+      "company": "Equinix",
+      "location": "Toronto, Ontario",
+      "url": "https://careers.equinix.com/nl/jobs/ai-engineer-trust-evaluation-toronto-ontario-canada",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 60.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "28701e456e5fd71c",
+      "title": "Risk Data Scientist",
+      "company": "Manulife",
+      "location": "Waterloo, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/risk-data-scientist-at-manulife-4489275609",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 60.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "377d8f43870d21f8",
+      "title": "On-Device AI Engineer for In-Vehicle Infotainment",
+      "company": "Ford",
+      "location": "Ottawa, Ontario",
+      "url": "https://www.jobleads.com/ca/job/on-device-ai-engineer-for-in-vehicle-infotainment--ottawa--eb87021c75889746afed74951e2f5de04",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 60.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "2496754c239e7126",
+      "title": "Data Scientist (Masters)",
+      "company": "Alignerr",
+      "location": "Edmonton, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/data-scientist-masters-at-alignerr-4489193724",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 59.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.83,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "201f1af2bd730018",
+      "title": "Data Scientist",
+      "company": "Government of Alberta",
+      "location": "Edmonton, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/data-scientist-at-government-of-alberta-4488633493",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 59.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.83,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "b5729698d052fcba",
+      "title": "AI Engineer, Innovation",
+      "company": "MNP",
+      "location": "Calgary, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/ai-engineer-innovation-at-mnp-4487681731",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 59.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.8,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "026c53ead66c93d5",
+      "title": "data scientist",
+      "company": "Macropus IT Services",
+      "location": "Victoria (BC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50723052",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 57.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "4821426bf3dadf81",
+      "title": "Software Developer III, AI/ML GenAI, Google Ads",
+      "company": "Google",
+      "location": "Mountain View, CA, USA; Waterloo, ON, Canada",
+      "url": "https://www.google.com/about/careers/applications/jobs/results/89559942574285510-software-developer-iii-aiml-genai-google-ads",
+      "source": "google",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 56.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    },
+    {
+      "id": "22b04aa3f2bbc5ee",
+      "title": "Software Developer II, Early Career",
+      "company": "Google",
+      "location": "Waterloo, ON, Canada; Montreal, QC, Canada",
+      "url": "https://www.google.com/about/careers/applications/jobs/results/93868335938052806-software-developer-ii-early-career",
+      "source": "google",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 56.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null
+    }
+  ],
+  "rest": [
+    {
+      "id": "164b7f656419d62b",
+      "title": "AI Developer (LLM & Agentic Systems)",
+      "company": "WSP in Canada",
+      "location": "Calgary, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/ai-developer-llm-agentic-systems-at-wsp-in-canada-4471979755",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 81.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 1.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "AI Agents",
+        "LLM"
+      ],
+      "skills_matched": [
+        "AI Agents",
+        "LLM"
+      ],
+      "years_asked": null,
+      "same_role_as_top": true
+    },
+    {
+      "id": "1765c0d52b0751c0",
+      "title": "Edge ML Engineer — Hardware-Driven AI Innovator",
+      "company": "Urban Ridge Supplies",
+      "location": "Markham, Ontario",
+      "url": "https://ca.jooble.org/jdp/4347620648753369700",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 56.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "af7e59302690a193",
+      "title": "Software Developer Ii - Ai/Ml, Scalable Systems, Equity",
+      "company": "Google LLC",
+      "location": "Winnipeg, Manitoba",
+      "url": "https://ca.jooble.org/jdp/-5961356636329753351",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 55.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.83,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "c890e30d50039226",
+      "title": "AI Software Developer",
+      "company": "Newfoundland Capital Corporation Limited",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/ai-software-developer-at-newfoundland-capital-corporation-limited-4491049436",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 53.2,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "b8d429af1173eba2",
+      "title": "AI Software Developer",
+      "company": "Stingray",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/ai-software-developer-at-stingray-4488989845",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 53.2,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "67b4be6993f78edb",
+      "title": "Production Reliability Engineer, AI Platform",
+      "company": "Equinix",
+      "location": "Toronto, Ontario",
+      "url": "https://ca.linkedin.com/jobs/view/production-reliability-engineer-ai-platform-at-equinix-4488952387?refId=dBCXJrBUZus7ne7H7wEmUw%3D%3D&trackingId=Gmy%2BLzIziR38ODDPa1gBnw%3D%3D",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 52.8,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "ef736aae530b0b8a",
+      "title": "Software Engineer, AI",
+      "company": "Softchoice",
+      "location": "Calgary, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/software-engineer-ai-at-softchoice-4470734137",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 52.8,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.77,
+        "tier": 0.33
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "8527111ab8a6d616",
+      "title": "Software Engineer - ML Training & Onboard Autonomy",
+      "company": "Inverted AI",
+      "location": "Vancouver, British Columbia, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/software-engineer-ml-training-onboard-autonomy-at-inverted-ai-4489501227",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 52.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "69d643351c6f3580",
+      "title": "Researcher - Embodied AI",
+      "company": "Huawei Canada",
+      "location": "Edmonton, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/researcher-embodied-ai-at-huawei-canada-4490532894",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 52.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "cc0fe4e913b1f7bd",
+      "title": "Tenure-Track Position in AI for Health",
+      "company": "University of Alberta",
+      "location": "Edmonton, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/tenure-track-position-in-ai-for-health-at-university-of-alberta-4481775998",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 52.2,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "151a92ba7f51ed94",
+      "title": "AI and Automation Developer",
+      "company": "Morgan Construction and Environmental Ltd.",
+      "location": "Edmonton, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/ai-and-automation-developer-at-morgan-construction-and-environmental-ltd-4488642591",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 52.2,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "688430fb24594a82",
+      "title": "Machine Learning Engineer - EA SPORTS™ FC",
+      "company": "EA SPORTS",
+      "location": "Vancouver, British Columbia, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-ea-sports%E2%84%A2-fc-at-ea-sports-4443630360",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 51.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "4a2402045661c04e",
+      "title": "Machine Learning Engineer",
+      "company": "EvenUp",
+      "location": "Toronto, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-at-evenup-4481154512",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 51.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "59fe31ad0d91827c",
+      "title": "Machine Learning Engineer - Autonomous Driving Policy & Deployment",
+      "company": "Inverted AI",
+      "location": "Vancouver, British Columbia, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-autonomous-driving-policy-deployment-at-inverted-ai-4489500274",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 51.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "11a8c5967c3d6d8e",
+      "title": "Machine Learning Engineer",
+      "company": "Zurich Canada",
+      "location": "Toronto, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-at-zurich-canada-4480744714",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 51.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "72cbdd48e3e68433",
+      "title": "Machine Learning Engineer",
+      "company": "Clio",
+      "location": "Calgary, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-at-clio-4435480310",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 51.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "5d559ddf6481770b",
+      "title": "Machine Learning Engineer",
+      "company": "Zurich Canada",
+      "location": "Waterloo, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-at-zurich-canada-4480755249",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 51.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "4c270e08c5d333cb",
+      "title": "Machine Learning Engineer Toronto, ON (Hybrid) · View role",
+      "company": "Point11",
+      "location": "Toronto, Ontario",
+      "url": "https://www.jobleads.com/ca/job/machine-learning-engineer-toronto-on-hybrid-view-role--toronto--ef2df5fca5eff936591d18343d859e6de",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 50.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.83,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "5eecb2dd707db564",
+      "title": "Machine Learning Engineer",
+      "company": "Clio",
+      "location": "Vancouver, British Columbia, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-at-clio-4435463912",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 50.8,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.83,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "1421ef18d9baac3d",
+      "title": "AI Content Reviewer, Video Annotation",
+      "company": "iMerit Technology",
+      "location": "Switzerland, Australia, New Zealand, Singapore, Austria, Belgium, Czech Republic, Denmark, Finland, France, Germany, Ireland, Netherlands, Norway, Sweden, United Kingdom, Canada, United States",
+      "url": "https://www.workingnomads.com/job/go/1996233/",
+      "source": "workingnomads",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 50.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.7,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "ddb5d498802d1c59",
+      "title": "Machine Learning Engineer",
+      "company": "Clio",
+      "location": "Toronto, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-at-clio-4435476574",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 50.5,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.8,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "f206e2866c1c1a9d",
+      "title": "Machine Learning Engineer IV, Data",
+      "company": "ACV Auctions",
+      "location": "Toronto, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-engineer-iv-data-at-acv-auctions-4436397934",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 50.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.77,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "ec3d795beea4223f",
+      "title": "Développeur(se) IA/AI Engineer - Databricks",
+      "company": "Moov AI",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/d%C3%A9veloppeur-se-ia-ai-engineer-databricks-at-moov-ai-4451695717",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 50.2,
+      "parts": {
+        "title": 1.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.77,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Databricks"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "4b502751d3c0b557",
+      "title": "refrigeration and air conditioning mechanic (non-construction)",
+      "company": "G2Clim",
+      "location": "Terrebonne (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50720791",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 48.8,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "2cbf54c440f16bd8",
+      "title": "AI Researcher (PhD), 2027 Graduate Canada",
+      "company": "Atlassian",
+      "location": "Canada - Canada; Remote - Remote",
+      "url": "https://campus-americas.icims.com/jobs/26074/ai-researcher-%28phd%29%2c-2027-graduate-canada/job",
+      "source": "atlassian",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 48.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "697d49ac15190170",
+      "title": "HR Generalist",
+      "company": "Jerry",
+      "location": "Canada, United States",
+      "url": "https://himalayas.app/companies/jerry/jobs/hr-generalist-7970150369?utm_source=api",
+      "source": "himalayas",
+      "workplace": "remote",
+      "salary": [
+        80000.0,
+        100000.0,
+        "",
+        "year"
+      ],
+      "pre_score": 46.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 1.0,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "e9beec9bc0ed505d",
+      "title": "Content Creator - YouTube",
+      "company": "Metics Media",
+      "location": "Canada",
+      "url": "https://himalayas.app/companies/metics-media/jobs/content-creator-youtube-270618726?utm_source=api",
+      "source": "himalayas",
+      "workplace": "remote",
+      "salary": [
+        100000.0,
+        200000.0,
+        "",
+        "year"
+      ],
+      "pre_score": 46.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 1.0,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "fc885483e5293123",
+      "title": "Consultant en Déploiement - Apprentissage automatique | Delivery Consultant - Machine Learning, ProServe Shared Delivery Team - Data & AI",
+      "company": "Amazon Web Services (AWS)",
+      "location": "Calgary, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/consultant-en-d%C3%A9ploiement-apprentissage-automatique-delivery-consultant-machine-learning-proserve-shared-delivery-team-data-ai-at-amazon-web-services-aws-4455911313",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 43.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "0d7614fed6a99a33",
+      "title": "Spécialiste en Intelligence Artificielle (IA Générative, Agentique, Vision & MLOps)",
+      "company": "Ateko, backed by Bell Canada",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/sp%C3%A9cialiste-en-intelligence-artificielle-ia-g%C3%A9n%C3%A9rative-agentique-vision-mlops-at-ateko-backed-by-bell-canada-4487925395",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 42.5,
+      "parts": {
+        "title": 0.6,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.8,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "LLMOps"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "6c488b11795aa473",
+      "title": "IT Service Technician I",
+      "company": "VC3",
+      "location": "Canada",
+      "url": "https://himalayas.app/companies/vc3/jobs/it-service-technician-i-6560855079?utm_source=api",
+      "source": "himalayas",
+      "workplace": "remote",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "877c8329b29496a6",
+      "title": "Ingénieur mécanique sénior",
+      "company": "Stantec",
+      "location": "Canada",
+      "url": "https://himalayas.app/companies/stantec/jobs/ingenieur-mecanique-senior-805938144?utm_source=api",
+      "source": "himalayas",
+      "workplace": "remote",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "b06d2324fc8c763f",
+      "title": "software developer",
+      "company": "Able Innovations",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50729192",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "f457b35b01b2f0ed",
+      "title": "data engineer",
+      "company": "Citylitics",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50725816",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "c641f176c16585c1",
+      "title": "geotechnical engineer",
+      "company": "Englobe Corp.",
+      "location": "Calgary (AB)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50727188",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "374870c4a6e500fa",
+      "title": "data modeler",
+      "company": "Infinity Quest UK",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50724470",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "b4aac94233fd21ae",
+      "title": "cybersecurity consultant",
+      "company": "Euro Tile & Stone",
+      "location": "Ottawa (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50724088",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "d649621c9ea13e51",
+      "title": "data engineer",
+      "company": "CATSA",
+      "location": "Ottawa (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50724006",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "53df339d97e41153",
+      "title": "Data Engineer",
+      "company": "Canadian Air Transport Security Authority",
+      "location": "Ottawa (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50723655",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "669b300e811ddf58",
+      "title": "software developer",
+      "company": "Maarut",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50726942",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "943d59c1ce44af62",
+      "title": "software developer",
+      "company": "Zaber Technologies",
+      "location": "Vancouver (BC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50725700",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "cda17ba7f322d8c6",
+      "title": "software developer",
+      "company": "Source Code",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50724583",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "b94b1cf148d7fb8f",
+      "title": "full stack Web developer",
+      "company": "Media Resources",
+      "location": "Mississauga (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50725102",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "35461287b74912fc",
+      "title": "Développeur.euse de logiciels IA",
+      "company": "Stingray",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/d%C3%A9veloppeur-euse-de-logiciels-ia-at-stingray-4491028556",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 41.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "8a98c037594ba25c",
+      "title": "mechanical engineer",
+      "company": "Wood Buffalo Specialty Products",
+      "location": "Edmonton (AB)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50719617",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "4eaddc7b8f5afbb1",
+      "title": "front-end developer",
+      "company": "Kablamo Pty Ltd",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50720756",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "4a73040f9be28133",
+      "title": "back-end developer",
+      "company": "Kablamo Pty Ltd",
+      "location": "Toronto (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50720761",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "bc31a533d3d9d9a9",
+      "title": "Artificial Intelligence Engineer",
+      "company": "Enterprise Solutions Inc.",
+      "location": "Toronto, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/artificial-intelligence-engineer-at-enterprise-solutions-inc-4486515074",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "8021b7ccabfebb42",
+      "title": "Spécialiste en apprentissage machine",
+      "company": "ODESIA INTELLIGENCE",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/sp%C3%A9cialiste-en-apprentissage-machine-at-odesia-intelligence-4488973005",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "513d23ecb035cffe",
+      "title": "Shell Graduate Programme 2027 / Programme Jeunes diplômés de Shell - Canada",
+      "company": "Shell",
+      "location": "Fort Saskatchewan, Alberta, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/shell-graduate-programme-2027-programme-jeunes-dipl%C3%B4m%C3%A9s-de-shell-canada-at-shell-4471924190",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.9,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "badf702b55450bf8",
+      "title": "Executive Operations Specialist",
+      "company": "Shakepay",
+      "location": "Montreal, QC",
+      "url": "https://cryptocurrencyjobs.co/operations/shakepay-executive-operations-specialist/",
+      "source": "cryptocurrencyjobs",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "45729366b9842463",
+      "title": "DevSecOps Engineer",
+      "company": "Casa",
+      "location": "Remote (United States, Canada)",
+      "url": "https://cryptocurrencyjobs.co/engineering/casa-devsecops-engineer/",
+      "source": "cryptocurrencyjobs",
+      "workplace": "remote",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 40.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.87,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "246035b180dfabef",
+      "title": "Customer Support Representative",
+      "company": "Swapped.com",
+      "location": "Remote (Canada, Europe, North America, United Kingdom)",
+      "url": "https://cryptocurrencyjobs.co/customer-support/swapped-com-customer-support-representative/",
+      "source": "cryptocurrencyjobs",
+      "workplace": "remote",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.63,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "a07e78c412a2ef23",
+      "title": "mechanical engineer",
+      "company": "PVLabs",
+      "location": "Burlington (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50730592",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "6b9426d46ba2fa62",
+      "title": "embedded software engineer",
+      "company": "PVLabs",
+      "location": "Burlington (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50729228",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "57eda09f9774ae29",
+      "title": "acoustical engineer",
+      "company": "Fed Manutech",
+      "location": "Montréal (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50727499",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 1.0,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "5f563841f19f8a70",
+      "title": "geotechnical engineer",
+      "company": "GEMTEC Consulting Engineers and Scientists Limited",
+      "location": "Greater Sudbury (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50727290",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "5086b7c065541cee",
+      "title": "cloud engineer",
+      "company": "Astra North Infoteck Inc.",
+      "location": "Montréal (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50726925",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "a31d7a905448eb7c",
+      "title": "lawyer",
+      "company": "Lyons Law Firm Professional Corporation",
+      "location": "Simcoe (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50725081",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "7904eff5d1a2687d",
+      "title": "development and operations (DevOps) engineer",
+      "company": "Kronos Consulting",
+      "location": "Montréal (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50725092",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "9d94d807d8509b2a",
+      "title": "laboratory technology professor - university",
+      "company": "Oulton College",
+      "location": "Moncton (NB)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50724536",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "d4f3708e7485a93b",
+      "title": "English professor - university",
+      "company": "Université de Moncton",
+      "location": "Moncton (NB)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50723722",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "fdb791b01a9bff32",
+      "title": "plant maintenance stationary engineer",
+      "company": "Gestion remabec inc.",
+      "location": "Saint-Félicien (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50722716",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "5867e42f5c0ccea7",
+      "title": "legal counsel",
+      "company": "Financial and Consumer Services Commission (FCNB)",
+      "location": "Saint John (NB)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50722924",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "d0d0efdd8e9c51a6",
+      "title": "third-class power engineer",
+      "company": "Acadian Seaplants Limited",
+      "location": "Cornwallis Park (NS)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50722744",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "489c80c0cfb667f9",
+      "title": "robotics engineer",
+      "company": "Opalin",
+      "location": "Québec (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50722185",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "f8a3348ce81e1239",
+      "title": "software developer",
+      "company": "Astra North Infoteck Inc.",
+      "location": "Montréal (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50726939",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "c49a23980fe82ee9",
+      "title": "software developer",
+      "company": "LTS Protective Services",
+      "location": "Vaughan (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50725804",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "efdc0dcb048eb82b",
+      "title": "software developer",
+      "company": "All Equip Repair",
+      "location": "St. Marys (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50721870",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 37.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "47eadaa20ef9aef2",
+      "title": "immigration consultant",
+      "company": "JF Service Expert",
+      "location": "Québec (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50721718",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "b51d2336b2d679f5",
+      "title": "fourth-class power engineer",
+      "company": "NORTH 49 FOODS LTD.",
+      "location": "Moose Jaw (SK)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50721473",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "ceb8a9341aac8a73",
+      "title": "mechanical engineer",
+      "company": "Boilersmith Ltd.",
+      "location": "Seaforth (ON)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50721504",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "b3c394983e2da477",
+      "title": "labour policy analyst",
+      "company": "Ordre des technologues professionnels du Québec",
+      "location": "Montréal (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50721128",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "212d61981e36e5cc",
+      "title": "building systems engineer",
+      "company": "Société D'Habitation Et De Développement De Montréal .",
+      "location": "Montréal (QC)",
+      "url": "https://www.jobbank.gc.ca/jobsearch/jobposting/50720770",
+      "source": "jobbankca",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "2ea450b09bd08144",
+      "title": "Machine Learning/Operations Research Platform Engineer",
+      "company": "Kinaxis",
+      "location": "Ottawa, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-operations-research-platform-engineer-at-kinaxis-4438104987",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 1.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "4549d2cf3419de8b",
+      "title": "Machine Learning/Operations Research Platform Engineer",
+      "company": "Kinaxis",
+      "location": "Waterloo, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-operations-research-platform-engineer-at-kinaxis-4438115587",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 1.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "47227ceee4cc3e04",
+      "title": "Machine Learning/Operations Research Platform Engineer",
+      "company": "Kinaxis",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-operations-research-platform-engineer-at-kinaxis-4438118267",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.8,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.93,
+        "tier": 1.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "171cab08739a5214",
+      "title": "Software Engineer, 2027 Graduate Canada",
+      "company": "Atlassian",
+      "location": "Canada - Canada",
+      "url": "https://campus-globalcareers-atlassian.icims.com/jobs/26070/software-engineer%2c-2027-graduate-canada/job",
+      "source": "atlassian",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "fad408cb820babfd",
+      "title": "Backend Software Engineer",
+      "company": "Atlassian",
+      "location": "Canada - Canada; Remote - Remote",
+      "url": "https://careers-americas.icims.com/jobs/27794/backend-software-engineer/job",
+      "source": "atlassian",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "972155d1e384592e",
+      "title": "Full Stack Software Engineer",
+      "company": "Atlassian",
+      "location": "Canada - Canada; Remote - Remote",
+      "url": "https://careers-americas.icims.com/jobs/25566/full-stack-software-engineer/job",
+      "source": "atlassian",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "f74f8df0a9aa38d8",
+      "title": "Software Developer, Apple Build Rules",
+      "company": "Google",
+      "location": "Waterloo, ON, Canada",
+      "url": "https://www.google.com/about/careers/applications/jobs/results/75335625070256838-software-developer-apple-build-rules",
+      "source": "google",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 36.5,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.5,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "9adcaf4c536e575c",
+      "title": "Data Engineer, Amazon Prime",
+      "company": "Amazon Development Centre Canada ULC",
+      "location": "Vancouver, British Columbia, CAN",
+      "url": "https://www.amazon.jobs/en/jobs/10584677/data-engineer-amazon-prime",
+      "source": "amazon",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 33.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.3,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.17,
+        "tier": 0.0
+      },
+      "skills_asked": [],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "d6ea4fc96a85220a",
+      "title": "Machine Learning Software Developer, In-Vehicle Infotainment",
+      "company": "Ford Motor Company",
+      "location": "Ottawa, Ontario, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-software-developer-in-vehicle-infotainment-at-ford-motor-company-4491003774",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 32.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "340893357e309fd9",
+      "title": "Machine Learning Specialist",
+      "company": "DRW",
+      "location": "Montreal, Quebec, Canada",
+      "url": "https://ca.linkedin.com/jobs/view/machine-learning-specialist-at-drw-4427128718",
+      "source": "linkedin",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 30.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 1.0,
+        "pay": 0.5,
+        "fresh": 0.77,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Machine Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    },
+    {
+      "id": "928f046dfa92cfc7",
+      "title": "Deep Learning Engineer",
+      "company": "NHS Jobs",
+      "location": "Nova Scotia",
+      "url": "https://en-ca.whatjobs.com/jobs/deep-learning-engineer/nova-scotia?id=162304451",
+      "source": "jsearch",
+      "workplace": "",
+      "salary": [
+        null,
+        null,
+        "",
+        ""
+      ],
+      "pre_score": 28.2,
+      "parts": {
+        "title": 0.0,
+        "skills": 0.0,
+        "years": 0.5,
+        "fit": 0.6,
+        "pay": 0.5,
+        "fresh": 0.97,
+        "tier": 0.0
+      },
+      "skills_asked": [
+        "Deep Learning"
+      ],
+      "skills_matched": [],
+      "years_asked": null,
+      "same_role_as_top": false
+    }
+  ]
+}

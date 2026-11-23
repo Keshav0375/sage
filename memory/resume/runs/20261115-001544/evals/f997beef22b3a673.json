@@ -1,0 +1,12 @@
+{"id": "f997beef22b3a673", "score": 4.4, "band": "apply", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "AI Engineer on an agent evaluation and trust platform; 1-4 years fits, pay 102-152k CAD, strong match on LLM-as-judge, guardrails, OAuth, MCP; gaps are eval statistics and red-teaming.",
+ "level_fit": "fit", "base": "agentic", "company_size": "500+", "company_size_basis": "Well-known company size (Equinix, global data-center company).",
+ "must_haves_missing": ["Evaluation statistics (confidence intervals, reviewer agreement)", "Human-review versus judge calibration"],
+ "customisation": [
+  {"change": "Lead with LLM-as-judge eval gate, golden set, and the 30-case agent test set", "job_words": ["LLM-as-judge", "golden datasets", "regression suites"], "fact_ids": ["F021", "F012", "F017"], "blocked_by_facts": false, "note": "F021 and F017 have open checks in facts.json; do not strengthen."},
+  {"change": "Use guardrails and access-control wording", "job_words": ["guardrails", "data boundaries", "agent identity", "per-user access"], "fact_ids": ["F005", "F016", "F018"], "blocked_by_facts": false},
+  {"change": "Show OAuth2 test framework and MCP work", "job_words": ["OAuth", "MCP", "end-to-end agent tests"], "fact_ids": ["F008", "F002"], "blocked_by_facts": false},
+  {"change": "Show root-cause debugging and observability", "job_words": ["root cause", "traces", "OpenTelemetry"], "fact_ids": ["F006", "F014"], "blocked_by_facts": false},
+  {"change": "Candidate NC04 (judge self-grading fix) fits the judge-quality theme; NC05 (30 deterministic test cases) fits regression tests. Candidates only, not facts.", "job_words": ["Judge scores agree", "regression tests"], "fact_ids": [], "blocked_by_facts": true},
+  {"change": "Evaluation statistics, red-teaming, reviewer agreement", "job_words": ["confidence intervals", "red-teaming"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["How do you check that an LLM judge agrees with human reviewers?", "Walk through tracing an agent failure to its root cause.", "How did you make the eval gate fail a PR, and how do you set thresholds?"]}

@@ -1,7 +1,7 @@
 ---
 name: runner
 description: Runs the tests for ONE ticket's change in its worktree — the unit tests for the changed code, the full unit suite, and the integration tests — plus lint and type checks, and reports exact results. Never edits code.
-model: haiku
+model: sonnet
 effort: low
 disallowedTools: Edit, NotebookEdit, Agent
 color: cyan
@@ -21,15 +21,41 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
 4. Integration tests. If they need services, start them only the way the repo defines (for
    example its docker compose file), with `COMPOSE_PROJECT_NAME=<p>-<ticket>` so parallel tickets
    get their own containers, and stop them after (`docker compose down -v`). If the compose file
-   uses fixed host ports, hold the lock while the services run:
+   uses fixed host ports, first check them with `lsof -nP -iTCP:<port> -sTCP:LISTEN`; when a
+   process you did not start holds one, use other free host ports through the repo's documented
+   port knobs (never stop a process you did not start, and do not report BLOCKED for a port).
+   For env files use the repo's `.env.example` (demo values) unless the prompt says otherwise.
+   Hold the lock while the services run (check `mkdir`'s exit code: non-zero means another run
+   holds it, so wait and retry; never start containers without it):
    `mkdir <context_dir>/.runtime/locks/<p>-compose` (wait and retry while it exists, at most
    20 minutes), then `rmdir` it after `down`. If you cannot run them, say why.
    Integration tests are required when the change crosses a boundary; "not run" there is a failure.
-5. The security scanners the repo defines or has installed (`gitleaks`, `bandit`, `semgrep`,
+5. Coverage of the change, end to end: run the unit AND integration tests together with
+   coverage (`pytest --cov=<src> --cov-report=xml` with the services up, `vitest --coverage`,
+   `go test -cover`, or what the repo defines; with pytest-cov, `--cov-append` across runs) and
+   report total coverage and the coverage of the changed lines (`diff-cover coverage.xml --compare-branch=origin/<base>`
+   when installed; else list changed functions with no test that runs them). Changed lines below
+   80% covered is a finding (name the uncovered lines).
+6. The CI commands: run exactly what the repo's CI workflow runs for the changed area, with only
+   the env the workflow sets (a fresh venv and `env -i HOME=<fresh> PATH=$PATH` plus the step
+   env), so a CI failure shows here first.
+7. For any failure, run the same command on the default branch (a read-only baseline worktree)
+   and say whether it is new on this branch or already there.
+8. The security scanners the repo defines or has installed (`gitleaks`, `bandit`, `semgrep`,
    `pip-audit`, `npm audit`).
+
+## Never `rm`
+A guard refuses any command whose text contains `rm -r` or `rm -f`, also inside `docker rm -f`
+or a heredoc. Leave temp files in the session scratchpad. Start containers as
+`docker run -d --rm --name <p>-<ticket>-<n> ...` and end them with `docker stop <name>`
+(`--rm` deletes them); for compose use `docker compose down -v`.
 
 ## Write
 Your report file starts with these two lines (the brain mod reads them):
+
+Save the report with the Write tool before you reply; your reply is not the report. In a round 2
+or later, overwrite the file (the old file still carries the earlier sha, and the verifier gate
+refuses a stale sha). Then read back its first two lines to confirm the new sha.
 ```
 sha: <git -C <worktree> rev-parse HEAD>
 status: <your status keyword>

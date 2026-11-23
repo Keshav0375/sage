@@ -4,14 +4,14 @@
 // The ledger is the files on disk, not a separate state file, so it cannot drift from the work:
 //   <context_dir>/.runtime/builder/<p>/<ticket>/context.md     fetcher
 //   <context_dir>/.runtime/worktrees/<p>/<ticket>/              brancher (the git worktree)
-//   <context_dir>/.runtime/builder/<p>/<ticket>/{review,security,tests,arch-check}.md   checkers
+//   <context_dir>/.runtime/builder/<p>/<ticket>/{review-compat,review-standards,review-design,security,tests,arch-check}.md   checkers
 //   <context_dir>/.runtime/builder/<p>/<ticket>/verdict.md      verifier
 //   <context_dir>/.runtime/builder/<p>/<ticket>/claim.json      which session owns the ticket
 //   <context_dir>/.runtime/builder/<p>/<ticket>/log.jsonl       one line per builder agent spawn
 // Each report starts with `sha: <HEAD>` and `status: <keyword>`, so a report about an older commit
 // is stale and counts as not done.
 
-export const CHECKS = ['review', 'security', 'tests', 'arch-check'] as const
+export const CHECKS = ['review-compat', 'review-standards', 'review-design', 'security', 'tests', 'arch-check'] as const
 export const CLAIM_MS = 2 * 60 * 60 * 1000
 
 export type Header = { project?: string; ticket?: string; worktree?: string; mode?: string }

@@ -1,0 +1,17 @@
+{"id": "655f07473920532e", "score": 3.4, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Title and pay fit and the stack matches (agents, RAG, FastAPI, Azure), but the JD asks 5+ years and the resume shows 2.",
+ "level_fit": "stretch", "base": "agentic",
+ "company": "WSP", "company_size": "500+", "company_size_basis": "Well-known: WSP is a global engineering firm with tens of thousands of staff. JD text says 'global community' and 'one of the world's leading engineering firms'; no head count on page.",
+ "must_haves_missing": ["5+ years professional software development", "NLP entity extraction / entity resolution", "Knowledge graphs (nice to have)"],
+ "customisation": [
+  {"change": "Lead the summary with 'production agentic AI, RAG and LLM systems on Azure' and 'FastAPI backend'.", "job_words": ["agentic", "RAG", "FastAPI", "Azure"], "fact_ids": ["F001", "F010"], "blocked_by_facts": false},
+  {"change": "Put retrieval work first: Azure AI Search / Vertex AI RAG agents and pgvector search.", "job_words": ["embeddings", "vector search", "RAG pipelines"], "fact_ids": ["F009", "F018"], "blocked_by_facts": false},
+  {"change": "Show evaluation strategy: LLM judge, golden set, benchmark of LLM candidates.", "job_words": ["evaluation strategies"], "fact_ids": ["F012", "F021"], "blocked_by_facts": false},
+  {"change": "Show CI/CD and multi-environment deploys with GitHub Actions, Terraform, ArgoCD.", "job_words": ["CI/CD", "multi-environment", "DevOps"], "fact_ids": ["F006", "F017"], "blocked_by_facts": false},
+  {"change": "Add entity extraction / entity resolution experience.", "job_words": ["entity recognition", "entity resolution"], "fact_ids": [], "blocked_by_facts": true}
+ ],
+ "interview_questions": [
+  "Describe an agent system you took to production and how you scaled it (Slideoo 10x traffic, F010).",
+  "How did you improve retrieval quality and test it (F009, F018, F021)?",
+  "How would you handle entity resolution across structured and unstructured data? (gap; no fact)"
+ ]}

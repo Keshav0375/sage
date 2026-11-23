@@ -7,7 +7,7 @@ import {
 const CTX = '/h/sage/context'
 const HEAD = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678'
 const report = (sha: string, status = 'CLEAN') => `sha: ${sha}\nstatus: ${status}\n\n# Report\n`
-const fresh = { review: report(HEAD), security: report(HEAD), tests: report(HEAD, 'RESULTS'), 'arch-check': report(HEAD) }
+const fresh = { 'review-compat': report(HEAD), 'review-standards': report(HEAD), 'review-design': report(HEAD), security: report(HEAD), tests: report(HEAD, 'RESULTS'), 'arch-check': report(HEAD) }
 
 test('the prompt header gives project, ticket, worktree and mode', () => {
   const h = parseHeader('project: finadvisor\nticket: E1-T3\nworktree: /w/E1-T3\nmode=fix\n\nFix these findings.')
@@ -30,7 +30,7 @@ test('short and full SHAs of the same commit match; short ones under 7 do not', 
 test('a check about an older commit is stale', () => {
   expect(staleChecks(fresh, HEAD)).toEqual([])
   expect(staleChecks({ ...fresh, security: report('0000000') }, HEAD)).toEqual(['security'])
-  expect(staleChecks({ review: report(HEAD) }, HEAD)).toEqual(['security', 'tests', 'arch-check'])
+  expect(staleChecks({ 'review-compat': report(HEAD) }, HEAD)).toEqual(['review-standards', 'review-design', 'security', 'tests', 'arch-check'])
 })
 
 test('a path inside a harness worktree names its ticket', () => {
@@ -79,7 +79,7 @@ test('the step comes from the evidence on disk', () => {
   expect(deriveStep({ ...base, hasContext: false })).toBe('todo')
   expect(deriveStep({ ...base, hasWorktree: false })).toBe('fetched')
   expect(deriveStep(base)).toBe('branched')
-  expect(deriveStep({ ...base, reports: { review: report(HEAD) } })).toBe('checking')
+  expect(deriveStep({ ...base, reports: { 'review-compat': report(HEAD) } })).toBe('checking')
   expect(deriveStep({ ...base, reports: fresh })).toBe('checked')
   expect(deriveStep({ ...base, reports: fresh, verdict: report(HEAD, 'RED') })).toBe('red')
   expect(deriveStep({ ...base, reports: fresh, verdict: report(HEAD, 'GREEN') })).toBe('verified')

@@ -1,0 +1,233 @@
+[
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Toronto, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Toronto, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Vancouver, British Columbia, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Vancouver, British Columbia, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Montreal, Quebec, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Montreal, Quebec, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Ottawa, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Ottawa, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Calgary, Alberta, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Calgary, Alberta, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Waterloo, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Waterloo, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Edmonton, Alberta, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Edmonton, Alberta, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer",
+      "location": "Mississauga, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JOBS_API_LINKEDIN_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer",
+      "location": "Mississauga, Ontario, Canada",
+      "date_posted": "week",
+      "workplace_types": "remote;hybrid;onSite",
+      "employment_types": "fulltime;contractor",
+      "experience_levels": "entry;associate"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_LINKEDIN_SEARCH_LIST_ACTIVE_JOBS",
+    "arguments": {
+      "title_advanced": "'AI Engineer' | 'Forward Deployed Engineer' | 'Software Developer II' | 'Software Developer 2' | 'Software Engineer II' | 'Intermediate Software Developer' | 'Machine Learning Engineer' | 'ML Engineer' | 'Data Scientist' | 'LLM Engineer' | 'AI Developer' | 'Applied AI Engineer' | 'AI/ML Engineer'",
+      "location_advanced": "Canada OR Toronto, Ontario, Canada OR Vancouver, British Columbia, Canada OR Montreal, Quebec, Canada OR Ottawa, Ontario, Canada OR Calgary, Alberta, Canada OR Waterloo, Ontario, Canada OR Edmonton, Alberta, Canada OR Mississauga, Ontario, Canada",
+      "time_frame": "7d",
+      "ai_experience_level": [
+        "0-2",
+        "2-5"
+      ],
+      "limit": 100,
+      "organization_agency": "exclude",
+      "description_format": "text"
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JSEARCH_SEARCH_JOBS",
+    "arguments": {
+      "query": "AI Engineer in Canada",
+      "country": "ca",
+      "date_posted": "week",
+      "num_pages": 2
+    }
+  },
+  {
+    "tool_slug": "JOB_SEARCH_JSEARCH_SEARCH_JOBS",
+    "arguments": {
+      "query": "Machine Learning Engineer in Canada",
+      "country": "ca",
+      "date_posted": "week",
+      "num_pages": 2
+    }
+  }
+]

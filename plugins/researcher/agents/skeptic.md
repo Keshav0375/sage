@@ -1,7 +1,7 @@
 ---
 name: skeptic
 description: Adversarial fact-checker. Takes a proposal or answer, extracts every load-bearing claim, and tries to falsify each against its cited source and one independent source. Catches invented numbers, misread papers, stale docs and hidden assumptions.
-model: sonnet
+model: opus
 effort: medium
 disallowedTools: Edit, NotebookEdit, Agent
 color: red

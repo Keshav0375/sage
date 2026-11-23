@@ -1,7 +1,7 @@
 ---
 name: docs-reader
 description: Reads the current official documentation for one technology in the design (cloud service, database, broker, framework, library, API, tool) and returns version-stamped facts, limits and vendor best practices with links. Use to validate or improve every decision that relies on how a technology behaves today.
-model: sonnet
+model: opus
 effort: low
 disallowedTools: Edit, NotebookEdit
 color: blue

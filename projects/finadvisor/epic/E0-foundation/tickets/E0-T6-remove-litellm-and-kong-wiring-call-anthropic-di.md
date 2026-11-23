@@ -4,13 +4,13 @@ title: "Remove LiteLLM and Kong wiring; call Anthropic directly"
 epic: "E0"
 repo: "FinAdvisor"
 size: "M"
-status: "todo"
+status: "done"
 depends_on: ["E0-T3"]
-arch_refs: ["deep-dive/01-context-and-goals.md#1", "decision-logs.md#adr-005", "decision-logs.md#adr-006", "deep-dive/06-interfaces-and-contracts.md#6.6"]
-issue: {"repo": "Keshav0375/FinAdvisor", "number": 7, "id": 6155571397, "url": "https://github.com/Keshav0375/FinAdvisor/issues/7"}
-branch: null
-pr: null
-updated: "2026-11-01"
+arch_refs: ["deep-dive/01-context-and-goals.md#1","decision-logs.md#adr-005","decision-logs.md#adr-006","deep-dive/06-interfaces-and-contracts.md#6.6"]
+issue: {"repo":"Keshav0375/FinAdvisor","number":7,"id":6155571397,"url":"https://github.com/Keshav0375/FinAdvisor/issues/7"}
+branch: "feat/E0-T6-remove-litellm-and-kong-wiring-call"
+pr: "https://github.com/Keshav0375/FinAdvisor/pull/332"
+updated: "2026-11-20"
 ---
 
 ## Summary
