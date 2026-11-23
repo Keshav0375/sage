@@ -55,6 +55,9 @@ background. One check wave at a time when both tickets reach it together.
   state with `mcp__brain__run_update` at every step boundary (goal, step, next).
 
 ## 0. Orient
+- On macOS, start `caffeinate -ims -t 86400` with Bash `run_in_background: true` at the start of a
+  run (and again after 24 h). A sleeping Mac cuts every running agent mid-reply ("computer went to
+  sleep") and each one needs a resume; it also leaves Docker hung.
 - `mcp__brain__where <project>` and `mcp__brain__run_status <project>`.
 - Read the ticket frontmatter of the epic. Tickets `todo` whose `depends_on` are all `done` are
   **ready**. A dependency in `review` (PR open, landing) is also enough when the next ticket can
