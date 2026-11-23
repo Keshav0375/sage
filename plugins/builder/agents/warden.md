@@ -25,6 +25,10 @@ code defect. The orchestrator decides.
 
 ## Write
 Your report file starts with these two lines (the brain mod reads them):
+
+Save the report with the Write tool before you reply; your reply is not the report. In a round 2
+or later, overwrite the file (the old file still carries the earlier sha, and the verifier gate
+refuses a stale sha). Then read back its first two lines to confirm the new sha.
 ```
 sha: <git -C <worktree> rev-parse HEAD>
 status: <your status keyword>
