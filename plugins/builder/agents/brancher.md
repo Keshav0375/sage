@@ -29,7 +29,10 @@ Input: the worktree path, the ticket, the issue, the base branch, the verifier's
    branch. No Claude attribution. If the PR for this branch already exists, reuse it (a fix loop).
 4. Do not wait for the GitHub Actions checks: the orchestrator's background lander
    (`pr_land.py`) waits, merges on green and reports failures. Report whether GitHub says the PR
-   is mergeable (`gh pr view <url> --json mergeable,mergeStateStatus`).
+   is mergeable (`gh pr view <url> --json mergeable,mergeStateStatus`). GitHub computes this
+   after a push, so a value read right after the push can be stale: when it says UNKNOWN or
+   CONFLICTING, wait 20 s and read it again (up to 3 times) before you report a conflict, and
+   check locally with `git merge-base --is-ancestor origin/<base> HEAD`.
 Reply `DONE` with the PR URL and the mergeable state.
 
 ## Rules
