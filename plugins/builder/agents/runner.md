@@ -25,7 +25,8 @@ scripts, Makefile, pyproject.toml, go.mod, CI config) and say where you found th
    process you did not start holds one, use other free host ports through the repo's documented
    port knobs (never stop a process you did not start, and do not report BLOCKED for a port).
    For env files use the repo's `.env.example` (demo values) unless the prompt says otherwise.
-   Hold the lock while the services run:
+   Hold the lock while the services run (check `mkdir`'s exit code: non-zero means another run
+   holds it, so wait and retry; never start containers without it):
    `mkdir <context_dir>/.runtime/locks/<p>-compose` (wait and retry while it exists, at most
    20 minutes), then `rmdir` it after `down`. If you cannot run them, say why.
    Integration tests are required when the change crosses a boundary; "not run" there is a failure.
