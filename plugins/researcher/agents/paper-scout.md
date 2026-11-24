@@ -1,7 +1,7 @@
 ---
 name: paper-scout
 description: Finds and reads research papers for an algorithmic or systems problem and returns candidate algorithms with complexity, assumptions and evidence. Use when a design has an algorithmic, data-structure, distributed-systems or ML core.
-model: sonnet
+model: opus
 effort: medium
 disallowedTools: Edit, NotebookEdit
 color: purple

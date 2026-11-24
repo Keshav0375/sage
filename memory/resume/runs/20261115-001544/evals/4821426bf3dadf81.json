@@ -1,0 +1,13 @@
+{"id": "4821426bf3dadf81", "score": 4.3, "band": "apply", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Google Ads GenAI developer, Waterloo, $150-153k CAD; 2 years Python and GenAI match well; end-to-end ML is the gap.",
+ "level_fit": "fit", "base": "agentic", "company_size": "500+",
+ "company_size_basis": "Well-known company size (Google); JD text does not state size",
+ "must_haves_missing": ["1 year end-to-end ML (model training, data processing) is only partly shown"],
+ "customisation": [
+  {"change": "Put multimodal LLM pipeline work first in the summary", "job_words": ["Multi-Modal", "GenAI", "generation"], "fact_ids": ["F011"], "blocked_by_facts": false},
+  {"change": "Use 'model evaluation' and 'model deployment' wording for benchmark and production work", "job_words": ["model evaluation", "model deployment"], "fact_ids": ["F012", "F010"], "blocked_by_facts": false},
+  {"change": "Show Python as the main language in the skills line", "job_words": ["Python"], "fact_ids": ["F010", "F018"], "blocked_by_facts": false},
+  {"change": "Use 'triage and debug' wording for the pipeline fault work", "job_words": ["Triage", "debug"], "fact_ids": ["F006"], "blocked_by_facts": false},
+  {"change": "Claim data structures and algorithms or image/video generation experience", "job_words": ["data structures and algorithms", "image, video, or audio generation"], "fact_ids": [], "blocked_by_facts": true}
+ ],
+ "interview_questions": ["How did you cut multimodal generation latency from 3+ min to 40s?", "How do you evaluate and compare LLM candidates before production?", "Describe a hard production fault you debugged and how you found the cause."]}

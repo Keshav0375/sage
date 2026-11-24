@@ -1,3 +1,37 @@
 # gimme-job user knobs (overrides). Edit or use `knobs.py set`.
+# Default search for `/gimme-job` (set 2026-11-15). These win over knobs.default.toml and any preset.
+# Company size (500+ employees, plus some startups) has no knob yet: the /gimme-job skill
+# (.claude/skills/gimme-job/SKILL.md) gives that rule to the scout and analyst agents.
+
+[profile]
+target_titles = ["AI Engineer", "Forward Deployed Engineer", "Software Developer II", "Software Developer 2",
+                 "Software Engineer II", "Intermediate Software Developer", "Machine Learning Engineer", "ML Engineer",
+                 "Data Scientist", "LLM Engineer", "AI Developer", "Applied AI Engineer", "AI/ML Engineer"]
+exclude_titles = ["Senior", "Sr.", "Staff", "Principal", "Lead", "Director", "Manager", "Head of", "VP", "Architect",
+                  "Intern", "Co-op", "Sales", "Account Executive", "Recruiter"]
+years_experience = 2
+min_base = 90000
+currency = "CAD"
+
+[search]
+# LinkedIn runs one call per location x the first 2 keywords. JSearch uses only the first location.
+keywords = ["AI Engineer", "Machine Learning Engineer", "LLM Engineer", "Forward Deployed Engineer", "Data Scientist",
+            "Software Developer II", "AI Developer"]
+locations = ["Canada", "Toronto, Ontario, Canada", "Vancouver, British Columbia, Canada", "Montreal, Quebec, Canada",
+             "Ottawa, Ontario, Canada", "Calgary, Alberta, Canada", "Waterloo, Ontario, Canada",
+             "Edmonton, Alberta, Canada", "Mississauga, Ontario, Canada"]
+countries = ["CA"]
+remote_regions = ["Canada"]
+workplace = ["remote", "hybrid", "onsite"]
+seniority = ["entry", "associate"]
+experience_buckets = ["0-2", "2-5"]
+must_have_any = ["LLM", "agent", "agentic", "RAG", "GenAI", "generative AI", "large language", "machine learning",
+                 "deep learning", "artificial intelligence", "data science", "NLP", "Python"]
+
+[sources.linkedin_active_jobs]
+enabled = true   # one call that searches every target title in every location
+
 [ranking]
 select_min = 3.3
+select_top_n = 6
+pre_rank_top_k = 15

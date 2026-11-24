@@ -1,0 +1,11 @@
+{"id": "1dbaf124cb59d6fb", "score": 2.7, "band": "skip", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Google Cloud data-pipeline consulting role needs 5 years of Spark/Beam work and 30% travel; pay is strong but level and focus do not match.",
+ "level_fit": "stretch", "base": "agentic", "company_size": "500+", "company_size_basis": "Well-known company size (Google, Alphabet).",
+ "must_haves_missing": ["5 years data processing software (Spark, Beam)", "Database administration or distributed data processing", "Client-facing project management", "Big Data pipeline delivery"],
+ "customisation": [
+  {"change": "Lead with GCP, Vertex AI and RAG agents work", "job_words": ["Google Cloud Platform", "RAG", "multi-agent orchestration"], "fact_ids": ["F009", "F002"], "blocked_by_facts": false},
+  {"change": "Use tool calling and agent orchestration wording", "job_words": ["tool and function calling", "agent frameworks"], "fact_ids": ["F010", "F003"], "blocked_by_facts": false},
+  {"change": "Show customer-facing and leadership work", "job_words": ["client-facing", "technical advisor"], "fact_ids": ["F013"], "blocked_by_facts": false},
+  {"change": "Show ETL and data work", "job_words": ["ETL/ELT", "data pipelines"], "fact_ids": ["F009"], "blocked_by_facts": false},
+  {"change": "Spark, Beam, GCP Data certification", "job_words": ["Spark", "Beam", "Professional Data Certification"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Describe a data pipeline you built or migrated at scale. What broke?", "How would you design a RAG system on Vertex AI for a customer?", "Tell about a time you advised a customer who disagreed with you."]}

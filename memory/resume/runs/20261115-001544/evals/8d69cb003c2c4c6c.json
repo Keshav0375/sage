@@ -1,0 +1,17 @@
+{"id": "8d69cb003c2c4c6c", "score": 1.8, "band": "skip", "confidence": "high", "hard_stop": false,
+ "legitimacy": "legit", "why": "Security engineering role, not an AI builder title; asks 4-5+ years of security work and code review that the resume does not show.",
+ "level_fit": "under", "base": "agentic",
+ "company": "Amazon Web Services Canada", "company_size": "500+", "company_size_basis": "Well-known: Amazon has over a million staff. JD text says 'hundreds of millions of customers'; no head count on page.",
+ "must_haves_missing": ["5+ years identifying security issues and risks", "4+ years non-internship security code review", "4+ years troubleshooting and log analysis", "Threat modeling", "Tech lead or mentor experience (partial: F013)"],
+ "customisation": [
+  {"change": "Show guardrails and prompt-guard policies as AI security work.", "job_words": ["AI security", "security automation"], "fact_ids": ["F005", "F015"], "blocked_by_facts": false},
+  {"change": "Show secure design: Entra ID, workload identity, Key Vault, no secrets, GitHub OIDC.", "job_words": ["security architecture", "design guidance"], "fact_ids": ["F016", "F007"], "blocked_by_facts": false},
+  {"change": "Show security scans in CI: tfsec and gitleaks.", "job_words": ["automation", "code review"], "fact_ids": ["F017"], "blocked_by_facts": false},
+  {"change": "Show mentoring of interns.", "job_words": ["mentor", "tech lead"], "fact_ids": ["F013"], "blocked_by_facts": false},
+  {"change": "Add threat modeling and years of security work.", "job_words": ["threat models"], "fact_ids": [], "blocked_by_facts": true}
+ ],
+ "interview_questions": [
+  "How did you secure LLM traffic with Kong AI Gateway (F005)?",
+  "Describe a threat model for an agent with tool access (F015, F016).",
+  "How do you review code for security issues in Java, Python, JavaScript? (gap; no fact)"
+ ]}

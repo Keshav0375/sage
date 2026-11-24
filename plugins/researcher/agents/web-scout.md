@@ -1,7 +1,7 @@
 ---
 name: web-scout
 description: Gathers practitioner evidence for one question from the web — engineering blogs, postmortems, GitHub issues, benchmarks, Reddit and forum threads. Fast and cheap; returns sourced evidence only.
-model: haiku
+model: sonnet
 effort: low
 disallowedTools: Edit, NotebookEdit, Agent
 color: cyan

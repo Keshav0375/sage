@@ -1,6 +1,6 @@
 ---
 name: pipeline
-description: The orchestration protocol for the researcher and builder agents — the main session (Opus) only orchestrates and decides; depth-1 subagents (Sonnet for judgment, Haiku for mechanical work) research, write, build and check; depth-2 Haiku leaves only read and quote. Work runs in dependency waves (parallel only when inputs are independent), with token rules. Use for any non-trivial task.
+description: The orchestration protocol for the researcher and builder agents — the main session (Opus) only orchestrates and decides; depth-1 subagents (Opus for research and design reasoning, Sonnet for all other work) research, write, build and check; depth-2 Sonnet leaves only read and quote. Work runs in dependency waves (parallel only when inputs are independent), with token rules. Use for any non-trivial task.
 ---
 
 # Orchestration protocol
@@ -9,13 +9,14 @@ description: The orchestration protocol for the researcher and builder agents �
 | Depth | Who | Model | Does |
 |---|---|---|---|
 | 0 | Main session (orchestrator) | Opus (brain mod forces it) | Splits work, decides, records decisions. Never researches, writes arch, edits code or runs tests itself. |
-| 1 | Judgment agents | Sonnet | solution-architect, skeptic, arch-writer, ticket-writer, docs-reader, reference-scout, paper-scout, fetcher, editor, code-reviewer, security-reviewer, warden, verifier. |
-| 1 | Mechanical agents | Haiku | web-scout, brancher, runner, publisher, Explore. |
-| 2 | Leaves (spawned by a depth-1 agent) | Haiku, forced | `researcher:page-reader` (read one source, quote), `Explore` (find code). Nothing else may be spawned at depth 2; leaves spawn nothing. |
+| 1 | Reasoning and research agents | Opus | solution-architect, skeptic, docs-reader, reference-scout, paper-scout. |
+| 1 | All other work and coordination | Sonnet | arch-writer, ticket-writer, web-scout, publisher, fetcher, editor (every fix loop too), code-reviewer, security-reviewer, warden, verifier, brancher, runner, Explore. |
+| 2 | Leaves (spawned by a depth-1 agent) | Sonnet, forced | `researcher:page-reader` (read one source, quote), `Explore` (find code). Nothing else may be spawned at depth 2; leaves spawn nothing. |
 
 The tier lives in each agent's frontmatter and in `projects/routing.json`; the brain mod enforces depth 2.
-Move an agent to a cheaper tier only when its output is checked by a higher-tier agent (a skeptic,
-verifier, or the orchestrator). Never put a step that decides or declares on Haiku.
+Keshav's rule (2026-11-21): Opus only for reasoning and research; everything else on Sonnet; no
+Haiku (Haiku runners and branchers caused rework that cost more than they saved). Save tokens with
+short prompts, short replies and reports on disk, not with a weaker model.
 
 ## The five steps, each with a different owner
 1. **Research**: scouts gather evidence; readers delegate page reading to Haiku leaves.
@@ -60,8 +61,8 @@ verifier, or the orchestrator). Never put a step that decides or declares on Hai
    or a pure preference go to Keshav, batched in one AskUserQuestion message; set the run status
    `waiting_keshav` while you wait and `active` after. Every other question an agent raises is
    answered by the orchestrator from the arch or with a reader, recorded in the round's decision
-   file, and sent back to that agent by SendMessage. The `budget-guard` window line is an order:
-   drop to one agent at a time.
+   file, and sent back to that agent by SendMessage. When the `budget-guard` weekly token line is
+   present, stop starting new work and agent runs; finish only already-running work and save progress.
 7. **Write early.** Every agent writes its output file in its first turns and extends it, so a
    usage-limit stop loses nothing; a stopped agent is resumed by SendMessage, never respawned.
 8. **Tiers are enforced.** `projects/routing.json` `tiers` sets model and effort per agent type and

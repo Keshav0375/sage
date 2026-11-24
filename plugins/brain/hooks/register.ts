@@ -221,7 +221,7 @@ export function register(on, options) {
   const mainModel = String(options?.main_model ?? 'opus')
   const subagentModel = String(options?.subagent_model ?? 'sonnet')
   const guardContext = Number(options?.guard_context_percent ?? 50)
-  const guardWindow = Number(options?.guard_window_percent ?? 75)
+  const guardWindow = Number(options?.guard_window_percent ?? 90)
   const budget = { context: undefined, window: 0 }
 
   on('session.start', async ($, e, next) => {

@@ -1,0 +1,12 @@
+{"id": "216491949b25fbcf", "score": 2.7, "band": "skip", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Cloud/DevOps Engineer (not a target title) asking 6+ years; Terraform/Helm/Argo skills match but level gap is large. Pay $120k-$140k is good.",
+ "level_fit": "under", "base": "agentic",
+ "company": "Smile Digital Health", "company_size": "unknown", "company_size_basis": "JD text gives no size; mid-size health-data firm, not well known enough to call 500+.",
+ "must_haves_missing": ["6+ years in cloud/DevOps/platform (about 2 years)", "Azure DevOps pipelines", "Kafka operations", "Azure Monitor / Grafana / Prometheus", "RTO and RPO measured DR drills", "Title not in knobs"],
+ "customisation": [
+  {"change": "Lead with Terraform, Helm, ArgoCD and Kubernetes pipeline work", "job_words": ["Terraform", "Helm", "Argo CD", "AKS"], "fact_ids": ["F006", "F009", "F017"], "blocked_by_facts": false},
+  {"change": "Show backup debug and alerting as DR evidence", "job_words": ["backup", "restore", "alerts as code"], "fact_ids": ["F006", "F025"], "blocked_by_facts": false},
+  {"change": "Show secret and credential rotation", "job_words": ["certificate and secret rotation"], "fact_ids": ["F007", "F016"], "blocked_by_facts": false},
+  {"change": "Show agentic coding tools with safe use", "job_words": ["Claude Code", "agentic coding tools"], "fact_ids": ["F002", "F003"], "blocked_by_facts": false},
+  {"change": "Show Kafka and measured RTO/RPO (no fact exists)", "job_words": ["Kafka", "RTO", "RPO"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Walk through how you found the root cause of the failing backup pipeline.", "How do you make Terraform and Helm upgrades safe?", "How do you rotate secrets with no downtime?"]}

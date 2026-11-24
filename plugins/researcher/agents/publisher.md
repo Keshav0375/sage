@@ -1,7 +1,7 @@
 ---
 name: publisher
 description: Publishes the approved epic and ticket files to GitHub with the gh CLI — creates the GitHub Project and its Status field, the epic issues, the ticket issues as sub-issues, adds all to the project, and writes the issue numbers, ids and URLs back into those files. Runs when the orchestrator's plan checks pass.
-model: haiku
+model: sonnet
 effort: low
 disallowedTools: NotebookEdit, Agent
 color: orange

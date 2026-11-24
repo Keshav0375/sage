@@ -1,0 +1,17 @@
+{"id": "58251ba27e0927ec", "score": 3.3, "band": "maybe", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Agent and MCP work matches well and level is 0-2 years, but the role is embedded-focused, title is off target, pay is not stated, and it is hybrid in Ottawa or Kitchener.",
+ "level_fit": "fit", "base": "agentic",
+ "company": "Fidus Systems", "company_size": "unknown", "company_size_basis": "JD gives no head count. Page says founded 2001, 400+ customers, 4,000+ projects, offices in Ottawa, Kitchener-Waterloo, San Jose. Likely a few hundred staff; not confirmed 500+.",
+ "must_haves_missing": ["Own hands-on embedded projects (Arduino, STM32, ESP32, Raspberry Pi)", "Controlled Goods Program eligibility (unconfirmed)", "Commute to Ottawa or Kitchener (hybrid)"],
+ "customisation": [
+  {"change": "Lead with MCP servers and Claude-based agents that connect to Jira and Bitbucket.", "job_words": ["MCP servers", "Claude", "Bitbucket", "Jira"], "fact_ids": ["F002", "F008"], "blocked_by_facts": false},
+  {"change": "Show a shared agent platform that others use: harness and plugin marketplace.", "job_words": ["shared platform", "supported tool", "versioned and documented"], "fact_ids": ["F003"], "blocked_by_facts": false},
+  {"change": "Show tests and CI on agent work: pytest, GitHub Actions, eval gates.", "job_words": ["write tests", "automate builds"], "fact_ids": ["F008", "F017"], "blocked_by_facts": false},
+  {"change": "Show Python, Linux, git, Docker in the skills line.", "job_words": ["Python", "Linux", "git"], "fact_ids": [], "blocked_by_facts": false},
+  {"change": "Add a hardware or microcontroller personal project.", "job_words": ["Arduino", "Raspberry Pi", "STM32"], "fact_ids": [], "blocked_by_facts": true}
+ ],
+ "interview_questions": [
+  "Walk us through an agent you built that engineers use daily (F002, F003).",
+  "Tell us about a personal project, what went wrong, and how you used AI tools (F014, F015).",
+  "How would you build a tool that reads a serial console or checks a device tree? (gap; no fact)"
+ ]}

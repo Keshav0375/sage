@@ -1,0 +1,11 @@
+{"id": "28701e456e5fd71c", "score": 2.8, "band": "skip", "confidence": "medium", "hard_stop": false,
+ "legitimacy": "legit", "why": "Risk Data Scientist asks 5+ years and classic stats/BI work; some LLM/RAG match, but level and focus are off and the text says it supports post-audit analytics.",
+ "level_fit": "stretch", "base": "agentic", "company_size": "500+", "company_size_basis": "Well-known company size (Manulife, large global insurer).",
+ "must_haves_missing": ["5 years applicable experience", "Data visualization tools (PowerBI, plotly)", "Statistical modeling (regression, survival analysis)", "Strong ML algorithm knowledge"],
+ "customisation": [
+  {"change": "Lead with LLM and RAG solutions", "job_words": ["LLM powered solutions", "RAG"], "fact_ids": ["F018", "F010"], "blocked_by_facts": false},
+  {"change": "Use Python, SQL, cloud wording", "job_words": ["Python", "SQL", "Azure", "AWS", "GCP"], "fact_ids": ["F001"], "blocked_by_facts": false},
+  {"change": "Show evaluation and benchmark analysis", "job_words": ["analyze large datasets", "actionable insights"], "fact_ids": ["F012"], "blocked_by_facts": false},
+  {"change": "Show governance and tracking in pipelines", "job_words": ["governance", "tracking mechanisms"], "fact_ids": ["F015"], "blocked_by_facts": false},
+  {"change": "PowerBI, statistical modeling, 5 years", "job_words": ["PowerBI", "survival analysis"], "fact_ids": [], "blocked_by_facts": true}],
+ "interview_questions": ["Explain how you would pick between regression and a decision tree for a risk problem.", "How did you measure quality of your RAG output?", "Tell about turning data findings into a business recommendation."]}

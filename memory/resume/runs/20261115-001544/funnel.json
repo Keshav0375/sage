@@ -1,0 +1,36 @@
+{
+  "found": 1681,
+  "unique": 1269,
+  "after_filters": 406,
+  "dropped": {
+    "missing must_have_any": 48,
+    "excluded title": 716,
+    "too old": 90,
+    "agency": 9
+  },
+  "liveness": {
+    "live": 244,
+    "dead": 1,
+    "unknown": 161,
+    "skipped": 0
+  },
+  "kept": 405,
+  "by_source": {
+    "hackernews": 3,
+    "cryptocurrencyjobs": 51,
+    "atlassian": 280,
+    "google": 11,
+    "generalist-world": 51,
+    "pythonorg": 20,
+    "remoteok": 90,
+    "remote-com": 55,
+    "workingnomads": 34,
+    "weworkremotely": 68,
+    "amazon": 300,
+    "himalayas": 152,
+    "ibm": 300,
+    "jobbankca": 48,
+    "jsearch": 38,
+    "linkedin": 180
+  }
+}
