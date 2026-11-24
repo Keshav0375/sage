@@ -34,9 +34,9 @@
     },
     "guard_window_percent": {
       "type": "number",
-      "title": "Usage window guard (%)",
-      "description": "Rate-limit window use at which the orchestrator is told to spawn one agent at a time.",
-      "default": 75
+      "title": "Weekly token guard (%)",
+      "description": "Weekly token use at which the orchestrator stops starting new work and conserves the remaining 10%.",
+      "default": 90
     }
   }
 }

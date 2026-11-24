@@ -61,8 +61,8 @@ short prompts, short replies and reports on disk, not with a weaker model.
    or a pure preference go to Keshav, batched in one AskUserQuestion message; set the run status
    `waiting_keshav` while you wait and `active` after. Every other question an agent raises is
    answered by the orchestrator from the arch or with a reader, recorded in the round's decision
-   file, and sent back to that agent by SendMessage. The `budget-guard` window line is an order:
-   drop to one agent at a time.
+   file, and sent back to that agent by SendMessage. When the `budget-guard` weekly token line is
+   present, stop starting new work and agent runs; finish only already-running work and save progress.
 7. **Write early.** Every agent writes its output file in its first turns and extends it, so a
    usage-limit stop loses nothing; a stopped agent is resumed by SendMessage, never respawned.
 8. **Tiers are enforced.** `projects/routing.json` `tiers` sets model and effort per agent type and

@@ -128,7 +128,7 @@ export function budgetGuard(
     lines.push(`Main-loop context is ${Math.round(b.context ?? 0)}% full (limit ${contextLimit}%). Record the run state now with mcp__brain__run_update (stage, step, next action); the brain mod compacts the session by itself and the run continues. Keep agent replies short and read files by section.`)
   }
   if ((b.window ?? 0) >= windowLimit) {
-    lines.push(`The usage window is ${Math.round(b.window ?? 0)}% used (limit ${windowLimit}%). Spawn at most one agent at a time, prefer Haiku tiers, and save progress to files before each spawn.`)
+    lines.push(`Weekly token use is ${Math.round(b.window ?? 0)}% (limit ${windowLimit}%). Stop starting new work and new agent runs; finish only already-running work, save progress to files, and use the remaining capacity conservatively until the weekly reset.`)
   }
   return lines.length ? lines.join('\n') : undefined
 }
