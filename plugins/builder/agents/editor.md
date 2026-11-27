@@ -49,6 +49,11 @@ test commands you ran with their summary lines.
 - Write your output files early and extend them, so a usage-limit stop loses nothing.
 
 ## Docker services
+If the compose lock is held by another run, do not wait for it: commit after the checks that
+need no services, write "integration: to be verified by the runner" in edit.md, and reply DONE.
+The runner in the check round runs the integration tests when the lock is free. (Editors that
+waited on the lock returned INCOMPLETE with the fix uncommitted.)
+
 When you start services with fixed host ports, use the same compose lock as the runner
 (`mkdir <context_dir>/.runtime/locks/<p>-compose`; a non-zero exit means another run holds it:
 wait and retry; `rmdir` it after `docker compose down -v`). Never `rm`; use `docker run -d --rm`
